@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Refuse direct pushes to protected branches (main, develop).
+# These branches should only be updated via merged pull requests.
+# Bypass (use sparingly): git push --no-verify
+
+set -euo pipefail
+
+protected_branches=("main" "develop")
+zero_sha="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    branch="${remote_ref#refs/heads/}"
+
+    # Skip non-branch refs (tags, etc.)
+    if [[ "$branch" == "$remote_ref" ]]; then
+        continue
+    fi
+
+    for protected in "${protected_branches[@]}"; do
+        if [[ "$branch" == "$protected" ]]; then
+            if [[ "$local_sha" == "$zero_sha" ]]; then
+                echo "error: refusing to delete protected branch '$protected'." >&2
+            else
+                echo "error: direct push to protected branch '$protected' is forbidden." >&2
+                echo "       open a pull request instead, or use --no-verify to bypass." >&2
+            fi
+            exit 1
+        fi
+    done
+done
+
+exit 0
