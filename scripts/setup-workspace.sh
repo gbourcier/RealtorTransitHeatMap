@@ -6,6 +6,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+echo "==> activating tracked git hooks..."
+git config core.hooksPath .githooks
+
 echo "==> setting up database..."
 ./scripts/setup-db.sh
 
