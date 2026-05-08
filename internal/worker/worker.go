@@ -40,6 +40,11 @@ func (w *Worker) Run(ctx context.Context) {
 			return
 		case j := <-w.jobs:
 			listings, err := w.realtor.FetchPrices(ctx, j.criteria)
+			if err == nil {
+				if upsertErr := w.repo.UpsertListings(ctx, listings); upsertErr != nil {
+					slog.Error("upsert listings failed", "err", upsertErr)
+				}
+			}
 			j.reply <- result{listings: listings, err: err}
 		}
 	}

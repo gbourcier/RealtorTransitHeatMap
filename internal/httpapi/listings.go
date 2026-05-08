@@ -18,6 +18,18 @@ type handlers struct {
 	svc FetchPricesService
 }
 
+// fetchPrices godoc
+// @Summary      Fetch listings
+// @Description  Fetch real estate listings filtered by optional price range
+// @Tags         listings
+// @Accept       json
+// @Produce      json
+// @Param        request body FetchPricesRequest true "Search criteria"
+// @Success      200 {object} FetchPricesResponse
+// @Failure      400 {string} string "invalid json"
+// @Failure      408 {string} string "request cancelled"
+// @Failure      500 {string} string "internal server error"
+// @Router       /fetchPrices [post]
 func (h *handlers) fetchPrices(w http.ResponseWriter, r *http.Request) {
 	var req FetchPricesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -43,9 +55,11 @@ func (h *handlers) fetchPrices(w http.ResponseWriter, r *http.Request) {
 	out := FetchPricesResponse{Listings: make([]ListingDTO, 0, len(listings))}
 	for _, l := range listings {
 		out.Listings = append(out.Listings, ListingDTO{
-			ID:      l.ID,
-			Price:   l.Price,
-			Address: l.Address,
+			MLS:       l.MLS,
+			Price:     l.Price,
+			Address:   l.Address,
+			Latitude:  l.Latitude,
+			Longitude: l.Longitude,
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")

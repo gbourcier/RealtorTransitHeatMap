@@ -5,7 +5,9 @@ type FetchPricesResponse struct {
 }
 
 type ListingDTO struct {
-	ID      string `json:"id"`
-	Price   uint64 `json:"price"`
-	Address string `json:"address"`
+	MLS       string  `json:"mls"`
+	Price     float64 `json:"price"`
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }

@@ -1,3 +1,9 @@
+// @title           Realtor Transit Heat Map API
+// @version         1.0
+// @description     API for fetching real estate listings filtered by city and price range.
+// @host            localhost:8080
+// @BasePath        /
+
 package main
 
 import (
@@ -18,6 +24,8 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/joho/godotenv"
+
+	_ "github.com/gbourcier/RealtorTransitHeatMap/docs"
 )
 
 func main() {
@@ -44,7 +52,7 @@ func run() error {
 	}
 	defer pool.Close()
 
-	realtorClient := realtor.NewClient()
+	realtorClient := realtor.NewClient(cfg)
 	repo := listing.NewRepository(pool)
 
 	w := worker.New(realtorClient, repo)

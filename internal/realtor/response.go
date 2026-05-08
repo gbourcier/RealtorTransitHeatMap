@@ -18,6 +18,7 @@ type paging struct {
 type listingResult struct {
 	ID                 string   `json:"Id"`
 	MlsNumber          string   `json:"MlsNumber"`
+	StatusId           string   `json:"StatusId"`
 	Property           property `json:"Property"`
 	RelativeDetailsURL string   `json:"RelativeDetailsURL"`
 }

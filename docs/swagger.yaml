@@ -1,0 +1,70 @@
+basePath: /
+definitions:
+  httpapi.FetchPricesRequest:
+    properties:
+      city:
+        type: string
+      max_price:
+        type: integer
+      min_price:
+        type: integer
+    type: object
+  httpapi.FetchPricesResponse:
+    properties:
+      listings:
+        items:
+          $ref: '#/definitions/httpapi.ListingDTO'
+        type: array
+    type: object
+  httpapi.ListingDTO:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      price:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for fetching real estate listings filtered by city and price range.
+  title: Realtor Transit Heat Map API
+  version: "1.0"
+paths:
+  /fetchPrices:
+    post:
+      consumes:
+      - application/json
+      description: Fetch real estate listings filtered by city and optional price
+        range
+      parameters:
+      - description: Search criteria
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/httpapi.FetchPricesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/httpapi.FetchPricesResponse'
+        "400":
+          description: invalid json
+          schema:
+            type: string
+        "408":
+          description: request cancelled
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Fetch listings
+      tags:
+      - listings
+swagger: "2.0"

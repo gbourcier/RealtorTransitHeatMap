@@ -1,9 +1,13 @@
 package listing
 
 type Listing struct {
-	ID      string
-	Price   uint64
-	Address string
+	Board     string
+	MLS       string
+	Latitude  float64
+	Longitude float64
+	Address   string
+	Status    string
+	Price     float64
 }
 
 type FetchCriteria struct {
