@@ -2,18 +2,18 @@ package listing
 
 import (
 	"context"
-	"fmt"
+	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	db *gorm.DB
 }
 
-func NewRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{db: db}
 }
 
 func (r *Repository) UpsertListings(ctx context.Context, listings []Listing) error {
@@ -21,32 +21,38 @@ func (r *Repository) UpsertListings(ctx context.Context, listings []Listing) err
 		return nil
 	}
 
-	batch := &pgx.Batch{}
-	for _, l := range listings {
-		batch.Queue(`
-			INSERT INTO listings (board, mls, latitude, longitude, address, status)
-			VALUES ($1, $2, $3, $4, $5, $6)
-			ON CONFLICT (board, mls) DO UPDATE SET
-				latitude = EXCLUDED.latitude,
-				longitude = EXCLUDED.longitude,
-				address = EXCLUDED.address,
-				status = EXCLUDED.status`,
-			l.Board, l.MLS, l.Latitude, l.Longitude, l.Address, l.Status)
-
-		batch.Queue(`
-			INSERT INTO listing_price_history (board, mls, observed_at, price)
-			VALUES ($1, $2, now(), $3)
-			ON CONFLICT (board, mls, observed_at) DO NOTHING`,
-			l.Board, l.MLS, l.Price)
-	}
-
-	br := r.pool.SendBatch(ctx, batch)
-	defer br.Close()
-
-	for i := 0; i < batch.Len(); i++ {
-		if _, err := br.Exec(); err != nil {
-			return fmt.Errorf("batch exec[%d]: %w", i, err)
+	observedAt := time.Now()
+	prices := make([]PriceHistory, len(listings))
+	for i, l := range listings {
+		prices[i] = PriceHistory{
+			Board:      l.Board,
+			MLS:        l.MLS,
+			ObservedAt: observedAt,
+			Price:      l.Price,
 		}
 	}
-	return nil
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Omit(clause.Associations).
+			Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
+				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status"}),
+			}).
+			CreateInBatches(listings, 200).Error; err != nil {
+			return err
+		}
+		return tx.
+			Clauses(clause.OnConflict{DoNothing: true}).
+			CreateInBatches(prices, 200).Error
+	})
+}
+
+func (r *Repository) LatestPrice(ctx context.Context, board, mls string) (PriceHistory, error) {
+	var ph PriceHistory
+	err := r.db.WithContext(ctx).
+		Where("board = ? AND mls = ?", board, mls).
+		Order("observed_at DESC").
+		First(&ph).Error
+	return ph, err
 }

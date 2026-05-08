@@ -1,10 +1,13 @@
-.PHONY: run build test fmt vet tidy db-up db-reset migrate seed
+.PHONY: run dev build test fmt vet tidy db-up db-reset migrate seed
 
 GO ?= go
 BIN := bin/api
 
 run:
 	$(GO) run ./cmd/api
+
+dev:
+	air
 
 build:
 	$(GO) build -o $(BIN) ./cmd/api
