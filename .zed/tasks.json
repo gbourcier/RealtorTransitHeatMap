@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Setup Workspace",
+    "command": "./scripts/setup-workspace.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Setup Database",
+    "command": "./scripts/setup-db.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]

@@ -2,7 +2,7 @@ services:
   db:
     image: timescale/timescaledb:latest-pg16
     container_name: realtor_heatmap_db
-    restart: unless-stopped
+    restart: no
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
