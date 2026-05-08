@@ -2,7 +2,7 @@
 # Bring up the dev database from a clean slate:
 #   1. start (or refresh) the docker compose db service and wait for healthcheck
 #   2. drop + recreate the database
-#   3. run all sqlx migrations
+#   3. run all golang-migrate migrations
 #   4. apply seed data
 #
 # Safe to re-run; intended for local dev only.
@@ -20,11 +20,34 @@ set -a
 source .env
 set +a
 
+# Make go-installed tools (e.g. migrate) reachable when invoked directly.
+if command -v go >/dev/null 2>&1; then
+    export PATH="$(go env GOPATH)/bin:$PATH"
+fi
+
+for tool in docker psql migrate; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "error: required tool '$tool' is not on PATH." >&2
+        if [[ "$tool" == "migrate" ]]; then
+            echo "       install with:" >&2
+            echo "         go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@latest" >&2
+            echo "       or run ./scripts/setup-workspace.sh which installs it for you." >&2
+        fi
+        exit 1
+    fi
+done
+
 echo "==> docker compose up..."
 docker compose up -d --wait
 
-echo "==> sqlx database reset (drop + create + migrate)..."
-sqlx database reset -y
+echo "==> dropping + recreating database..."
+PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -p "${POSTGRES_PORT:-5432}" -U "$POSTGRES_USER" -d postgres \
+    -v ON_ERROR_STOP=1 \
+    -c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\";" \
+    -c "CREATE DATABASE \"$POSTGRES_DB\";"
+
+echo "==> running migrations..."
+migrate -path migrations -database "$DATABASE_URL" up
 
 echo "==> seeding..."
 psql "$DATABASE_URL" -f seeds/seed.sql
