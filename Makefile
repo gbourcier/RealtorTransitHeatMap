@@ -28,7 +28,7 @@ db-reset:
 	./scripts/setup-db.sh
 
 migrate:
-	@. ./.env && migrate -path migrations -database "$$DATABASE_URL" up
+	@. ./.env && migrate -path migrations -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$${POSTGRES_HOST:-localhost}:$${POSTGRES_PORT:-5432}/$$POSTGRES_DB" up
 
 seed:
-	@. ./.env && psql "$$DATABASE_URL" -f seeds/seed.sql
+	@. ./.env && psql "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$${POSTGRES_HOST:-localhost}:$${POSTGRES_PORT:-5432}/$$POSTGRES_DB" -f seeds/seed.sql

@@ -17,9 +17,11 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	if err := run(); err != nil {
 		slog.Error("fatal", "err", err)

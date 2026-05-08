@@ -46,10 +46,12 @@ PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -p "${POSTGRES_PORT:-5432}" -U
     -c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\";" \
     -c "CREATE DATABASE \"$POSTGRES_DB\";"
 
+DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}"
+
 echo "==> running migrations..."
-migrate -path migrations -database "$DATABASE_URL" up
+migrate -path migrations -database "$DB_URL" up
 
 echo "==> seeding..."
-psql "$DATABASE_URL" -f seeds/seed.sql
+psql "$DB_URL" -f seeds/seed.sql
 
 echo "==> done."
