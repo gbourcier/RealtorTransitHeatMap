@@ -4,8 +4,17 @@ package realtor
 // PropertySearch_Post endpoint. These types are package-private on purpose:
 // they describe realtor.ca's wire format and must not leak to other packages.
 type asyncPropertySearchResponse struct {
-	Paging  paging          `json:"Paging"`
-	Results []listingResult `json:"Results"`
+	ErrorCode errorCode       `json:"ErrorCode"`
+	Paging    paging          `json:"Paging"`
+	Results   []listingResult `json:"Results"`
+}
+
+type errorCode struct {
+	Id          int    `json:"Id"`
+	Description string `json:"Description"`
+	Status      string `json:"Status"`
+	ProductName string `json:"ProductName"`
+	Version     string `json:"Version"`
 }
 
 type paging struct {

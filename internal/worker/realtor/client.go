@@ -117,8 +117,10 @@ func (c *Client) primeSession(ctx context.Context) error {
 
 func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, int, error) {
 	vals := searchValues(c.cfg, page)
+	encoded := vals.Encode()
+	slog.Debug("realtor search request", "page", page, "body", encoded)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.baseURL+searchPath, strings.NewReader(vals.Encode()))
+		c.baseURL+searchPath, strings.NewReader(encoded))
 	if err != nil {
 		return nil, 0, err
 	}
@@ -143,9 +145,33 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, in
 		return nil, 0, fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("read body: %w", err)
+	}
 	var parsed asyncPropertySearchResponse
-	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		preview := body
+		if len(preview) > maxErrBody {
+			preview = preview[:maxErrBody]
+		}
+		slog.Error("realtor search decode failed",
+			"page", page,
+			"content_encoding", resp.Header.Get("Content-Encoding"),
+			"content_type", resp.Header.Get("Content-Type"),
+			"body_preview", string(preview))
 		return nil, 0, fmt.Errorf("decode response: %w", err)
+	}
+	if len(parsed.Results) == 0 {
+		preview := body
+		if len(preview) > maxErrBody {
+			preview = preview[:maxErrBody]
+		}
+		slog.Warn("realtor search returned no results",
+			"page", page,
+			"error_code", parsed.ErrorCode,
+			"paging", parsed.Paging,
+			"body_preview", string(preview))
 	}
 
 	listings := make([]listing.Listing, 0, len(parsed.Results))
