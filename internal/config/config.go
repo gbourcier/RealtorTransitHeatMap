@@ -7,19 +7,31 @@ import (
 )
 
 type Config struct {
-	DatabaseURL    string
-	HTTPAddr       string
-	RealtorBaseURL string
-	MockRealtorAPI bool
-	PolygonWKT     string
-	PriceMin       string
-	PriceMax       string
-	BedRange       string
-	BathRange      string
-	LatitudeMax    string
-	LatitudeMin    string
-	LongitudeMax   string
-	LongitudeMin   string
+	HTTP    HTTPConfig
+	DB      DBConfig
+	Realtor RealtorConfig
+}
+
+type HTTPConfig struct {
+	Addr string
+}
+
+type DBConfig struct {
+	URL string
+}
+
+type RealtorConfig struct {
+	BaseURL      string
+	Mock         bool
+	PolygonWKT   string
+	PriceMin     string
+	PriceMax     string
+	BedRange     string
+	BathRange    string
+	LatitudeMax  string
+	LatitudeMin  string
+	LongitudeMax string
+	LongitudeMin string
 }
 
 func Load() (*Config, error) {
@@ -31,8 +43,8 @@ func Load() (*Config, error) {
 	if password == "" {
 		return nil, errors.New("POSTGRES_PASSWORD is required")
 	}
-	db := os.Getenv("POSTGRES_DB")
-	if db == "" {
+	dbName := os.Getenv("POSTGRES_DB")
+	if dbName == "" {
 		return nil, errors.New("POSTGRES_DB is required")
 	}
 	host := os.Getenv("POSTGRES_HOST")
@@ -64,18 +76,24 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		DatabaseURL:    fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", user, password, host, port, db, sslMode),
-		HTTPAddr:       addr,
-		RealtorBaseURL: realtorBaseURL,
-		MockRealtorAPI: os.Getenv("MOCK_REALTOR_API") == "true",
-		PolygonWKT:     polygonWKT,
-		PriceMin:       os.Getenv("PRICE_MIN"),
-		PriceMax:       os.Getenv("PRICE_MAX"),
-		BedRange:       os.Getenv("BED_RANGE"),
-		BathRange:      os.Getenv("BATH_RANGE"),
-		LatitudeMax:    os.Getenv("LAT_MAX"),
-		LatitudeMin:    os.Getenv("LAT_MIN"),
-		LongitudeMax:   os.Getenv("LON_MAX"),
-		LongitudeMin:   os.Getenv("LON_MIN"),
+		HTTP: HTTPConfig{
+			Addr: addr,
+		},
+		DB: DBConfig{
+			URL: fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", user, password, host, port, dbName, sslMode),
+		},
+		Realtor: RealtorConfig{
+			BaseURL:      realtorBaseURL,
+			Mock:         os.Getenv("MOCK_REALTOR_API") == "true",
+			PolygonWKT:   polygonWKT,
+			PriceMin:     os.Getenv("PRICE_MIN"),
+			PriceMax:     os.Getenv("PRICE_MAX"),
+			BedRange:     os.Getenv("BED_RANGE"),
+			BathRange:    os.Getenv("BATH_RANGE"),
+			LatitudeMax:  os.Getenv("LAT_MAX"),
+			LatitudeMin:  os.Getenv("LAT_MIN"),
+			LongitudeMax: os.Getenv("LON_MAX"),
+			LongitudeMin: os.Getenv("LON_MIN"),
+		},
 	}, nil
 }

@@ -40,13 +40,11 @@ const (
 
 type Client struct {
 	http      *http.Client
-	baseURL   string
-	cfg       *config.Config
+	cfg       config.RealtorConfig
 	lastPrime time.Time
-	mock      bool
 }
 
-func NewClient(cfg *config.Config) *Client {
+func NewClient(cfg config.RealtorConfig) *Client {
 	jar, _ := cookiejar.New(nil)
 	return &Client{
 		http: &http.Client{
@@ -54,45 +52,28 @@ func NewClient(cfg *config.Config) *Client {
 			Transport: browserTransport(),
 			Timeout:   defaultTimeout,
 		},
-		baseURL: cfg.RealtorBaseURL,
-		cfg:     cfg,
-		mock:    cfg.MockRealtorAPI,
+		cfg: cfg,
 	}
 }
 
-func (c *Client) fetchMock() ([]listing.Listing, error) {
+func (c *Client) fetchMock() ([]listing.Observation, error) {
 	slog.Info("fetching prices from mock response")
 	var parsed asyncPropertySearchResponse
 	if err := json.Unmarshal(mockResponseJSON, &parsed); err != nil {
 		return nil, fmt.Errorf("decode mock response: %w", err)
 	}
-	listings := make([]listing.Listing, 0, len(parsed.Results))
-	for _, r := range parsed.Results {
-		lat, _ := strconv.ParseFloat(r.Property.Address.Latitude, 64)
-		lon, _ := strconv.ParseFloat(r.Property.Address.Longitude, 64)
-		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
-		listings = append(listings, listing.Listing{
-			Board:     r.Individual[0].Organization.OrganizationId,
-			MLS:       r.MlsNumber,
-			Latitude:  lat,
-			Longitude: lon,
-			Address:   r.Property.Address.AddressText,
-			Status:    r.StatusId,
-			Price:     price,
-		})
-	}
-	return listings, nil
+	return decodeObservations(parsed.Results), nil
 }
 
-func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
-	if c.mock {
+func (c *Client) FetchPrices(ctx context.Context) ([]listing.Observation, error) {
+	if c.cfg.Mock {
 		return c.fetchMock()
 	}
 	slog.Info("fetching prices from realtor.ca")
 	if err := c.ensurePrimed(ctx); err != nil {
 		return nil, fmt.Errorf("prime session: %w", err)
 	}
-	var all []listing.Listing
+	var all []listing.Observation
 	page := 1
 	for {
 		batch, totalPages, err := c.fetchPage(ctx, page)
@@ -159,12 +140,12 @@ func (c *Client) primeSession(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, int, error) {
+func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Observation, int, error) {
 	vals := searchValues(c.cfg, page)
 	encoded := vals.Encode()
 	slog.Debug("realtor search request", "page", page, "body", encoded)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.baseURL+searchPath, strings.NewReader(encoded))
+		c.cfg.BaseURL+searchPath, strings.NewReader(encoded))
 	if err != nil {
 		return nil, 0, err
 	}
@@ -221,21 +202,33 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, in
 			"body_preview", string(preview))
 	}
 
-	listings := make([]listing.Listing, 0, len(parsed.Results))
-	for _, r := range parsed.Results {
+	return decodeObservations(parsed.Results), parsed.Paging.TotalPages, nil
+}
+
+// decodeObservations converts realtor.ca wire-format results into domain
+// observations. Best-effort numeric parsing: malformed lat/lon/price strings
+// become zero rather than aborting the batch. Results without an Individual
+// entry are skipped because we have no Board (organization) id for them.
+func decodeObservations(results []listingResult) []listing.Observation {
+	out := make([]listing.Observation, 0, len(results))
+	for _, r := range results {
+		if len(r.Individual) == 0 {
+			continue
+		}
 		lat, _ := strconv.ParseFloat(r.Property.Address.Latitude, 64)
 		lon, _ := strconv.ParseFloat(r.Property.Address.Longitude, 64)
 		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
-		listings = append(listings, listing.Listing{
-			Board:     r.Individual[0].Organization.OrganizationId,
-			MLS:       r.MlsNumber,
-			Latitude:  lat,
-			Longitude: lon,
-			Address:   r.Property.Address.AddressText,
-			Status:    r.StatusId,
-			Price:     price,
+		out = append(out, listing.Observation{
+			Listing: listing.Listing{
+				Board:     r.Individual[0].Organization.OrganizationId,
+				MLS:       r.MlsNumber,
+				Latitude:  lat,
+				Longitude: lon,
+				Address:   r.Property.Address.AddressText,
+				Status:    r.StatusId,
+			},
+			Price: price,
 		})
 	}
-
-	return listings, parsed.Paging.TotalPages, nil
+	return out
 }
