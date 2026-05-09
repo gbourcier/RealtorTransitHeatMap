@@ -7,7 +7,7 @@ run:
 	$(GO) run ./cmd/api
 
 dev:
-	air
+	$(GO) build -gcflags='all=-N -l' -o ./tmp/api ./cmd/api && dlv exec ./tmp/api --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --continue --log --
 
 build:
 	$(GO) build -o $(BIN) ./cmd/api

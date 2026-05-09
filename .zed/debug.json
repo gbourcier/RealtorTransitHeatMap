@@ -1,19 +1,9 @@
 [
   {
-    "label": "Debug",
     "adapter": "Delve",
-    "request": "launch",
-    "mode": "debug",
-    "program": "$ZED_WORKTREE_ROOT/cmd/api",
-    "cwd": "$ZED_WORKTREE_ROOT"
-  },
-  {
-    "label": "Attach (air dlv)",
-    "adapter": "Delve",
+    "label": "attach: air dlv :2345",
     "request": "attach",
     "mode": "remote",
-    "host": "127.0.0.1",
-    "port": 2345,
-    "cwd": "$ZED_WORKTREE_ROOT"
-  }
+    "tcp_connection": { "host": "127.0.0.1", "port": 2345 },
+  },
 ]
