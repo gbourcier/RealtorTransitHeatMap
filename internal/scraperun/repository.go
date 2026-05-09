@@ -2,11 +2,15 @@ package scraperun
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// ErrNotFound is returned when a scrape run lookup finds no matching row.
+var ErrNotFound = errors.New("scraperun: not found")
 
 type Repository struct {
 	db *gorm.DB
@@ -62,4 +66,17 @@ func (r *Repository) FinishError(ctx context.Context, id uuid.UUID, kind, messag
 			"error_message": message,
 		}).Error
 	return completedAt, err
+}
+
+// Get returns the scrape run with the given id, or ErrNotFound if no row matches.
+func (r *Repository) Get(ctx context.Context, id uuid.UUID) (*ScrapeRun, error) {
+	var run ScrapeRun
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&run).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &run, nil
 }

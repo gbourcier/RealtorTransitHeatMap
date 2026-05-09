@@ -7,17 +7,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/api"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/httpapi"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker/realtor"
 	"github.com/joho/godotenv"
 )
 
@@ -39,7 +38,7 @@ func run() error {
 		return err
 	}
 
-	gormDB, err := db.Open(cfg.DatabaseURL)
+	gormDB, err := db.Open(cfg.DB.URL)
 	if err != nil {
 		return err
 	}
@@ -49,23 +48,18 @@ func run() error {
 	}
 	defer sqlDB.Close()
 
-	realtorClient := realtor.NewClient(cfg)
-	repo := listing.NewRepository(gormDB)
+	realtorClient := realtor.NewClient(cfg.Realtor)
+	listings := listing.NewRepository(gormDB)
 	runs := scraperun.NewRepository(gormDB)
 
-	w := worker.New(realtorClient, repo, runs)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		w.Run(ctx)
-	}()
+	w := worker.New(realtorClient, listings, runs)
+	w.Bind(ctx)
 
-	srv := httpapi.NewServer(cfg.HTTPAddr, w)
+	srv := api.NewServer(cfg.HTTP.Addr, w)
 
 	serverErr := make(chan error, 1)
 	go func() {
-		slog.Info("http server listening", "addr", cfg.HTTPAddr)
+		slog.Info("http server listening", "addr", cfg.HTTP.Addr)
 		serverErr <- srv.ListenAndServe()
 	}()
 
@@ -83,6 +77,6 @@ func run() error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Warn("server shutdown error", "err", err)
 	}
-	wg.Wait()
+	w.Wait()
 	return nil
 }

@@ -1,4 +1,4 @@
-package httpapi
+package api
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func NewServer(addr string, svc ExecuteScrapeService) *http.Server {
+func NewServer(addr string, scrapes ScrapeService) *http.Server {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -21,10 +21,11 @@ func NewServer(addr string, svc ExecuteScrapeService) *http.Server {
 		AllowedHeaders: []string{"Content-Type"},
 	}))
 
-	h := &handlers{svc: svc}
+	h := &handlers{scrapes: scrapes}
 	r.Route("/api", func(r chi.Router) {
-		r.Route("/execute", func(r chi.Router) {
-			r.Get("/scrape", h.executeScrape)
+		r.Route("/scrapes", func(r chi.Router) {
+			r.Post("/", h.startScrape)
+			r.Get("/{id}", h.getScrape)
 		})
 	})
 

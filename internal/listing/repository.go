@@ -16,23 +16,25 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-// UpsertListings persists the given listings (and a price history row each)
-// and returns the count of newly inserted listings — i.e. listings whose
-// (board, mls) key did not already exist. Updates to existing rows are not
-// counted toward inserted.
-func (r *Repository) UpsertListings(ctx context.Context, listings []Listing) (inserted int, err error) {
-	if len(listings) == 0 {
+// UpsertListings persists the given observations (one listing row + one price
+// history row each) and returns the count of newly inserted listings — i.e.
+// listings whose (board, mls) key did not already exist. Updates to existing
+// rows are not counted toward inserted.
+func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (inserted int, err error) {
+	if len(obs) == 0 {
 		return 0, nil
 	}
 
 	observedAt := time.Now()
-	prices := make([]PriceHistory, len(listings))
-	for i, l := range listings {
+	listings := make([]Listing, len(obs))
+	prices := make([]PriceHistory, len(obs))
+	for i, o := range obs {
+		listings[i] = o.Listing
 		prices[i] = PriceHistory{
-			Board:      l.Board,
-			MLS:        l.MLS,
+			Board:      o.Listing.Board,
+			MLS:        o.Listing.MLS,
 			ObservedAt: observedAt,
-			Price:      l.Price,
+			Price:      o.Price,
 		}
 	}
 

@@ -10,7 +10,6 @@ type Listing struct {
 	Address        string
 	Status         string
 	PriceHistories []PriceHistory `gorm:"foreignKey:Board,MLS;references:Board,MLS"`
-	Price          float64        `gorm:"-"` // transport field: carries fetched price for repository insertion
 }
 
 func (Listing) TableName() string { return "listings" }
@@ -23,3 +22,11 @@ type PriceHistory struct {
 }
 
 func (PriceHistory) TableName() string { return "listing_price_history" }
+
+// Observation pairs a listing with the price seen during a single scrape.
+// Repository inputs use this so the persisted Listing entity stays a faithful
+// row mirror and doesn't need a non-column transport field.
+type Observation struct {
+	Listing Listing
+	Price   float64
+}

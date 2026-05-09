@@ -7,7 +7,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 )
 
-func searchValues(cfg *config.Config, page int) url.Values {
+func searchValues(cfg config.RealtorConfig, page int) url.Values {
 	v := url.Values{}
 	v.Set("ZoomLevel", "11")
 	v.Set("Sort", "6-D")

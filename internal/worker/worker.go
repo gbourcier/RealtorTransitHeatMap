@@ -4,35 +4,43 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker/realtor"
 	"github.com/google/uuid"
 )
 
-const queueSize = 32
+// ErrBusy is returned by StartScrape when a scrape is already in flight.
+// Only one scrape may run at a time; callers should retry later.
+var ErrBusy = errors.New("worker: scrape already in progress")
 
 type RealtorClient interface {
-	FetchPrices(ctx context.Context) ([]listing.Listing, error)
+	FetchPrices(ctx context.Context) ([]listing.Observation, error)
 }
 
 type ListingRepository interface {
-	UpsertListings(ctx context.Context, l []listing.Listing) (int, error)
+	UpsertListings(ctx context.Context, obs []listing.Observation) (int, error)
 }
 
 type ScrapeRunRepository interface {
 	Start(ctx context.Context, source string) (*scraperun.ScrapeRun, error)
 	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int) (time.Time, error)
 	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int) (time.Time, error)
+	Get(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
 }
 
 type Worker struct {
 	realtor RealtorClient
 	repo    ListingRepository
 	runs    ScrapeRunRepository
-	jobs    chan job
+
+	rootCtx context.Context
+	wg      sync.WaitGroup
+	busy    atomic.Bool
 }
 
 func New(rc RealtorClient, repo ListingRepository, runs ScrapeRunRepository) *Worker {
@@ -40,106 +48,71 @@ func New(rc RealtorClient, repo ListingRepository, runs ScrapeRunRepository) *Wo
 		realtor: rc,
 		repo:    repo,
 		runs:    runs,
-		jobs:    make(chan job, queueSize),
 	}
 }
 
-func (w *Worker) Run(ctx context.Context) {
-	slog.Info("worker started")
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("worker shutting down")
-			return
-		case j := <-w.jobs:
-			j.reply <- w.executeScrape(ctx)
-		}
-	}
+// Bind associates the worker with a process-lifetime context. Background
+// scrapes inherit this context (NOT the HTTP request context that triggered
+// them) so that a scrape — which can run for minutes across many pages — is
+// not aborted when the HTTP client disconnects after receiving its 202. The
+// scrape only stops when the process is shutting down.
+func (w *Worker) Bind(rootCtx context.Context) {
+	w.rootCtx = rootCtx
 }
 
-// ExecuteScrape submits a scrape job to the worker and waits for the result.
-// It is the public entry point invoked from the HTTP handler.
-func (w *Worker) ExecuteScrape(ctx context.Context) (ScrapeResult, error) {
-	reply := make(chan ScrapeResult, 1)
-	select {
-	case w.jobs <- job{reply: reply}:
-	case <-ctx.Done():
-		return ScrapeResult{}, ctx.Err()
+// StartScrape kicks off a scrape in the background and returns its run id.
+// Returns ErrBusy if another scrape is already running.
+func (w *Worker) StartScrape() (uuid.UUID, error) {
+	if !w.busy.CompareAndSwap(false, true) {
+		return uuid.Nil, ErrBusy
 	}
-
-	select {
-	case r := <-reply:
-		return r, nil
-	case <-ctx.Done():
-		return ScrapeResult{}, ctx.Err()
-	}
-}
-
-func (w *Worker) executeScrape(ctx context.Context) ScrapeResult {
-	run, err := w.runs.Start(ctx, scraperun.SourceRealtor)
+	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor)
 	if err != nil {
-		slog.Error("scrape_runs start failed", "err", err)
-		// We can't persist a row, but still return a meaningful result.
-		now := time.Now()
-		return ScrapeResult{
-			Status:      scraperun.StatusError,
-			StartedAt:   now,
-			CompletedAt: now,
-			ErrorKind:   scraperun.ErrorKindUnknown,
-			Error:       err.Error(),
-		}
+		w.busy.Store(false)
+		return uuid.Nil, err
 	}
+	w.wg.Add(1)
+	go func() {
+		defer w.wg.Done()
+		defer w.busy.Store(false)
+		w.executeScrape(w.rootCtx, run)
+	}()
+	return run.ID, nil
+}
 
-	listings, fetchErr := w.realtor.FetchPrices(ctx)
-	totalCount := len(listings)
+// Wait blocks until any in-flight scrape finishes. Call after server shutdown.
+func (w *Worker) Wait() { w.wg.Wait() }
+
+// GetRun returns the persisted scrape run with the given id.
+func (w *Worker) GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error) {
+	return w.runs.Get(ctx, id)
+}
+
+func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
+	observations, fetchErr := w.realtor.FetchPrices(ctx)
+	totalCount := len(observations)
 	newCount := 0
 
 	if fetchErr != nil {
 		kind := classifyError(fetchErr)
-		completedAt, updateErr := w.runs.FinishError(ctx, run.ID, kind, fetchErr.Error(), totalCount, newCount)
-		if updateErr != nil {
+		if _, updateErr := w.runs.FinishError(ctx, run.ID, kind, fetchErr.Error(), totalCount, newCount); updateErr != nil {
 			slog.Error("scrape_runs finish error update failed", "err", updateErr, "run_id", run.ID)
 		}
-		return ScrapeResult{
-			Status:      scraperun.StatusError,
-			StartedAt:   run.StartedAt,
-			CompletedAt: completedAt,
-			TotalCount:  totalCount,
-			NewCount:    newCount,
-			ErrorKind:   kind,
-			Error:       fetchErr.Error(),
-		}
+		return
 	}
 
-	inserted, upsertErr := w.repo.UpsertListings(ctx, listings)
+	inserted, upsertErr := w.repo.UpsertListings(ctx, observations)
 	if upsertErr != nil {
 		slog.Error("upsert listings failed", "err", upsertErr)
-		completedAt, updateErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, upsertErr.Error(), totalCount, newCount)
-		if updateErr != nil {
+		if _, updateErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, upsertErr.Error(), totalCount, newCount); updateErr != nil {
 			slog.Error("scrape_runs finish error update failed", "err", updateErr, "run_id", run.ID)
 		}
-		return ScrapeResult{
-			Status:      scraperun.StatusError,
-			StartedAt:   run.StartedAt,
-			CompletedAt: completedAt,
-			TotalCount:  totalCount,
-			NewCount:    newCount,
-			ErrorKind:   scraperun.ErrorKindUnknown,
-			Error:       upsertErr.Error(),
-		}
+		return
 	}
 	newCount = inserted
 
-	completedAt, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount)
-	if updateErr != nil {
+	if _, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount); updateErr != nil {
 		slog.Error("scrape_runs finish success update failed", "err", updateErr, "run_id", run.ID)
-	}
-	return ScrapeResult{
-		Status:      scraperun.StatusSuccess,
-		StartedAt:   run.StartedAt,
-		CompletedAt: completedAt,
-		TotalCount:  totalCount,
-		NewCount:    newCount,
 	}
 }
 
