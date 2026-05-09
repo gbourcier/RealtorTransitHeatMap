@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
@@ -18,8 +19,10 @@ import (
 const (
 	defaultTimeout = 30 * time.Second
 	searchPath     = "/Listing.svc/AsyncPropertySearch_Post"
+	primeURL       = "https://www.realtor.ca/map"
 	pageDelay      = 2 * time.Second
 	boardName      = "realtor.ca"
+	maxErrBody     = 2048
 )
 
 type Client struct {
@@ -32,8 +35,9 @@ func NewClient(cfg *config.Config) *Client {
 	jar, _ := cookiejar.New(nil)
 	return &Client{
 		http: &http.Client{
-			Jar:     jar,
-			Timeout: defaultTimeout,
+			Jar:       jar,
+			Transport: browserTransport(),
+			Timeout:   defaultTimeout,
 		},
 		baseURL: cfg.RealtorBaseURL,
 		cfg:     cfg,
@@ -42,6 +46,9 @@ func NewClient(cfg *config.Config) *Client {
 
 func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 	slog.Info("fetching prices from realtor.ca")
+	if err := c.primeSession(ctx); err != nil {
+		return nil, fmt.Errorf("prime session: %w", err)
+	}
 	var all []listing.Listing
 	page := 1
 	for {
@@ -64,6 +71,33 @@ func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 	return all, nil
 }
 
+// primeSession does a GET on the public site so the cookie jar picks up
+// the anti-bot cookies (Imperva visid_incap_*, reese84, etc.) that the
+// search endpoint requires. Without this, the first POST hits a 403.
+func (c *Client) primeSession(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, primeURL, nil)
+	if err != nil {
+		return err
+	}
+	for k, vv := range c.defaultHeaders() {
+		for _, v := range vv {
+			req.Header.Set(k, v)
+		}
+	}
+	req.Header.Del("Origin")
+	req.Header.Del("Content-Type")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body)
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("prime status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
 func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, int, error) {
 	vals := searchValues(c.cfg, page)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
@@ -84,6 +118,11 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, in
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBody))
+		slog.Error("realtor search non-200",
+			"status", resp.StatusCode,
+			"page", page,
+			"body", string(body))
 		return nil, 0, fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
