@@ -15,6 +15,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/httpapi"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker/realtor"
 	"github.com/joho/godotenv"
@@ -50,8 +51,9 @@ func run() error {
 
 	realtorClient := realtor.NewClient(cfg)
 	repo := listing.NewRepository(gormDB)
+	runs := scraperun.NewRepository(gormDB)
 
-	w := worker.New(realtorClient, repo)
+	w := worker.New(realtorClient, repo, runs)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {

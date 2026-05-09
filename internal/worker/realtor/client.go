@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -15,6 +16,14 @@ import (
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+)
+
+// ErrForbidden is returned when the realtor.ca search endpoint responds 403.
+// ErrNullCount is returned when the realtor.ca response contains no usable
+// total record count (e.g., results are present but Paging is empty/zeroed).
+var (
+	ErrForbidden = errors.New("realtor: forbidden")
+	ErrNullCount = errors.New("realtor: null count")
 )
 
 //go:embed mock/response.json
@@ -92,6 +101,9 @@ func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 		}
 		all = append(all, batch...)
 		slog.Info("fetched page", "page", page, "total_pages", totalPages, "count", len(batch))
+		if page == 1 && totalPages == 0 && len(batch) == 0 {
+			return nil, ErrNullCount
+		}
 		if page >= totalPages {
 			break
 		}
@@ -174,6 +186,9 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, in
 			"status", resp.StatusCode,
 			"page", page,
 			"body", string(body))
+		if resp.StatusCode == http.StatusForbidden {
+			return nil, 0, ErrForbidden
+		}
 		return nil, 0, fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 

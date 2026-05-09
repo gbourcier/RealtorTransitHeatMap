@@ -23,4 +23,20 @@
     "allow_concurrent_runs": false,
     "reveal": "always",
   },
+  {
+    "label": "Migration Run",
+    "command": "./scripts/migrate-up.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+  },
+  {
+    "label": "Migration Revert",
+    "command": "./scripts/migrate-down.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+  },
 ]

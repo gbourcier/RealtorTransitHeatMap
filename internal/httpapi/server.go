@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func NewServer(addr string, svc FetchPricesService) *http.Server {
+func NewServer(addr string, svc ExecuteScrapeService) *http.Server {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -22,7 +22,11 @@ func NewServer(addr string, svc FetchPricesService) *http.Server {
 	}))
 
 	h := &handlers{svc: svc}
-	r.Get("/fetchPrices", h.fetchPrices)
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/execute", func(r chi.Router) {
+			r.Get("/scrape", h.executeScrape)
+		})
+	})
 
 	return &http.Server{
 		Addr:              addr,

@@ -1,14 +1,10 @@
 package httpapi
 
-type FetchPricesResponse struct {
-	Listings []ListingDTO `json:"listings"`
-}
-
-type ListingDTO struct {
-	MLS       int     `json:"mls"`
-	Price     float64 `json:"price"`
-	Address   string  `json:"address"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	BoardId   int     `json:"boardId"`
+type ExecuteScrapeResponse struct {
+	TotalCount  int    `json:"totalCount"`
+	NewCount    int    `json:"newCount"`
+	StartedAt   int64  `json:"startedAt"`
+	CompletedAt int64  `json:"completedAt"`
+	ErrorKind   string `json:"errorKind,omitempty"`
+	Error       string `json:"error,omitempty"`
 }
