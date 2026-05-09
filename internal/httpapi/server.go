@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func NewServer(addr string, svc FetchPricesService) *http.Server {
@@ -24,7 +23,6 @@ func NewServer(addr string, svc FetchPricesService) *http.Server {
 
 	h := &handlers{svc: svc}
 	r.Get("/fetchPrices", h.fetchPrices)
-	r.Get("/api/docs/*", httpSwagger.WrapHandler)
 
 	return &http.Server{
 		Addr:              addr,

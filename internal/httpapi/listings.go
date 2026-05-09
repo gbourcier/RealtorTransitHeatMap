@@ -18,15 +18,6 @@ type handlers struct {
 	svc FetchPricesService
 }
 
-// fetchPrices godoc
-// @Summary      Fetch listings
-// @Description  Fetch real estate listings using the operator-configured search parameters
-// @Tags         listings
-// @Produce      json
-// @Success      200 {object} FetchPricesResponse
-// @Failure      408 {string} string "request cancelled"
-// @Failure      500 {string} string "internal server error"
-// @Router       /fetchPrices [get]
 func (h *handlers) fetchPrices(w http.ResponseWriter, r *http.Request) {
 	listings, err := h.svc.FetchPrices(r.Context())
 	if err != nil {

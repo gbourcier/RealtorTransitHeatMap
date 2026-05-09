@@ -1,9 +1,3 @@
-// @title           Realtor Transit Heat Map API
-// @version         1.0
-// @description     API for fetching real estate listings using the operator-configured search parameters.
-// @host            localhost:3000
-// @BasePath        /
-
 package main
 
 import (
@@ -24,8 +18,6 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker/realtor"
 	"github.com/joho/godotenv"
-
-	_ "github.com/gbourcier/RealtorTransitHeatMap/docs"
 )
 
 func main() {
