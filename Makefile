@@ -1,4 +1,4 @@
-.PHONY: run dev build test fmt vet tidy db-up db-reset migrate seed
+.PHONY: run dev build build-backend test fmt vet tidy db-up db-reset migrate seed swagger
 
 GO ?= go
 BIN := bin/api
@@ -8,6 +8,12 @@ run:
 
 dev:
 	$(GO) build -gcflags='all=-N -l' -o ./tmp/api ./cmd/api && dlv exec ./tmp/api --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --continue --log --
+
+swagger:
+	swag init -g cmd/api/main.go
+
+build-backend: swagger
+	$(GO) build -o $(BIN) ./cmd/api
 
 build:
 	$(GO) build -o $(BIN) ./cmd/api

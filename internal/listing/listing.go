@@ -23,9 +23,3 @@ type PriceHistory struct {
 }
 
 func (PriceHistory) TableName() string { return "listing_price_history" }
-
-type FetchCriteria struct {
-	City     string
-	MaxPrice *uint64
-	MinPrice *uint64
-}

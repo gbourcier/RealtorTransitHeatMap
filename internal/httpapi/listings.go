@@ -11,7 +11,7 @@ import (
 )
 
 type FetchPricesService interface {
-	FetchPrices(ctx context.Context, c listing.FetchCriteria) ([]listing.Listing, error)
+	FetchPrices(ctx context.Context) ([]listing.Listing, error)
 }
 
 type handlers struct {
@@ -20,28 +20,15 @@ type handlers struct {
 
 // fetchPrices godoc
 // @Summary      Fetch listings
-// @Description  Fetch real estate listings filtered by optional price range
+// @Description  Fetch real estate listings using the operator-configured search parameters
 // @Tags         listings
-// @Accept       json
 // @Produce      json
-// @Param        request body FetchPricesRequest true "Search criteria"
 // @Success      200 {object} FetchPricesResponse
-// @Failure      400 {string} string "invalid json"
 // @Failure      408 {string} string "request cancelled"
 // @Failure      500 {string} string "internal server error"
-// @Router       /fetchPrices [post]
+// @Router       /fetchPrices [get]
 func (h *handlers) fetchPrices(w http.ResponseWriter, r *http.Request) {
-	var req FetchPricesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	listings, err := h.svc.FetchPrices(r.Context(), listing.FetchCriteria{
-		City:     req.City,
-		MinPrice: req.MinPrice,
-		MaxPrice: req.MaxPrice,
-	})
+	listings, err := h.svc.FetchPrices(r.Context())
 	if err != nil {
 		slog.Error("fetchPrices failed", "err", err)
 		if errors.Is(err, context.Canceled) {

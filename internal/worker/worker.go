@@ -10,7 +10,7 @@ import (
 const queueSize = 32
 
 type RealtorClient interface {
-	FetchPrices(ctx context.Context, c listing.FetchCriteria) ([]listing.Listing, error)
+	FetchPrices(ctx context.Context) ([]listing.Listing, error)
 }
 
 type Repository interface {
@@ -39,7 +39,7 @@ func (w *Worker) Run(ctx context.Context) {
 			slog.Info("worker shutting down")
 			return
 		case j := <-w.jobs:
-			listings, err := w.realtor.FetchPrices(ctx, j.criteria)
+			listings, err := w.realtor.FetchPrices(ctx)
 			if err == nil {
 				if upsertErr := w.repo.UpsertListings(ctx, listings); upsertErr != nil {
 					slog.Error("upsert listings failed", "err", upsertErr)
@@ -50,10 +50,10 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
-func (w *Worker) FetchPrices(ctx context.Context, c listing.FetchCriteria) ([]listing.Listing, error) {
+func (w *Worker) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 	reply := make(chan result, 1)
 	select {
-	case w.jobs <- job{criteria: c, reply: reply}:
+	case w.jobs <- job{reply: reply}:
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}

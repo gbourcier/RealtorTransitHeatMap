@@ -1,7 +1,7 @@
 // @title           Realtor Transit Heat Map API
 // @version         1.0
-// @description     API for fetching real estate listings filtered by city and price range.
-// @host            localhost:8080
+// @description     API for fetching real estate listings using the operator-configured search parameters.
+// @host            localhost:3000
 // @BasePath        /
 
 package main

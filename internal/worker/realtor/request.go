@@ -5,10 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 )
 
-func searchValues(cfg *config.Config, c listing.FetchCriteria, page int) url.Values {
+func searchValues(cfg *config.Config, page int) url.Values {
 	v := url.Values{}
 	v.Set("ZoomLevel", "11")
 	v.Set("Sort", "6-D")
@@ -30,17 +29,8 @@ func searchValues(cfg *config.Config, c listing.FetchCriteria, page int) url.Val
 	setIfNonEmpty(v, "LongitudeMax", cfg.LongitudeMax)
 	setIfNonEmpty(v, "LongitudeMin", cfg.LongitudeMin)
 
-	priceMin := cfg.PriceMin
-	if c.MinPrice != nil {
-		priceMin = strconv.FormatUint(*c.MinPrice, 10)
-	}
-	setIfNonEmpty(v, "PriceMin", priceMin)
-
-	priceMax := cfg.PriceMax
-	if c.MaxPrice != nil {
-		priceMax = strconv.FormatUint(*c.MaxPrice, 10)
-	}
-	setIfNonEmpty(v, "PriceMax", priceMax)
+	setIfNonEmpty(v, "PriceMin", cfg.PriceMin)
+	setIfNonEmpty(v, "PriceMax", cfg.PriceMax)
 
 	setIfNonEmpty(v, "BedRange", cfg.BedRange)
 	setIfNonEmpty(v, "BathRange", cfg.BathRange)

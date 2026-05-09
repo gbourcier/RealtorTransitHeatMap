@@ -16,11 +16,8 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/fetchPrices": {
-            "post": {
-                "description": "Fetch real estate listings filtered by city and optional price range",
-                "consumes": [
-                    "application/json"
-                ],
+            "get": {
+                "description": "Fetch real estate listings using the operator-configured search parameters",
                 "produces": [
                     "application/json"
                 ],
@@ -28,28 +25,11 @@ const docTemplate = `{
                     "listings"
                 ],
                 "summary": "Fetch listings",
-                "parameters": [
-                    {
-                        "description": "Search criteria",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpapi.FetchPricesRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/httpapi.FetchPricesResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid json",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "408": {
@@ -69,20 +49,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpapi.FetchPricesRequest": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "max_price": {
-                    "type": "integer"
-                },
-                "min_price": {
-                    "type": "integer"
-                }
-            }
-        },
         "httpapi.FetchPricesResponse": {
             "type": "object",
             "properties": {
@@ -100,11 +66,17 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "id": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "mls": {
                     "type": "string"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         }
@@ -114,11 +86,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:3000",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Realtor Transit Heat Map API",
-	Description:      "API for fetching real estate listings filtered by city and price range.",
+	Description:      "API for fetching real estate listings using the operator-configured search parameters.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

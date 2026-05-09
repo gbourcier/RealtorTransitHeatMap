@@ -40,12 +40,12 @@ func NewClient(cfg *config.Config) *Client {
 	}
 }
 
-func (c *Client) FetchPrices(ctx context.Context, criteria listing.FetchCriteria) ([]listing.Listing, error) {
+func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 	slog.Info("fetching prices from realtor.ca")
 	var all []listing.Listing
 	page := 1
 	for {
-		batch, totalPages, err := c.fetchPage(ctx, criteria, page)
+		batch, totalPages, err := c.fetchPage(ctx, page)
 		if err != nil {
 			return nil, fmt.Errorf("page %d: %w", page, err)
 		}
@@ -64,8 +64,8 @@ func (c *Client) FetchPrices(ctx context.Context, criteria listing.FetchCriteria
 	return all, nil
 }
 
-func (c *Client) fetchPage(ctx context.Context, criteria listing.FetchCriteria, page int) ([]listing.Listing, int, error) {
-	vals := searchValues(c.cfg, criteria, page)
+func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, int, error) {
+	vals := searchValues(c.cfg, page)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.baseURL+searchPath, strings.NewReader(vals.Encode()))
 	if err != nil {

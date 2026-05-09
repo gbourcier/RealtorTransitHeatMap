@@ -1,20 +1,17 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API for fetching real estate listings filtered by city and price range.",
+        "description": "API for fetching real estate listings using the operator-configured search parameters.",
         "title": "Realtor Transit Heat Map API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:3000",
     "basePath": "/",
     "paths": {
         "/fetchPrices": {
-            "post": {
-                "description": "Fetch real estate listings filtered by city and optional price range",
-                "consumes": [
-                    "application/json"
-                ],
+            "get": {
+                "description": "Fetch real estate listings using the operator-configured search parameters",
                 "produces": [
                     "application/json"
                 ],
@@ -22,28 +19,11 @@
                     "listings"
                 ],
                 "summary": "Fetch listings",
-                "parameters": [
-                    {
-                        "description": "Search criteria",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpapi.FetchPricesRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/httpapi.FetchPricesResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid json",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "408": {
@@ -63,20 +43,6 @@
         }
     },
     "definitions": {
-        "httpapi.FetchPricesRequest": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "max_price": {
-                    "type": "integer"
-                },
-                "min_price": {
-                    "type": "integer"
-                }
-            }
-        },
         "httpapi.FetchPricesResponse": {
             "type": "object",
             "properties": {
@@ -94,11 +60,17 @@
                 "address": {
                     "type": "string"
                 },
-                "id": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "mls": {
                     "type": "string"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         }
