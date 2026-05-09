@@ -23,12 +23,14 @@ const (
 	pageDelay      = 2 * time.Second
 	boardName      = "realtor.ca"
 	maxErrBody     = 2048
+	primeTTL       = 30 * time.Minute
 )
 
 type Client struct {
-	http    *http.Client
-	baseURL string
-	cfg     *config.Config
+	http      *http.Client
+	baseURL   string
+	cfg       *config.Config
+	lastPrime time.Time
 }
 
 func NewClient(cfg *config.Config) *Client {
