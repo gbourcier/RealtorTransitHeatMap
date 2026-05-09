@@ -38,6 +38,7 @@ func (h *handlers) fetchPrices(w http.ResponseWriter, r *http.Request) {
 			Address:   l.Address,
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
+			BoardId:   l.Board,
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")

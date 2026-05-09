@@ -10,6 +10,7 @@ type Config struct {
 	DatabaseURL    string
 	HTTPAddr       string
 	RealtorBaseURL string
+	MockRealtorAPI bool
 	PolygonWKT     string
 	PriceMin       string
 	PriceMax       string
@@ -57,10 +58,16 @@ func Load() (*Config, error) {
 		realtorBaseURL = "https://api2.realtor.ca"
 	}
 
+	sslMode := ""
+	if os.Getenv("POSTGRES_ENABLE_SSL") == "false" {
+		sslMode = "?sslmode=disable"
+	}
+
 	return &Config{
-		DatabaseURL:    fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, db),
+		DatabaseURL:    fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", user, password, host, port, db, sslMode),
 		HTTPAddr:       addr,
 		RealtorBaseURL: realtorBaseURL,
+		MockRealtorAPI: os.Getenv("MOCK_REALTOR_API") == "true",
 		PolygonWKT:     polygonWKT,
 		PriceMin:       os.Getenv("PRICE_MIN"),
 		PriceMax:       os.Getenv("PRICE_MAX"),

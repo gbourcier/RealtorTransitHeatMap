@@ -2,6 +2,7 @@ package realtor
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,12 +17,14 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 )
 
+//go:embed mock/response.json
+var mockResponseJSON []byte
+
 const (
 	defaultTimeout = 30 * time.Second
 	searchPath     = "/Listing.svc/AsyncPropertySearch_Post"
 	primeURL       = "https://www.realtor.ca/map"
 	pageDelay      = 2 * time.Second
-	boardName      = "realtor.ca"
 	maxErrBody     = 2048
 	primeTTL       = 30 * time.Minute
 )
@@ -31,6 +34,7 @@ type Client struct {
 	baseURL   string
 	cfg       *config.Config
 	lastPrime time.Time
+	mock      bool
 }
 
 func NewClient(cfg *config.Config) *Client {
@@ -43,10 +47,38 @@ func NewClient(cfg *config.Config) *Client {
 		},
 		baseURL: cfg.RealtorBaseURL,
 		cfg:     cfg,
+		mock:    cfg.MockRealtorAPI,
 	}
 }
 
+func (c *Client) fetchMock() ([]listing.Listing, error) {
+	slog.Info("fetching prices from mock response")
+	var parsed asyncPropertySearchResponse
+	if err := json.Unmarshal(mockResponseJSON, &parsed); err != nil {
+		return nil, fmt.Errorf("decode mock response: %w", err)
+	}
+	listings := make([]listing.Listing, 0, len(parsed.Results))
+	for _, r := range parsed.Results {
+		lat, _ := strconv.ParseFloat(r.Property.Address.Latitude, 64)
+		lon, _ := strconv.ParseFloat(r.Property.Address.Longitude, 64)
+		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
+		listings = append(listings, listing.Listing{
+			Board:     r.Individual[0].Organization.OrganizationId,
+			MLS:       r.MlsNumber,
+			Latitude:  lat,
+			Longitude: lon,
+			Address:   r.Property.Address.AddressText,
+			Status:    r.StatusId,
+			Price:     price,
+		})
+	}
+	return listings, nil
+}
+
 func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
+	if c.mock {
+		return c.fetchMock()
+	}
 	slog.Info("fetching prices from realtor.ca")
 	if err := c.ensurePrimed(ctx); err != nil {
 		return nil, fmt.Errorf("prime session: %w", err)
@@ -180,7 +212,7 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Listing, in
 		lon, _ := strconv.ParseFloat(r.Property.Address.Longitude, 64)
 		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
 		listings = append(listings, listing.Listing{
-			Board:     boardName,
+			Board:     r.Individual[0].Organization.OrganizationId,
 			MLS:       r.MlsNumber,
 			Latitude:  lat,
 			Longitude: lon,

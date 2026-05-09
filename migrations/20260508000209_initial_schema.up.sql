@@ -1,6 +1,6 @@
 CREATE TABLE listings (
-    board                     TEXT             NOT NULL,
-    mls                       TEXT             NOT NULL,
+    board                     INTEGER             NOT NULL,
+    mls                       INTEGER             NOT NULL,
     latitude                  DOUBLE PRECISION NOT NULL,
     longitude                 DOUBLE PRECISION NOT NULL,
     address                   TEXT,
@@ -13,8 +13,8 @@ CREATE TABLE listings (
 );
 
 CREATE TABLE listing_price_history (
-    board       TEXT          NOT NULL,
-    mls         TEXT          NOT NULL,
+    board       INTEGER          NOT NULL,
+    mls         INTEGER          NOT NULL,
     observed_at TIMESTAMPTZ   NOT NULL,
     price       NUMERIC(12,2) NOT NULL,
     PRIMARY KEY (board, mls, observed_at),

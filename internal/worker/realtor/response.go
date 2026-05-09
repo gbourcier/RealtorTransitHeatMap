@@ -25,11 +25,12 @@ type paging struct {
 }
 
 type listingResult struct {
-	ID                 string   `json:"Id"`
-	MlsNumber          string   `json:"MlsNumber"`
-	StatusId           string   `json:"StatusId"`
-	Property           property `json:"Property"`
-	RelativeDetailsURL string   `json:"RelativeDetailsURL"`
+	ID                 string       `json:"Id"`
+	MlsNumber          int          `json:"MlsNumber,string"`
+	StatusId           string       `json:"StatusId"`
+	Property           property     `json:"Property"`
+	RelativeDetailsURL string       `json:"RelativeDetailsURL"`
+	Individual         []individual `json:"Individual"`
 }
 
 type property struct {
@@ -41,4 +42,12 @@ type address struct {
 	AddressText string `json:"AddressText"`
 	Latitude    string `json:"Latitude"`
 	Longitude   string `json:"Longitude"`
+}
+
+type individual struct {
+	Organization organization `json:"Organization"`
+}
+
+type organization struct {
+	OrganizationId int `json:"OrganizationId"`
 }

@@ -3,8 +3,8 @@ package listing
 import "time"
 
 type Listing struct {
-	Board          string `gorm:"column:board;primaryKey"`
-	MLS            string `gorm:"column:mls;primaryKey"`
+	Board          int `gorm:"column:board;primaryKey"`
+	MLS            int `gorm:"column:mls;primaryKey"`
 	Latitude       float64
 	Longitude      float64
 	Address        string
@@ -16,8 +16,8 @@ type Listing struct {
 func (Listing) TableName() string { return "listings" }
 
 type PriceHistory struct {
-	Board      string    `gorm:"column:board;primaryKey"`
-	MLS        string    `gorm:"column:mls;primaryKey"`
+	Board      int       `gorm:"column:board;primaryKey"`
+	MLS        int       `gorm:"column:mls;primaryKey"`
 	ObservedAt time.Time `gorm:"column:observed_at;primaryKey"`
 	Price      float64   `gorm:"column:price;type:numeric(12,2)"`
 }
