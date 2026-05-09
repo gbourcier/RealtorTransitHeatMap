@@ -46,12 +46,20 @@ PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -p "${POSTGRES_PORT:-5432}" -U
     -c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\";" \
     -c "CREATE DATABASE \"$POSTGRES_DB\";"
 
-DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}"
+SSL_PARAM=""
+if [[ "${POSTGRES_ENABLE_SSL:-true}" == "false" ]]; then
+    SSL_PARAM="?sslmode=disable"
+fi
+DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}${SSL_PARAM}"
 
 echo "==> running migrations..."
 migrate -path migrations -database "$DB_URL" up
 
-echo "==> seeding..."
-psql "$DB_URL" -f seeds/seed.sql
+if [[ "${POSTGRES_SEED_DB:-false}" == "true" ]]; then
+    echo "==> seeding..."
+    psql "$DB_URL" -f seeds/seed.sql
+else
+    echo "==> skipping seed (POSTGRES_SEED_DB is not true)"
+fi
 
 echo "==> done."

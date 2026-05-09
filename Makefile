@@ -1,10 +1,13 @@
-.PHONY: run build test fmt vet tidy db-up db-reset migrate seed
+.PHONY: run dev build test fmt vet tidy db-up db-reset migrate seed
 
 GO ?= go
 BIN := bin/api
 
 run:
 	$(GO) run ./cmd/api
+
+dev:
+	$(GO) build -gcflags='all=-N -l' -o ./tmp/api ./cmd/api && dlv exec ./tmp/api --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --continue --log --
 
 build:
 	$(GO) build -o $(BIN) ./cmd/api

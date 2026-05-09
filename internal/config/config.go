@@ -7,8 +7,19 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	HTTPAddr    string
+	DatabaseURL    string
+	HTTPAddr       string
+	RealtorBaseURL string
+	MockRealtorAPI bool
+	PolygonWKT     string
+	PriceMin       string
+	PriceMax       string
+	BedRange       string
+	BathRange      string
+	LatitudeMax    string
+	LatitudeMin    string
+	LongitudeMax   string
+	LongitudeMin   string
 }
 
 func Load() (*Config, error) {
@@ -37,8 +48,34 @@ func Load() (*Config, error) {
 		addr = "127.0.0.1:3000"
 	}
 
+	polygonWKT := os.Getenv("POLYGON_WKT")
+	if polygonWKT == "" {
+		return nil, errors.New("POLYGON_WKT is required")
+	}
+
+	realtorBaseURL := os.Getenv("REALTOR_BASE_URL")
+	if realtorBaseURL == "" {
+		realtorBaseURL = "https://api2.realtor.ca"
+	}
+
+	sslMode := ""
+	if os.Getenv("POSTGRES_ENABLE_SSL") == "false" {
+		sslMode = "?sslmode=disable"
+	}
+
 	return &Config{
-		DatabaseURL: fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, db),
-		HTTPAddr:    addr,
+		DatabaseURL:    fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", user, password, host, port, db, sslMode),
+		HTTPAddr:       addr,
+		RealtorBaseURL: realtorBaseURL,
+		MockRealtorAPI: os.Getenv("MOCK_REALTOR_API") == "true",
+		PolygonWKT:     polygonWKT,
+		PriceMin:       os.Getenv("PRICE_MIN"),
+		PriceMax:       os.Getenv("PRICE_MAX"),
+		BedRange:       os.Getenv("BED_RANGE"),
+		BathRange:      os.Getenv("BATH_RANGE"),
+		LatitudeMax:    os.Getenv("LAT_MAX"),
+		LatitudeMin:    os.Getenv("LAT_MIN"),
+		LongitudeMax:   os.Getenv("LON_MAX"),
+		LongitudeMin:   os.Getenv("LON_MIN"),
 	}, nil
 }
