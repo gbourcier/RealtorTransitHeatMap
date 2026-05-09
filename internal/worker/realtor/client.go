@@ -48,7 +48,7 @@ func NewClient(cfg *config.Config) *Client {
 
 func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 	slog.Info("fetching prices from realtor.ca")
-	if err := c.primeSession(ctx); err != nil {
+	if err := c.ensurePrimed(ctx); err != nil {
 		return nil, fmt.Errorf("prime session: %w", err)
 	}
 	var all []listing.Listing
@@ -71,6 +71,21 @@ func (c *Client) FetchPrices(ctx context.Context) ([]listing.Listing, error) {
 		}
 	}
 	return all, nil
+}
+
+// ensurePrimed re-runs primeSession if the cookies are older than primeTTL.
+// Imperva session cookies don't carry an explicit Max-Age and can be
+// invalidated server-side after roughly half an hour, so we proactively
+// refresh on that cadence to avoid the next search 403'ing.
+func (c *Client) ensurePrimed(ctx context.Context) error {
+	if time.Since(c.lastPrime) < primeTTL {
+		return nil
+	}
+	if err := c.primeSession(ctx); err != nil {
+		return err
+	}
+	c.lastPrime = time.Now()
+	return nil
 }
 
 // primeSession does a GET on the public site so the cookie jar picks up
