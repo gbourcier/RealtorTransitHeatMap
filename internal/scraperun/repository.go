@@ -71,6 +71,44 @@ func (r *Repository) FinishError(ctx context.Context, id uuid.UUID, kind, messag
 	return completedAt, err
 }
 
+// Where is the optional filter passed to List. Nil pointer = no filter on
+// that field.
+type Where struct {
+	Status     *string
+	ScheduleID *uuid.UUID
+}
+
+// Page controls list pagination. Limit <= 0 means "no limit".
+type Page struct {
+	Limit  int
+	Offset int
+}
+
+// List returns matching scrape runs newest-first, along with the total count
+// (ignoring page).
+func (r *Repository) List(ctx context.Context, where Where, page Page) ([]ScrapeRun, int64, error) {
+	q := r.db.WithContext(ctx).Model(&ScrapeRun{})
+	if where.Status != nil {
+		q = q.Where("status = ?", *where.Status)
+	}
+	if where.ScheduleID != nil {
+		q = q.Where("schedule_id = ?", *where.ScheduleID)
+	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	q = q.Order("started_at DESC")
+	if page.Limit > 0 {
+		q = q.Limit(page.Limit).Offset(page.Offset)
+	}
+	var out []ScrapeRun
+	if err := q.Find(&out).Error; err != nil {
+		return nil, 0, err
+	}
+	return out, total, nil
+}
+
 // Get returns the scrape run with the given id, or ErrNotFound if no row matches.
 func (r *Repository) Get(ctx context.Context, id uuid.UUID) (*ScrapeRun, error) {
 	var run ScrapeRun

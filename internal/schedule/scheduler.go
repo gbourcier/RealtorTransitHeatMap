@@ -51,7 +51,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 // Call after any CRUD write to a schedule.
 func (s *Scheduler) Reload(ctx context.Context) error {
 	enabled := true
-	schedules, err := s.repo.List(ctx, Where{Enabled: &enabled})
+	schedules, _, err := s.repo.List(ctx, Where{Enabled: &enabled}, Page{})
 	if err != nil {
 		return err
 	}

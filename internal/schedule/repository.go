@@ -27,16 +27,32 @@ type Where struct {
 	Enabled *bool
 }
 
-func (r *Repository) List(ctx context.Context, where Where) ([]Schedule, error) {
-	q := r.db.WithContext(ctx).Order("created_at ASC")
+// Page controls list pagination. Limit <= 0 means "no limit" (used by the
+// in-memory cron loader, which needs every enabled row).
+type Page struct {
+	Limit  int
+	Offset int
+}
+
+// List returns matching schedules along with the total count (ignoring page).
+func (r *Repository) List(ctx context.Context, where Where, page Page) ([]Schedule, int64, error) {
+	q := r.db.WithContext(ctx).Model(&Schedule{})
 	if where.Enabled != nil {
 		q = q.Where("enabled = ?", *where.Enabled)
 	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	q = q.Order("created_at ASC")
+	if page.Limit > 0 {
+		q = q.Limit(page.Limit).Offset(page.Offset)
+	}
 	var out []Schedule
 	if err := q.Find(&out).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return out, nil
+	return out, total, nil
 }
 
 func (r *Repository) Get(ctx context.Context, id uuid.UUID) (*Schedule, error) {

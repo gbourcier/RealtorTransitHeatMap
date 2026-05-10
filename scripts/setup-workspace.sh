@@ -5,6 +5,7 @@
 #   3. download Go module dependencies
 #   4. set up the database (drop + create + migrate + seed)
 #   5. build all Go packages
+#   6. install frontend npm dependencies
 #
 # Idempotent: safe to re-run.
 
@@ -37,5 +38,12 @@ echo "==> setting up database..."
 
 echo "==> go build..."
 go build ./...
+
+echo "==> installing frontend dependencies..."
+if ! command -v npm >/dev/null 2>&1; then
+    echo "error: npm is not installed. Install Node.js (>= 20) and re-run." >&2
+    exit 1
+fi
+npm --prefix web install
 
 echo "==> workspace ready."
