@@ -1,0 +1,305 @@
+openapi: 3.0.3
+info:
+  title: RealtorTransitHeatMap API
+  version: 0.1.0
+  description: >-
+    Internal API for triggering scrape runs and managing recurring scrape
+    schedules. Default bind address is 127.0.0.1:3000 (HTTP_ADDR env var).
+
+servers:
+  - url: http://127.0.0.1:3000
+    description: Local dev
+
+tags:
+  - name: scrapes
+    description: Manually trigger and inspect scrape runs
+  - name: schedules
+    description: CRUD on recurring scrape schedules (cron-driven)
+
+paths:
+  /api/scrapes:
+    post:
+      tags: [scrapes]
+      summary: Start a manual scrape
+      description: >-
+        Kicks off a scrape in the background and returns the run id.
+        Returns 409 if a scrape is already in flight (single-flight worker).
+      responses:
+        "202":
+          description: Scrape accepted; runId returned for polling.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StartScrapeResponse" }
+        "409":
+          description: A scrape is already in progress.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/scrapes/{id}:
+    get:
+      tags: [scrapes]
+      summary: Get a scrape run by id
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: The scrape run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScrapeRun" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/schedules:
+    get:
+      tags: [schedules]
+      summary: List schedules
+      parameters:
+        - in: query
+          name: enabled
+          required: false
+          description: Filter by enabled flag. Omit for all.
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Schedules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Schedule" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [schedules]
+      summary: Create a schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateScheduleRequest" }
+            examples:
+              every-six-hours:
+                summary: Every 6 hours
+                value:
+                  name: realtor-6h
+                  cronExpr: "0 */6 * * *"
+                  enabled: true
+              weekday-9am-utc:
+                summary: Weekdays 09:00 UTC
+                value:
+                  name: realtor-weekday-morning
+                  cronExpr: "0 9 * * 1-5"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Schedule" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/schedules/{id}:
+    get:
+      tags: [schedules]
+      summary: Get a schedule by id
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Schedule" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [schedules]
+      summary: Update a schedule (partial)
+      description: All fields optional; omitted fields are left unchanged.
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateScheduleRequest" }
+            examples:
+              disable:
+                summary: Disable a schedule
+                value: { enabled: false }
+              change-cron:
+                summary: Change cadence
+                value: { cronExpr: "0 */12 * * *" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Schedule" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [schedules]
+      summary: Delete a schedule
+      description: >-
+        Deleting a schedule sets schedule_id=NULL on its historical scrape_runs
+        rows (history is preserved).
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "204":
+          description: Deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  parameters:
+    IdPath:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Bad request.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    InternalError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    StartScrapeResponse:
+      type: object
+      required: [runId]
+      properties:
+        runId:
+          type: string
+          format: uuid
+
+    ScrapeRun:
+      type: object
+      required: [id, source, status, startedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          example: realtor.ca
+        status:
+          type: string
+          enum: [running, success, error]
+        startedAt:
+          type: integer
+          format: int64
+          description: Unix seconds.
+        completedAt:
+          type: integer
+          format: int64
+          nullable: true
+        totalCount:
+          type: integer
+          nullable: true
+        newCount:
+          type: integer
+          nullable: true
+        errorKind:
+          type: string
+          enum: [forbidden, null_count, unknown]
+        errorMessage:
+          type: string
+        scheduleId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Set when the run was triggered by a schedule; null for manual triggers.
+
+    Schedule:
+      type: object
+      required: [id, name, cronExpr, enabled, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cronExpr:
+          type: string
+          description: 5-field cron expression interpreted in UTC.
+          example: "0 */6 * * *"
+        enabled:
+          type: boolean
+        createdAt:
+          type: integer
+          format: int64
+          description: Unix seconds.
+        updatedAt:
+          type: integer
+          format: int64
+
+    CreateScheduleRequest:
+      type: object
+      required: [name, cronExpr]
+      properties:
+        name:
+          type: string
+        cronExpr:
+          type: string
+          description: 5-field cron expression interpreted in UTC.
+        enabled:
+          type: boolean
+          description: Defaults to true if omitted.
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        cronExpr:
+          type: string
+        enabled:
+          type: boolean
