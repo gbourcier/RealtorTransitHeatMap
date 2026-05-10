@@ -21,13 +21,16 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 // Start inserts a new scrape_runs row with status=running and returns it.
-// The returned row's StartedAt is the canonical run start time.
-func (r *Repository) Start(ctx context.Context, source string) (*ScrapeRun, error) {
+// The returned row's StartedAt is the canonical run start time. Pass a
+// non-nil scheduleID when the run is triggered by a schedule; pass nil
+// for manual triggers.
+func (r *Repository) Start(ctx context.Context, source string, scheduleID *uuid.UUID) (*ScrapeRun, error) {
 	run := &ScrapeRun{
-		ID:        uuid.New(),
-		Source:    source,
-		Status:    StatusRunning,
-		StartedAt: time.Now(),
+		ID:         uuid.New(),
+		Source:     source,
+		Status:     StatusRunning,
+		StartedAt:  time.Now(),
+		ScheduleID: scheduleID,
 	}
 	if err := r.db.WithContext(ctx).Create(run).Error; err != nil {
 		return nil, err
