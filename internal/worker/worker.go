@@ -27,7 +27,7 @@ type ListingRepository interface {
 }
 
 type ScrapeRunRepository interface {
-	Start(ctx context.Context, source string) (*scraperun.ScrapeRun, error)
+	Start(ctx context.Context, source string, scheduleID *uuid.UUID) (*scraperun.ScrapeRun, error)
 	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int) (time.Time, error)
 	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int) (time.Time, error)
 	Get(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
@@ -60,13 +60,24 @@ func (w *Worker) Bind(rootCtx context.Context) {
 	w.rootCtx = rootCtx
 }
 
-// StartScrape kicks off a scrape in the background and returns its run id.
-// Returns ErrBusy if another scrape is already running.
+// StartScrape kicks off a manual scrape in the background and returns its
+// run id. Returns ErrBusy if another scrape is already running.
 func (w *Worker) StartScrape() (uuid.UUID, error) {
+	return w.startScrape(nil)
+}
+
+// StartScrapeForSchedule kicks off a scheduled scrape. The resulting
+// scrape_runs row is stamped with scheduleID so callers can reconstruct
+// run history per schedule.
+func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error) {
+	return w.startScrape(&scheduleID)
+}
+
+func (w *Worker) startScrape(scheduleID *uuid.UUID) (uuid.UUID, error) {
 	if !w.busy.CompareAndSwap(false, true) {
 		return uuid.Nil, ErrBusy
 	}
-	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor)
+	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, scheduleID)
 	if err != nil {
 		w.busy.Store(false)
 		return uuid.Nil, err

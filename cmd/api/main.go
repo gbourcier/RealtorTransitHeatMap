@@ -15,6 +15,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/joho/godotenv"
@@ -51,11 +52,17 @@ func run() error {
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
 	runs := scraperun.NewRepository(gormDB)
+	schedules := schedule.NewRepository(gormDB)
 
 	w := worker.New(realtorClient, listings, runs)
 	w.Bind(ctx)
 
-	srv := api.NewServer(cfg.HTTP.Addr, w)
+	scheduler := schedule.New(schedules, w)
+	if err := scheduler.Start(ctx); err != nil {
+		return err
+	}
+
+	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler)
 
 	serverErr := make(chan error, 1)
 	go func() {
@@ -74,6 +81,7 @@ func run() error {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	scheduler.Stop()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Warn("server shutdown error", "err", err)
 	}

@@ -32,6 +32,9 @@ type ScrapeRun struct {
 	NewCount     *int       `gorm:"column:new_count"`
 	ErrorKind    *string    `gorm:"column:error_kind"`
 	ErrorMessage *string    `gorm:"column:error_message"`
+	// ScheduleID is set when the run was triggered by a schedule; nil for
+	// manual triggers via POST /api/scrapes.
+	ScheduleID *uuid.UUID `gorm:"column:schedule_id;type:uuid"`
 }
 
 func (ScrapeRun) TableName() string { return "scrape_runs" }
