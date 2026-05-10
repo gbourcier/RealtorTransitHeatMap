@@ -17,14 +17,11 @@ var (
 type Schedule struct {
 	ID   uuid.UUID `gorm:"column:id;type:uuid;primaryKey"`
 	Name string    `gorm:"column:name;not null;uniqueIndex"`
-
 	// CronExpr is a 5-field cron expression (minute hour dom month dow)
 	// interpreted in UTC. Per-schedule timezones are not supported; convert
 	// local times to UTC before storing (e.g. 9am Eastern -> "0 13 * * *").
 	CronExpr string `gorm:"column:cron_expr;not null"`
-
 	Enabled bool `gorm:"column:enabled;not null;default:true"`
-
 	CreatedAt time.Time `gorm:"column:created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }

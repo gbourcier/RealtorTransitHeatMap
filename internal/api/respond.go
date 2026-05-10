@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 )
 
@@ -13,15 +14,16 @@ type StartScrapeResponse struct {
 }
 
 type ScrapeRunResponse struct {
-	ID           string `json:"id"`
-	Source       string `json:"source"`
-	Status       string `json:"status"`
-	StartedAt    int64  `json:"startedAt"`
-	CompletedAt  *int64 `json:"completedAt,omitempty"`
-	TotalCount   *int   `json:"totalCount,omitempty"`
-	NewCount     *int   `json:"newCount,omitempty"`
-	ErrorKind    string `json:"errorKind,omitempty"`
-	ErrorMessage string `json:"errorMessage,omitempty"`
+	ID           string  `json:"id"`
+	Source       string  `json:"source"`
+	Status       string  `json:"status"`
+	StartedAt    int64   `json:"startedAt"`
+	CompletedAt  *int64  `json:"completedAt,omitempty"`
+	TotalCount   *int    `json:"totalCount,omitempty"`
+	NewCount     *int    `json:"newCount,omitempty"`
+	ErrorKind    string  `json:"errorKind,omitempty"`
+	ErrorMessage string  `json:"errorMessage,omitempty"`
+	ScheduleID   *string `json:"scheduleId,omitempty"`
 }
 
 type errorResponse struct {
@@ -90,6 +92,10 @@ func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 	}
 	if r.ErrorMessage != nil {
 		out.ErrorMessage = *r.ErrorMessage
+	}
+	if r.ScheduleID != nil {
+		s := r.ScheduleID.String()
+		out.ScheduleID = &s
 	}
 	return out
 }
