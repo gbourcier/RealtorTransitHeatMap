@@ -15,7 +15,7 @@ import (
 
 // ScheduleRepo is the API's view of the schedule store.
 type ScheduleRepo interface {
-	List(ctx context.Context, where schedule.Where) ([]schedule.Schedule, error)
+	List(ctx context.Context, where schedule.Where, page schedule.Page) ([]schedule.Schedule, int64, error)
 	Get(ctx context.Context, id uuid.UUID) (*schedule.Schedule, error)
 	Create(ctx context.Context, s *schedule.Schedule) error
 	Update(ctx context.Context, id uuid.UUID, patch schedule.Patch) (*schedule.Schedule, error)
@@ -43,7 +43,12 @@ func (h *scheduleHandlers) list(w http.ResponseWriter, r *http.Request) {
 		}
 		where.Enabled = &b
 	}
-	items, err := h.repo.List(r.Context(), where)
+	limit, offset, err := parsePage(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := h.repo.List(r.Context(), where, schedule.Page{Limit: limit, Offset: offset})
 	if err != nil {
 		slog.Error("schedules list failed", "err", err)
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -53,7 +58,12 @@ func (h *scheduleHandlers) list(w http.ResponseWriter, r *http.Request) {
 	for i := range items {
 		out[i] = scheduleFromModel(&items[i])
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, PaginatedResponse[ScheduleResponse]{
+		Items:  out,
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+	})
 }
 
 func (h *scheduleHandlers) get(w http.ResponseWriter, r *http.Request) {

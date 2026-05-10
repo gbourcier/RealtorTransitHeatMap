@@ -30,6 +30,16 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
+// PaginatedResponse is the envelope returned by list endpoints. Total is the
+// total matching rows (ignoring limit/offset) so the client can render page
+// counts. Items is typed by the specific endpoint.
+type PaginatedResponse[T any] struct {
+	Items  []T   `json:"items"`
+	Total  int64 `json:"total"`
+	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

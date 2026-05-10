@@ -18,6 +18,37 @@ tags:
 
 paths:
   /api/scrapes:
+    get:
+      tags: [scrapes]
+      summary: List scrape runs
+      description: Returns scrape runs newest-first.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - in: query
+          name: status
+          required: false
+          description: Filter by run status.
+          schema:
+            type: string
+            enum: [running, success, error]
+        - in: query
+          name: scheduleId
+          required: false
+          description: Filter by triggering schedule id.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Paginated scrape runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginatedScrapeRuns" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
     post:
       tags: [scrapes]
       summary: Start a manual scrape
@@ -62,6 +93,8 @@ paths:
       tags: [schedules]
       summary: List schedules
       parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
         - in: query
           name: enabled
           required: false
@@ -70,12 +103,10 @@ paths:
             type: boolean
       responses:
         "200":
-          description: Schedules.
+          description: Paginated schedules.
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Schedule" }
+              schema: { $ref: "#/components/schemas/PaginatedSchedules" }
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -186,6 +217,25 @@ components:
       schema:
         type: string
         format: uuid
+    Limit:
+      in: query
+      name: limit
+      required: false
+      description: Max items per page (1-200, default 50).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Offset:
+      in: query
+      name: offset
+      required: false
+      description: Items to skip (default 0).
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
 
   responses:
     BadRequest:
@@ -303,3 +353,36 @@ components:
           type: string
         enabled:
           type: boolean
+
+    PaginationMeta:
+      type: object
+      required: [total, limit, offset]
+      properties:
+        total:
+          type: integer
+          format: int64
+          description: Total matching rows ignoring limit/offset.
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PaginatedSchedules:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/Schedule" }
+
+    PaginatedScrapeRuns:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ScrapeRun" }

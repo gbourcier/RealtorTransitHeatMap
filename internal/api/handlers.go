@@ -17,6 +17,7 @@ import (
 type ScrapeService interface {
 	StartScrape() (uuid.UUID, error)
 	GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
+	ListRuns(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error)
 }
 
 type handlers struct {
@@ -35,6 +36,48 @@ func (h *handlers) startScrape(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusAccepted, StartScrapeResponse{RunID: id.String()})
+}
+
+func (h *handlers) listScrapes(w http.ResponseWriter, r *http.Request) {
+	where := scraperun.Where{}
+	if v := r.URL.Query().Get("status"); v != "" {
+		switch v {
+		case scraperun.StatusRunning, scraperun.StatusSuccess, scraperun.StatusError:
+			where.Status = &v
+		default:
+			writeError(w, http.StatusBadRequest, "invalid 'status' query param")
+			return
+		}
+	}
+	if v := r.URL.Query().Get("scheduleId"); v != "" {
+		sid, err := uuid.Parse(v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid 'scheduleId' query param")
+			return
+		}
+		where.ScheduleID = &sid
+	}
+	limit, offset, err := parsePage(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	runs, total, err := h.scrapes.ListRuns(r.Context(), where, scraperun.Page{Limit: limit, Offset: offset})
+	if err != nil {
+		slog.Error("listScrapes failed", "err", err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	out := make([]ScrapeRunResponse, len(runs))
+	for i := range runs {
+		out[i] = scrapeRunFromModel(&runs[i])
+	}
+	writeJSON(w, http.StatusOK, PaginatedResponse[ScrapeRunResponse]{
+		Items:  out,
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+	})
 }
 
 func (h *handlers) getScrape(w http.ResponseWriter, r *http.Request) {

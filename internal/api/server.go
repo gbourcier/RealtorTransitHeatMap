@@ -26,6 +26,7 @@ func NewServer(addr string, scrapes ScrapeService, schedRepo ScheduleRepo, reloa
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/scrapes", func(r chi.Router) {
 			r.Post("/", h.startScrape)
+			r.Get("/", h.listScrapes)
 			r.Get("/{id}", h.getScrape)
 		})
 		r.Route("/schedules", func(r chi.Router) {

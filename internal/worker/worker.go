@@ -31,6 +31,7 @@ type ScrapeRunRepository interface {
 	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int) (time.Time, error)
 	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int) (time.Time, error)
 	Get(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
+	List(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error)
 }
 
 type Worker struct {
@@ -97,6 +98,11 @@ func (w *Worker) Wait() { w.wg.Wait() }
 // GetRun returns the persisted scrape run with the given id.
 func (w *Worker) GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error) {
 	return w.runs.Get(ctx, id)
+}
+
+// ListRuns returns scrape runs newest-first.
+func (w *Worker) ListRuns(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error) {
+	return w.runs.List(ctx, where, page)
 }
 
 func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {

@@ -24,6 +24,22 @@
     "reveal": "always",
   },
   {
+    "label": "Start Frontend",
+    "command": "npm run dev",
+    "cwd": "$ZED_WORKTREE_ROOT/web",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+  },
+  {
+    "label": "Start Stack",
+    "command": "./scripts/dev.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+  },
+  {
     "label": "Migration Run",
     "command": "./scripts/migrate-up.sh",
     "cwd": "$ZED_WORKTREE_ROOT",
