@@ -40,6 +40,38 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, errorResponse{Error: msg})
 }
 
+type ScheduleResponse struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	CronExpr  string `json:"cronExpr"`
+	Enabled   bool   `json:"enabled"`
+	CreatedAt int64  `json:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt"`
+}
+
+type CreateScheduleRequest struct {
+	Name     string `json:"name"`
+	CronExpr string `json:"cronExpr"`
+	Enabled  *bool  `json:"enabled,omitempty"`
+}
+
+type UpdateScheduleRequest struct {
+	Name     *string `json:"name,omitempty"`
+	CronExpr *string `json:"cronExpr,omitempty"`
+	Enabled  *bool   `json:"enabled,omitempty"`
+}
+
+func scheduleFromModel(s *schedule.Schedule) ScheduleResponse {
+	return ScheduleResponse{
+		ID:        s.ID.String(),
+		Name:      s.Name,
+		CronExpr:  s.CronExpr,
+		Enabled:   s.Enabled,
+		CreatedAt: s.CreatedAt.Unix(),
+		UpdatedAt: s.UpdatedAt.Unix(),
+	}
+}
+
 func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 	out := ScrapeRunResponse{
 		ID:         r.ID.String(),
