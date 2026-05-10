@@ -46,7 +46,6 @@ type ScheduleResponse struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CronExpr  string `json:"cronExpr"`
-	Source    string `json:"source"`
 	Enabled   bool   `json:"enabled"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
@@ -55,14 +54,12 @@ type ScheduleResponse struct {
 type CreateScheduleRequest struct {
 	Name     string `json:"name"`
 	CronExpr string `json:"cronExpr"`
-	Source   string `json:"source"`
 	Enabled  *bool  `json:"enabled,omitempty"`
 }
 
 type UpdateScheduleRequest struct {
 	Name     *string `json:"name,omitempty"`
 	CronExpr *string `json:"cronExpr,omitempty"`
-	Source   *string `json:"source,omitempty"`
 	Enabled  *bool   `json:"enabled,omitempty"`
 }
 
@@ -71,7 +68,6 @@ func scheduleFromModel(s *schedule.Schedule) ScheduleResponse {
 		ID:        s.ID.String(),
 		Name:      s.Name,
 		CronExpr:  s.CronExpr,
-		Source:    s.Source,
 		Enabled:   s.Enabled,
 		CreatedAt: s.CreatedAt.Unix(),
 		UpdatedAt: s.UpdatedAt.Unix(),

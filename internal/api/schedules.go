@@ -85,10 +85,6 @@ func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "name is required")
 		return
 	}
-	if req.Source == "" {
-		writeError(w, http.StatusBadRequest, "source is required")
-		return
-	}
 	if err := schedule.ValidateCron(req.CronExpr); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -97,7 +93,6 @@ func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 	s := &schedule.Schedule{
 		Name:     req.Name,
 		CronExpr: req.CronExpr,
-		Source:   req.Source,
 		Enabled:  true,
 	}
 	if req.Enabled != nil {
@@ -136,15 +131,10 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "name cannot be empty")
 		return
 	}
-	if req.Source != nil && *req.Source == "" {
-		writeError(w, http.StatusBadRequest, "source cannot be empty")
-		return
-	}
 
 	s, err := h.repo.Update(r.Context(), id, schedule.Patch{
 		Name:     req.Name,
 		CronExpr: req.CronExpr,
-		Source:   req.Source,
 		Enabled:  req.Enabled,
 	})
 	if err != nil {

@@ -18,7 +18,6 @@ func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 type Patch struct {
 	Name     *string
 	CronExpr *string
-	Source   *string
 	Enabled  *bool
 }
 
@@ -66,9 +65,6 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, patch Patch) (*Sc
 	}
 	if patch.CronExpr != nil {
 		updates["cron_expr"] = *patch.CronExpr
-	}
-	if patch.Source != nil {
-		updates["source"] = *patch.Source
 	}
 	if patch.Enabled != nil {
 		updates["enabled"] = *patch.Enabled
