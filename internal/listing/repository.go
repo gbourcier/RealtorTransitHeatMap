@@ -2,6 +2,7 @@ package listing
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,14 +13,12 @@ type Repository struct {
 	db *gorm.DB
 }
 
+var ErrNotFound = errors.New("listing: not found")
+
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-// UpsertListings persists the given observations (one listing row + one price
-// history row each) and returns the count of newly inserted listings — i.e.
-// listings whose (board, mls) key did not already exist. Updates to existing
-// rows are not counted toward inserted.
 func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (inserted int, err error) {
 	if len(obs) == 0 {
 		return 0, nil
@@ -55,7 +54,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 			Omit(clause.Associations).
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
-				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status"}),
+				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status", "slug"}),
 			}).
 			CreateInBatches(listings, 200).Error; err != nil {
 			return err
@@ -68,4 +67,54 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 		return 0, err
 	}
 	return inserted, nil
+}
+
+const statusAvailable = "1"
+
+func (r *Repository) ListListings(ctx context.Context, where Where, page Page, sort Sort) ([]ListingRow, int64, error) {
+	latestPrice := r.db.Model(&PriceHistory{}).
+		Select("DISTINCT ON (board, mls) board, mls, price").
+		Order("board, mls, observed_at DESC")
+
+	var rows []ListingRow
+	var total int64
+
+	q := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("listings.*, lp.price AS current_price").
+		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice)
+
+	if !where.ShowUnavailable {
+		q = q.Where("listings.status = ?", statusAvailable)
+	}
+
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	col := map[string]string{
+		"price":         "lp.price",
+		"first_seen_at": "listings.first_seen_at",
+	}[sort.By]
+
+	err := q.Order(col + " " + sort.Dir).
+		Limit(page.Limit).
+		Offset(page.Offset).
+		Find(&rows).Error
+
+	return rows, total, err
+}
+
+func (r *Repository) GetListing(ctx context.Context, board, mls int) (*Listing, error) {
+	var l Listing
+	err := r.db.WithContext(ctx).
+		Preload("PriceHistories", func(db *gorm.DB) *gorm.DB {
+			return db.Order("observed_at DESC")
+		}).
+		Where("board = ? AND mls = ?", board, mls).
+		First(&l).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	return &l, err
 }

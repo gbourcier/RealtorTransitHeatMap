@@ -62,7 +62,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler)
+	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler, listings)
 
 	serverErr := make(chan error, 1)
 	go func() {

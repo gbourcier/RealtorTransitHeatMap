@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 )
@@ -108,4 +109,73 @@ func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 		out.ScheduleID = &s
 	}
 	return out
+}
+
+type ListingResponse struct {
+	Board        int      `json:"board"`
+	MLS          int      `json:"mls"`
+	Address      string   `json:"address"`
+	CurrentPrice *float64 `json:"currentPrice"`
+	FirstSeenAt  int64    `json:"firstSeenAt"`
+	Slug         string   `json:"slug"`
+}
+
+type PriceHistoryResponse struct {
+	ObservedAt int64   `json:"observedAt"`
+	Price      float64 `json:"price"`
+}
+
+type ListingDetailResponse struct {
+	ListingResponse
+	Status         string                 `json:"status"`
+	PriceHistories []PriceHistoryResponse `json:"priceHistories"`
+}
+
+// mapStatus translates the raw realtor.ca StatusId into a human-readable value.
+// StatusId "1" means the listing is active/available; all other values indicate
+// it is no longer on the market.
+func mapStatus(raw string) string {
+	if raw == "1" {
+		return "available"
+	}
+	return "unavailable"
+}
+
+func listingFromRow(row *listing.ListingRow) ListingResponse {
+	return ListingResponse{
+		Board:        row.Board,
+		MLS:          row.MLS,
+		Address:      row.Address,
+		CurrentPrice: row.CurrentPrice,
+		FirstSeenAt:  row.FirstSeenAt.Unix(),
+		Slug:         "https://www.realtor.ca" + row.Slug,
+	}
+}
+
+func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
+	histories := make([]PriceHistoryResponse, len(l.PriceHistories))
+	for i, ph := range l.PriceHistories {
+		histories[i] = PriceHistoryResponse{
+			ObservedAt: ph.ObservedAt.Unix(),
+			Price:      ph.Price,
+		}
+	}
+	// PriceHistories is pre-ordered DESC so index 0 is the latest.
+	var currentPrice *float64
+	if len(l.PriceHistories) > 0 {
+		p := l.PriceHistories[0].Price
+		currentPrice = &p
+	}
+	return ListingDetailResponse{
+		ListingResponse: ListingResponse{
+			Board:        l.Board,
+			MLS:          l.MLS,
+			Address:      l.Address,
+			CurrentPrice: currentPrice,
+			FirstSeenAt:  l.FirstSeenAt.Unix(),
+			Slug:         "https://www.realtor.ca" + l.Slug,
+		},
+		Status:         mapStatus(l.Status),
+		PriceHistories: histories,
+	}
 }

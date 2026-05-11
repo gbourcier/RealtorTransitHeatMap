@@ -220,12 +220,13 @@ func decodeObservations(results []listingResult) []listing.Observation {
 		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
 		out = append(out, listing.Observation{
 			Listing: listing.Listing{
-				Board:     r.Individual[0].Organization.OrganizationId,
-				MLS:       r.MlsNumber,
-				Latitude:  lat,
-				Longitude: lon,
-				Address:   r.Property.Address.AddressText,
-				Status:    r.StatusId,
+				Board:      r.Individual[0].Organization.OrganizationId,
+				MLS:        r.MlsNumber,
+				Latitude:   lat,
+				Longitude:  lon,
+				Address:    r.Property.Address.AddressText,
+				Status:     r.StatusId,
+				Slug: r.RelativeDetailsURL,
 			},
 			Price: price,
 		})
