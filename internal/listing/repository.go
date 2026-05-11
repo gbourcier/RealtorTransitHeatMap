@@ -69,12 +69,3 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 	}
 	return inserted, nil
 }
-
-func (r *Repository) LatestPrice(ctx context.Context, board, mls string) (PriceHistory, error) {
-	var ph PriceHistory
-	err := r.db.WithContext(ctx).
-		Where("board = ? AND mls = ?", board, mls).
-		Order("observed_at DESC").
-		First(&ph).Error
-	return ph, err
-}

@@ -11,7 +11,6 @@ import (
 var (
 	ErrNotFound    = errors.New("schedule: not found")
 	ErrInvalidCron = errors.New("schedule: invalid cron expression")
-	ErrInvalidName = errors.New("schedule: name is required")
 )
 
 type Schedule struct {
