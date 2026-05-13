@@ -18,8 +18,6 @@ const (
 	ErrorKindUnknown   = "unknown"
 )
 
-// SourceRealtor identifies scrapes against realtor.ca. Add more constants here
-// when additional sources are introduced.
 const SourceRealtor = "realtor.ca"
 
 type ScrapeRun struct {
@@ -32,8 +30,7 @@ type ScrapeRun struct {
 	NewCount     *int       `gorm:"column:new_count"`
 	ErrorKind    *string    `gorm:"column:error_kind"`
 	ErrorMessage *string    `gorm:"column:error_message"`
-	// ScheduleID is set when the run was triggered by a schedule; nil for
-	// manual triggers via POST /api/scrapes.
+	// ScheduleID is nil for manual triggers
 	ScheduleID *uuid.UUID `gorm:"column:schedule_id;type:uuid"`
 }
 

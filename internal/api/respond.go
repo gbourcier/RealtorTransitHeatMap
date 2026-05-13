@@ -31,9 +31,6 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-// PaginatedResponse is the envelope returned by list endpoints. Total is the
-// total matching rows (ignoring limit/offset) so the client can render page
-// counts. Items is typed by the specific endpoint.
 type PaginatedResponse[T any] struct {
 	Items  []T   `json:"items"`
 	Total  int64 `json:"total"`
@@ -131,9 +128,6 @@ type ListingDetailResponse struct {
 	PriceHistories []PriceHistoryResponse `json:"priceHistories"`
 }
 
-// mapStatus translates the raw realtor.ca StatusId into a human-readable value.
-// StatusId "1" means the listing is active/available; all other values indicate
-// it is no longer on the market.
 func mapStatus(raw string) string {
 	if raw == "1" {
 		return "available"
@@ -160,7 +154,7 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 			Price:      ph.Price,
 		}
 	}
-	// PriceHistories is pre-ordered DESC so index 0 is the latest.
+
 	var currentPrice *float64
 	if len(l.PriceHistories) > 0 {
 		p := l.PriceHistories[0].Price

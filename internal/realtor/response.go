@@ -1,8 +1,5 @@
 package realtor
 
-// asyncPropertySearchResponse mirrors the JSON shape returned by realtor.ca's
-// PropertySearch_Post endpoint. These types are package-private on purpose:
-// they describe realtor.ca's wire format and must not leak to other packages.
 type asyncPropertySearchResponse struct {
 	ErrorCode errorCode       `json:"ErrorCode"`
 	Paging    paging          `json:"Paging"`

@@ -12,8 +12,6 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// WorkerTrigger is the scheduler's view of the worker. Decoupled via interface
-// so this package only depends on what it actually uses.
 type WorkerTrigger interface {
 	StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error)
 }
@@ -36,9 +34,6 @@ func New(repo *Repository, trigger WorkerTrigger) *Scheduler {
 	}
 }
 
-// Start loads enabled schedules from the DB, registers them with the cron
-// runtime, and begins firing. ctx is used for the initial load only; the
-// cron runtime runs until Stop is called.
 func (s *Scheduler) Start(ctx context.Context) error {
 	if err := s.Reload(ctx); err != nil {
 		return err
@@ -47,8 +42,6 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	return nil
 }
 
-// Reload re-reads enabled schedules and rebuilds the cron table to match.
-// Call after any CRUD write to a schedule.
 func (s *Scheduler) Reload(ctx context.Context) error {
 	enabled := true
 	schedules, _, err := s.repo.List(ctx, Where{Enabled: &enabled}, Page{})
@@ -77,8 +70,6 @@ func (s *Scheduler) Reload(ctx context.Context) error {
 	return nil
 }
 
-// Stop halts the cron runtime. In-flight fires (already-running goroutines)
-// are not cancelled here; the worker handles its own shutdown via Worker.Wait.
 func (s *Scheduler) Stop() {
 	s.cron.Stop()
 }
