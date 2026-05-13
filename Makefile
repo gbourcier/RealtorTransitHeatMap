@@ -1,4 +1,4 @@
-.PHONY: run dev build test fmt vet tidy db-up db-reset migrate seed
+.PHONY: run dev build test fmt vet tidy db-up db-reset migrate seed precompute
 
 GO ?= go
 BIN := bin/api
@@ -35,3 +35,6 @@ migrate:
 
 seed:
 	@. ./.env && psql "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$${POSTGRES_HOST:-localhost}:$${POSTGRES_PORT:-5432}/$$POSTGRES_DB" -f seeds/seed.sql
+
+precompute:
+	$(GO) run ./cmd/gtfs-precompute -skip-download

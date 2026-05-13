@@ -32,20 +32,26 @@ type ScrapeRunRepository interface {
 	List(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error)
 }
 
+type TransitTrigger interface {
+	StartComputation(refresh bool) error
+}
+
 type Worker struct {
 	realtor RealtorClient
 	repo    ListingRepository
 	runs    ScrapeRunRepository
+	transit TransitTrigger
 	rootCtx context.Context
 	wg      sync.WaitGroup
 	busy    atomic.Bool
 }
 
-func New(rc RealtorClient, repo ListingRepository, runs ScrapeRunRepository) *Worker {
+func New(rc RealtorClient, repo ListingRepository, runs ScrapeRunRepository, transit TransitTrigger) *Worker {
 	return &Worker{
 		realtor: rc,
 		repo:    repo,
 		runs:    runs,
+		transit: transit,
 	}
 }
 
@@ -121,6 +127,12 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 
 	if _, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount); updateErr != nil {
 		slog.Error("scrape_runs finish success update failed", "err", updateErr, "run_id", run.ID)
+	}
+
+	if w.transit != nil {
+		if err := w.transit.StartComputation(false); err != nil {
+			slog.Info("transit trigger skipped", "reason", err)
+		}
 	}
 }
 

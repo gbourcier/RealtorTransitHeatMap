@@ -15,6 +15,10 @@ tags:
     description: Manually trigger and inspect scrape runs
   - name: schedules
     description: CRUD on recurring scrape schedules (cron-driven)
+  - name: listings
+    description: Browse scraped property listings
+  - name: transit
+    description: Trigger transit commute-time computation
 
 paths:
   /api/scrapes:
@@ -208,6 +212,123 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/listings:
+    get:
+      tags: [listings]
+      summary: List listings
+      description: Returns scraped property listings newest-first by default.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - in: query
+          name: sortBy
+          required: false
+          description: Field to sort by (default first_seen_at).
+          schema:
+            type: string
+            enum: [price, first_seen_at]
+            default: first_seen_at
+        - in: query
+          name: sortDir
+          required: false
+          description: Sort direction (default desc).
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Paginated listings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginatedListings" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/listings/{board}/{mls}:
+    get:
+      tags: [listings]
+      summary: Get a listing by board and MLS number
+      parameters:
+        - $ref: "#/components/parameters/BoardPath"
+        - $ref: "#/components/parameters/MLSPath"
+      responses:
+        "200":
+          description: The listing with full price history.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListingDetail" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/transit/compute:
+    post:
+      tags: [transit]
+      summary: Start transit computation for all listings
+      description: >-
+        Kicks off a background job that computes transit commute times for every
+        listing that does not yet have one. Returns 409 if a computation is
+        already running, or 424 if no transit stops have been loaded yet
+        (run gtfs-precompute first).
+      parameters:
+        - in: query
+          name: refresh
+          required: false
+          description: Recompute even for listings that already have a commute time.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "202":
+          description: Computation accepted and started in the background.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitComputeResponse" }
+        "409":
+          description: Transit computation already in progress.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "424":
+          $ref: "#/components/responses/FailedDependency"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/transit/compute/{board}/{mls}:
+    post:
+      tags: [transit]
+      summary: Compute transit time for a single listing
+      parameters:
+        - $ref: "#/components/parameters/BoardPath"
+        - $ref: "#/components/parameters/MLSPath"
+        - in: query
+          name: refresh
+          required: false
+          description: Recompute even if a commute time already exists.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Computation complete.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitComputeOneResponse" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "424":
+          $ref: "#/components/responses/FailedDependency"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   parameters:
     IdPath:
@@ -217,6 +338,20 @@ components:
       schema:
         type: string
         format: uuid
+    BoardPath:
+      in: path
+      name: board
+      required: true
+      description: Board number.
+      schema:
+        type: integer
+    MLSPath:
+      in: path
+      name: mls
+      required: true
+      description: MLS number.
+      schema:
+        type: integer
     Limit:
       in: query
       name: limit
@@ -250,6 +385,11 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
     InternalError:
       description: Internal server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    FailedDependency:
+      description: A required dependency is missing (e.g. transit stops not loaded).
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -386,3 +526,80 @@ components:
             items:
               type: array
               items: { $ref: "#/components/schemas/ScrapeRun" }
+
+    Listing:
+      type: object
+      required: [board, mls, address, firstSeenAt, slug]
+      properties:
+        board:
+          type: integer
+        mls:
+          type: integer
+        address:
+          type: string
+        currentPrice:
+          type: number
+          format: double
+          nullable: true
+        commuteSecondsDowntown:
+          type: integer
+          nullable: true
+          description: Transit commute time in seconds; null until computed.
+        firstSeenAt:
+          type: integer
+          format: int64
+          description: Unix seconds.
+        slug:
+          type: string
+          description: Full realtor.ca URL for the listing.
+
+    PriceHistory:
+      type: object
+      required: [observedAt, price]
+      properties:
+        observedAt:
+          type: integer
+          format: int64
+          description: Unix seconds.
+        price:
+          type: number
+          format: double
+
+    ListingDetail:
+      allOf:
+        - $ref: "#/components/schemas/Listing"
+        - type: object
+          required: [status, priceHistories]
+          properties:
+            status:
+              type: string
+              enum: [available, unavailable]
+            priceHistories:
+              type: array
+              items: { $ref: "#/components/schemas/PriceHistory" }
+
+    PaginatedListings:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/Listing" }
+
+    TransitComputeResponse:
+      type: object
+      required: [started, refresh]
+      properties:
+        started:
+          type: boolean
+        refresh:
+          type: boolean
+
+    TransitComputeOneResponse:
+      type: object
+      required: [computed]
+      properties:
+        computed:
+          type: boolean

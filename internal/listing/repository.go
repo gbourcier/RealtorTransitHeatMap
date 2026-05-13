@@ -104,6 +104,50 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	return rows, total, err
 }
 
+func (r *Repository) ListPendingCommute(ctx context.Context, refresh bool) ([]PendingCommute, error) {
+	q := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("board, mls, latitude, longitude")
+	if !refresh {
+		q = q.Where("commute_seconds_downtown IS NULL")
+	}
+	var rows []PendingCommute
+	if err := q.Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *Repository) GetPendingCommute(ctx context.Context, board, mls int) (*PendingCommute, error) {
+	var row PendingCommute
+	err := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("board, mls, latitude, longitude").
+		Where("board = ? AND mls = ?", board, mls).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.Board == 0 && row.MLS == 0 {
+		return nil, ErrNotFound
+	}
+	return &row, nil
+}
+
+func (r *Repository) UpdateCommute(ctx context.Context, board, mls int, seconds int, computedAt time.Time) error {
+	res := r.db.WithContext(ctx).Model(&Listing{}).
+		Where("board = ? AND mls = ?", board, mls).
+		Updates(map[string]any{
+			"commute_seconds_downtown": seconds,
+			"commute_computed_at":      computedAt,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (r *Repository) GetListing(ctx context.Context, board, mls int) (*Listing, error) {
 	var l Listing
 	err := r.db.WithContext(ctx).

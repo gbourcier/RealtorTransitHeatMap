@@ -109,12 +109,13 @@ func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 }
 
 type ListingResponse struct {
-	Board        int      `json:"board"`
-	MLS          int      `json:"mls"`
-	Address      string   `json:"address"`
-	CurrentPrice *float64 `json:"currentPrice"`
-	FirstSeenAt  int64    `json:"firstSeenAt"`
-	Slug         string   `json:"slug"`
+	Board                  int      `json:"board"`
+	MLS                    int      `json:"mls"`
+	Address                string   `json:"address"`
+	CurrentPrice           *float64 `json:"currentPrice"`
+	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
+	FirstSeenAt            int64    `json:"firstSeenAt"`
+	Slug                   string   `json:"slug"`
 }
 
 type PriceHistoryResponse struct {
@@ -137,12 +138,13 @@ func mapStatus(raw string) string {
 
 func listingFromRow(row *listing.ListingRow) ListingResponse {
 	return ListingResponse{
-		Board:        row.Board,
-		MLS:          row.MLS,
-		Address:      row.Address,
-		CurrentPrice: row.CurrentPrice,
-		FirstSeenAt:  row.FirstSeenAt.Unix(),
-		Slug:         "https://www.realtor.ca" + row.Slug,
+		Board:                  row.Board,
+		MLS:                    row.MLS,
+		Address:                row.Address,
+		CurrentPrice:           row.CurrentPrice,
+		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
+		FirstSeenAt:            row.FirstSeenAt.Unix(),
+		Slug:                   "https://www.realtor.ca" + row.Slug,
 	}
 }
 
@@ -162,12 +164,13 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 	}
 	return ListingDetailResponse{
 		ListingResponse: ListingResponse{
-			Board:        l.Board,
-			MLS:          l.MLS,
-			Address:      l.Address,
-			CurrentPrice: currentPrice,
-			FirstSeenAt:  l.FirstSeenAt.Unix(),
-			Slug:         "https://www.realtor.ca" + l.Slug,
+			Board:                  l.Board,
+			MLS:                    l.MLS,
+			Address:                l.Address,
+			CurrentPrice:           currentPrice,
+			CommuteSecondsDowntown: l.CommuteSecondsDowntown,
+			FirstSeenAt:            l.FirstSeenAt.Unix(),
+			Slug:                   "https://www.realtor.ca" + l.Slug,
 		},
 		Status:         mapStatus(l.Status),
 		PriceHistories: histories,

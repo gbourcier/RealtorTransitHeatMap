@@ -3,15 +3,17 @@ package listing
 import "time"
 
 type Listing struct {
-	Board          int            `gorm:"column:board;primaryKey"`
-	MLS            int            `gorm:"column:mls;primaryKey"`
-	Latitude       float64
-	Longitude      float64
-	Address        string
-	Status         string
-	Slug           string         `gorm:"column:slug"`
-	FirstSeenAt    time.Time      `gorm:"column:first_seen_at"`
-	PriceHistories []PriceHistory `gorm:"foreignKey:Board,MLS;references:Board,MLS"`
+	Board                  int            `gorm:"column:board;primaryKey"`
+	MLS                    int            `gorm:"column:mls;primaryKey"`
+	Latitude               float64
+	Longitude              float64
+	Address                string
+	Status                 string
+	Slug                   string         `gorm:"column:slug"`
+	CommuteSecondsDowntown *int           `gorm:"column:commute_seconds_downtown"`
+	CommuteComputedAt      *time.Time     `gorm:"column:commute_computed_at"`
+	FirstSeenAt            time.Time      `gorm:"column:first_seen_at"`
+	PriceHistories         []PriceHistory `gorm:"foreignKey:Board,MLS;references:Board,MLS"`
 }
 
 func (Listing) TableName() string { return "listings" }
@@ -47,4 +49,11 @@ type Where struct {
 type ListingRow struct {
 	Listing
 	CurrentPrice *float64
+}
+
+type PendingCommute struct {
+	Board     int     `gorm:"column:board"`
+	MLS       int     `gorm:"column:mls"`
+	Latitude  float64 `gorm:"column:latitude"`
+	Longitude float64 `gorm:"column:longitude"`
 }
