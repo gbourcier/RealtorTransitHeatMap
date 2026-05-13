@@ -7,9 +7,6 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 )
 
-// TestFetchPricesMock exercises the full mock-mode parse path against the
-// embedded mock/response.json. It must never reach realtor.ca; if you change
-// this test to make a real network call, revert it.
 func TestFetchPricesMock(t *testing.T) {
 	c := NewClient(config.RealtorConfig{Mock: true})
 	obs, err := c.FetchPrices(context.Background())

@@ -14,8 +14,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrBusy is returned by StartScrape when a scrape is already in flight.
-// Only one scrape may run at a time; callers should retry later.
 var ErrBusy = errors.New("worker: scrape already in progress")
 
 type RealtorClient interface {
@@ -38,7 +36,6 @@ type Worker struct {
 	realtor RealtorClient
 	repo    ListingRepository
 	runs    ScrapeRunRepository
-
 	rootCtx context.Context
 	wg      sync.WaitGroup
 	busy    atomic.Bool
@@ -52,24 +49,14 @@ func New(rc RealtorClient, repo ListingRepository, runs ScrapeRunRepository) *Wo
 	}
 }
 
-// Bind associates the worker with a process-lifetime context. Background
-// scrapes inherit this context (NOT the HTTP request context that triggered
-// them) so that a scrape — which can run for minutes across many pages — is
-// not aborted when the HTTP client disconnects after receiving its 202. The
-// scrape only stops when the process is shutting down.
 func (w *Worker) Bind(rootCtx context.Context) {
 	w.rootCtx = rootCtx
 }
 
-// StartScrape kicks off a manual scrape in the background and returns its
-// run id. Returns ErrBusy if another scrape is already running.
 func (w *Worker) StartScrape() (uuid.UUID, error) {
 	return w.startScrape(nil)
 }
 
-// StartScrapeForSchedule kicks off a scheduled scrape. The resulting
-// scrape_runs row is stamped with scheduleID so callers can reconstruct
-// run history per schedule.
 func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error) {
 	return w.startScrape(&scheduleID)
 }
@@ -78,29 +65,31 @@ func (w *Worker) startScrape(scheduleID *uuid.UUID) (uuid.UUID, error) {
 	if !w.busy.CompareAndSwap(false, true) {
 		return uuid.Nil, ErrBusy
 	}
+
 	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, scheduleID)
+
 	if err != nil {
 		w.busy.Store(false)
 		return uuid.Nil, err
 	}
+
 	w.wg.Add(1)
+
 	go func() {
 		defer w.wg.Done()
 		defer w.busy.Store(false)
 		w.executeScrape(w.rootCtx, run)
 	}()
+
 	return run.ID, nil
 }
 
-// Wait blocks until any in-flight scrape finishes. Call after server shutdown.
 func (w *Worker) Wait() { w.wg.Wait() }
 
-// GetRun returns the persisted scrape run with the given id.
 func (w *Worker) GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error) {
 	return w.runs.Get(ctx, id)
 }
 
-// ListRuns returns scrape runs newest-first.
 func (w *Worker) ListRuns(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error) {
 	return w.runs.List(ctx, where, page)
 }
@@ -119,6 +108,7 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 	}
 
 	inserted, upsertErr := w.repo.UpsertListings(ctx, observations)
+
 	if upsertErr != nil {
 		slog.Error("upsert listings failed", "err", upsertErr)
 		if _, updateErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, upsertErr.Error(), totalCount, newCount); updateErr != nil {
@@ -126,6 +116,7 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 		}
 		return
 	}
+
 	newCount = inserted
 
 	if _, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount); updateErr != nil {

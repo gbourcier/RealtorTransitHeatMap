@@ -12,8 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ScrapeService is the API's view of the worker. Kept here so this package
-// doesn't depend on worker internals beyond what's needed for these handlers.
 type ScrapeService interface {
 	StartScrape() (uuid.UUID, error)
 	GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)

@@ -11,8 +11,6 @@ const (
 	maxPageLimit     = 200
 )
 
-// parsePage reads ?limit= and ?offset= and applies defaults / bounds. Returns
-// a 400-ready error message if a value is invalid.
 func parsePage(r *http.Request) (limit, offset int, err error) {
 	limit = defaultPageLimit
 	if v := r.URL.Query().Get("limit"); v != "" {

@@ -12,12 +12,6 @@ import (
 	"golang.org/x/net/http2"
 )
 
-// browserTransport returns an http.RoundTripper that performs TLS handshakes
-// using utls with a Chrome ClientHello so realtor.ca's Imperva fingerprint
-// check is satisfied. Chrome's preset advertises h2 in ALPN, and Imperva
-// negotiates h2, so the round tripper is an http2.Transport. Each connection
-// dials raw TCP, completes a utls handshake, asserts h2, and returns the
-// connection wrapped so http2.Transport can read its TLS state.
 func browserTransport() http.RoundTripper {
 	dialer := &net.Dialer{Timeout: 15 * time.Second, KeepAlive: 30 * time.Second}
 
@@ -47,9 +41,6 @@ func browserTransport() http.RoundTripper {
 	}
 }
 
-// h2Conn adapts a utls.UConn so it satisfies http2's connectionStater
-// interface (which expects ConnectionState() to return crypto/tls.ConnectionState,
-// not utls.ConnectionState).
 type h2Conn struct {
 	*utls.UConn
 }

@@ -12,29 +12,21 @@ type Repository struct{ db *gorm.DB }
 
 func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
-// Patch is the set of mutable fields for an update. Nil pointer = leave
-// unchanged. Name and CronExpr are validated by the caller (handler) before
-// reaching the repository.
 type Patch struct {
 	Name     *string
 	CronExpr *string
 	Enabled  *bool
 }
 
-// Where is the optional filter passed to List. Nil pointer = no filter on
-// that field.
 type Where struct {
 	Enabled *bool
 }
 
-// Page controls list pagination. Limit <= 0 means "no limit" (used by the
-// in-memory cron loader, which needs every enabled row).
 type Page struct {
 	Limit  int
 	Offset int
 }
 
-// List returns matching schedules along with the total count (ignoring page).
 func (r *Repository) List(ctx context.Context, where Where, page Page) ([]Schedule, int64, error) {
 	q := r.db.WithContext(ctx).Model(&Schedule{})
 	if where.Enabled != nil {

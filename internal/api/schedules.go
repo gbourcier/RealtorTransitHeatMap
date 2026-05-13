@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ScheduleRepo is the API's view of the schedule store.
 type ScheduleRepo interface {
 	List(ctx context.Context, where schedule.Where, page schedule.Page) ([]schedule.Schedule, int64, error)
 	Get(ctx context.Context, id uuid.UUID) (*schedule.Schedule, error)
@@ -22,8 +21,6 @@ type ScheduleRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// ScheduleReloader is the in-memory cron runtime; handlers call Reload after
-// writes so the active schedule table stays in sync with the DB.
 type ScheduleReloader interface {
 	Reload(ctx context.Context) error
 }

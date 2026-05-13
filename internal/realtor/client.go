@@ -18,9 +18,6 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 )
 
-// ErrForbidden is returned when the realtor.ca search endpoint responds 403.
-// ErrNullCount is returned when the realtor.ca response contains no usable
-// total record count (e.g., results are present but Paging is empty/zeroed).
 var (
 	ErrForbidden = errors.New("realtor: forbidden")
 	ErrNullCount = errors.New("realtor: null count")
@@ -98,10 +95,6 @@ func (c *Client) FetchPrices(ctx context.Context) ([]listing.Observation, error)
 	return all, nil
 }
 
-// ensurePrimed re-runs primeSession if the cookies are older than primeTTL.
-// Imperva session cookies don't carry an explicit Max-Age and can be
-// invalidated server-side after roughly half an hour, so we proactively
-// refresh on that cadence to avoid the next search 403'ing.
 func (c *Client) ensurePrimed(ctx context.Context) error {
 	if time.Since(c.lastPrime) < primeTTL {
 		return nil
@@ -113,9 +106,6 @@ func (c *Client) ensurePrimed(ctx context.Context) error {
 	return nil
 }
 
-// primeSession does a GET on the public site so the cookie jar picks up
-// the anti-bot cookies (Imperva visid_incap_*, reese84, etc.) that the
-// search endpoint requires. Without this, the first POST hits a 403.
 func (c *Client) primeSession(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, primeURL, nil)
 	if err != nil {
@@ -205,10 +195,6 @@ func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Observation
 	return decodeObservations(parsed.Results), parsed.Paging.TotalPages, nil
 }
 
-// decodeObservations converts realtor.ca wire-format results into domain
-// observations. Best-effort numeric parsing: malformed lat/lon/price strings
-// become zero rather than aborting the batch. Results without an Individual
-// entry are skipped because we have no Board (organization) id for them.
 func decodeObservations(results []listingResult) []listing.Observation {
 	out := make([]listing.Observation, 0, len(results))
 	for _, r := range results {
@@ -220,13 +206,13 @@ func decodeObservations(results []listingResult) []listing.Observation {
 		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
 		out = append(out, listing.Observation{
 			Listing: listing.Listing{
-				Board:      r.Individual[0].Organization.OrganizationId,
-				MLS:        r.MlsNumber,
-				Latitude:   lat,
-				Longitude:  lon,
-				Address:    r.Property.Address.AddressText,
-				Status:     r.StatusId,
-				Slug: r.RelativeDetailsURL,
+				Board:     r.Individual[0].Organization.OrganizationId,
+				MLS:       r.MlsNumber,
+				Latitude:  lat,
+				Longitude: lon,
+				Address:   r.Property.Address.AddressText,
+				Status:    r.StatusId,
+				Slug:      r.RelativeDetailsURL,
 			},
 			Price: price,
 		})
