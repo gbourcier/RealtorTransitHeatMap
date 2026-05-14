@@ -4,12 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type Config struct {
 	HTTP    HTTPConfig
 	DB      DBConfig
 	Realtor RealtorConfig
+	Transit TransitConfig
 }
 
 type HTTPConfig struct {
@@ -18,6 +22,18 @@ type HTTPConfig struct {
 
 type DBConfig struct {
 	URL string
+}
+
+type TransitConfig struct {
+	ReferenceKey  string
+	ReferenceLat  float64
+	ReferenceLon  float64
+	SnapshotKey   string
+	SnapshotDay   time.Weekday
+	SnapshotHour  int
+	NearestStops  int
+	WalkSpeedMps  float64
+	WalkDetour    float64
 }
 
 type RealtorConfig struct {
@@ -75,6 +91,11 @@ func Load() (*Config, error) {
 		sslMode = "?sslmode=disable"
 	}
 
+	transit, err := loadTransitConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		HTTP: HTTPConfig{
 			Addr: addr,
@@ -95,5 +116,105 @@ func Load() (*Config, error) {
 			LongitudeMax: os.Getenv("LON_MAX"),
 			LongitudeMin: os.Getenv("LON_MIN"),
 		},
+		Transit: transit,
 	}, nil
+}
+
+var weekdayNames = map[string]time.Weekday{
+	"sun": time.Sunday,
+	"mon": time.Monday,
+	"tue": time.Tuesday,
+	"wed": time.Wednesday,
+	"thu": time.Thursday,
+	"fri": time.Friday,
+	"sat": time.Saturday,
+}
+
+func loadTransitConfig() (TransitConfig, error) {
+	snapshot := os.Getenv("TRANSIT_SNAPSHOT")
+	if snapshot == "" {
+		snapshot = "tue-09"
+	}
+	day, hour, err := parseSnapshot(snapshot)
+	if err != nil {
+		return TransitConfig{}, fmt.Errorf("TRANSIT_SNAPSHOT: %w", err)
+	}
+
+	refLat, err := parseFloatEnv("TRANSIT_REF_LAT", 45.5048)
+	if err != nil {
+		return TransitConfig{}, err
+	}
+	refLon, err := parseFloatEnv("TRANSIT_REF_LON", -73.5772)
+	if err != nil {
+		return TransitConfig{}, err
+	}
+	refKey := os.Getenv("TRANSIT_REF_KEY")
+	if refKey == "" {
+		refKey = "mcgill"
+	}
+
+	nearest, err := parseIntEnv("TRANSIT_NEAREST_STOPS", 5)
+	if err != nil {
+		return TransitConfig{}, err
+	}
+	walkSpeed, err := parseFloatEnv("TRANSIT_WALK_SPEED_MPS", 1.39)
+	if err != nil {
+		return TransitConfig{}, err
+	}
+	walkDetour, err := parseFloatEnv("TRANSIT_WALK_DETOUR", 1.3)
+	if err != nil {
+		return TransitConfig{}, err
+	}
+
+	return TransitConfig{
+		ReferenceKey: refKey,
+		ReferenceLat: refLat,
+		ReferenceLon: refLon,
+		SnapshotKey:  snapshot,
+		SnapshotDay:  day,
+		SnapshotHour: hour,
+		NearestStops: nearest,
+		WalkSpeedMps: walkSpeed,
+		WalkDetour:   walkDetour,
+	}, nil
+}
+
+func parseSnapshot(s string) (time.Weekday, int, error) {
+	parts := strings.Split(strings.ToLower(s), "-")
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("invalid format %q, expected ddd-hh (e.g. tue-09)", s)
+	}
+	day, ok := weekdayNames[parts[0]]
+	if !ok {
+		return 0, 0, fmt.Errorf("invalid day %q", parts[0])
+	}
+	hour, err := strconv.Atoi(parts[1])
+	if err != nil || hour < 0 || hour > 23 {
+		return 0, 0, fmt.Errorf("invalid hour %q", parts[1])
+	}
+	return day, hour, nil
+}
+
+func parseFloatEnv(name string, def float64) (float64, error) {
+	v := os.Getenv(name)
+	if v == "" {
+		return def, nil
+	}
+	f, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s: invalid float %q", name, v)
+	}
+	return f, nil
+}
+
+func parseIntEnv(name string, def int) (int, error) {
+	v := os.Getenv(name)
+	if v == "" {
+		return def, nil
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0, fmt.Errorf("%s: invalid integer %q", name, v)
+	}
+	return n, nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/transit"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/joho/godotenv"
 )
@@ -53,8 +54,16 @@ func run() error {
 	listings := listing.NewRepository(gormDB)
 	runs := scraperun.NewRepository(gormDB)
 	schedules := schedule.NewRepository(gormDB)
+	stops := transit.NewRepository(gormDB)
 
-	w := worker.New(realtorClient, listings, runs)
+	transitWorker := transit.NewWorker(stops, listings, transit.Config{
+		NearestStops: cfg.Transit.NearestStops,
+		WalkSpeedMps: cfg.Transit.WalkSpeedMps,
+		WalkDetour:   cfg.Transit.WalkDetour,
+	})
+	transitWorker.Bind(ctx)
+
+	w := worker.New(realtorClient, listings, runs, transitWorker)
 	w.Bind(ctx)
 
 	scheduler := schedule.New(schedules, w)
@@ -62,7 +71,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler, listings)
+	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler, listings, transitWorker)
 
 	serverErr := make(chan error, 1)
 	go func() {
@@ -86,5 +95,6 @@ func run() error {
 		slog.Warn("server shutdown error", "err", err)
 	}
 	w.Wait()
+	transitWorker.Wait()
 	return nil
 }

@@ -51,7 +51,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 		inserted = len(listings) - int(existing)
 
 		if err := tx.
-			Omit(clause.Associations).
+			Omit(clause.Associations, "FirstSeenAt").
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
 				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status", "slug"}),
@@ -92,16 +92,61 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	}
 
 	col := map[string]string{
-		"price":         "lp.price",
-		"first_seen_at": "listings.first_seen_at",
+		"price":                    "lp.price",
+		"first_seen_at":            "listings.first_seen_at",
+		"commute_seconds_downtown": "listings.commute_seconds_downtown",
 	}[sort.By]
 
-	err := q.Order(col + " " + sort.Dir).
+	err := q.Order(col + " " + sort.Dir + " NULLS LAST").
 		Limit(page.Limit).
 		Offset(page.Offset).
 		Find(&rows).Error
 
 	return rows, total, err
+}
+
+func (r *Repository) ListPendingCommute(ctx context.Context, refresh bool) ([]PendingCommute, error) {
+	q := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("board, mls, latitude, longitude")
+	if !refresh {
+		q = q.Where("commute_seconds_downtown IS NULL")
+	}
+	var rows []PendingCommute
+	if err := q.Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *Repository) GetPendingCommute(ctx context.Context, board, mls int) (*PendingCommute, error) {
+	var row PendingCommute
+	err := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("board, mls, latitude, longitude").
+		Where("board = ? AND mls = ?", board, mls).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.Board == 0 && row.MLS == 0 {
+		return nil, ErrNotFound
+	}
+	return &row, nil
+}
+
+func (r *Repository) UpdateCommute(ctx context.Context, board, mls int, seconds int, computedAt time.Time) error {
+	res := r.db.WithContext(ctx).Model(&Listing{}).
+		Where("board = ? AND mls = ?", board, mls).
+		Updates(map[string]any{
+			"commute_seconds_downtown": seconds,
+			"commute_computed_at":      computedAt,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *Repository) GetListing(ctx context.Context, board, mls int) (*Listing, error) {

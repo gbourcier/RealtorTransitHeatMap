@@ -5,7 +5,8 @@
 #   3. download Go module dependencies
 #   4. set up the database (drop + create + migrate + seed)
 #   5. build all Go packages
-#   6. install frontend npm dependencies
+#   6. precompute transit stops from GTFS feeds
+#   7. install frontend npm dependencies
 #
 # Idempotent: safe to re-run.
 
@@ -38,6 +39,13 @@ echo "==> setting up database..."
 
 echo "==> go build..."
 go build ./...
+
+echo "==> precomputing transit stops (downloads GTFS feeds on first run)..."
+PRECOMPUTE_FLAGS=""
+if [[ -d data/gtfs ]] && compgen -G "data/gtfs/*.zip" > /dev/null; then
+    PRECOMPUTE_FLAGS="-skip-download"
+fi
+go run ./cmd/gtfs-precompute $PRECOMPUTE_FLAGS
 
 echo "==> installing frontend dependencies..."
 if ! command -v npm >/dev/null 2>&1; then
