@@ -1,40 +1,50 @@
-import { api, type Paginated } from './client'
+import { api, type Paginated } from "./client";
 
 export interface Listing {
-  board: number
-  mls: number
-  address: string
-  currentPrice: number | null
-  firstSeenAt: number
-  slug: string
+  board: number;
+  mls: number;
+  address: string;
+  currentPrice: number | null;
+  commuteSecondsDowntown: number | null;
+  firstSeenAt: number;
+  slug: string;
 }
 
 export interface PriceHistory {
-  observedAt: number
-  price: number
+  observedAt: number;
+  price: number;
 }
 
 export interface ListingDetail extends Listing {
-  status: string
-  priceHistories: PriceHistory[]
+  status: string;
+  priceHistories: PriceHistory[];
 }
 
-export type SortBy = 'price' | 'first_seen_at'
-export type SortDir = 'asc' | 'desc'
+export type SortBy = "price" | "first_seen_at" | "commute_time";
+export type SortDir = "asc" | "desc";
 
 export interface ListListingsParams {
-  limit?: number
-  offset?: number
-  sortBy?: SortBy
-  sortDir?: SortDir
+  limit?: number;
+  offset?: number;
+  sortBy?: SortBy;
+  sortDir?: SortDir;
 }
 
-export async function listListings(params: ListListingsParams = {}): Promise<Paginated<Listing>> {
-  const { data } = await api.get<Paginated<Listing>>('/api/listings', { params })
-  return data
+export async function listListings(
+  params: ListListingsParams = {},
+): Promise<Paginated<Listing>> {
+  const { data } = await api.get<Paginated<Listing>>("/api/listings", {
+    params,
+  });
+  return data;
 }
 
-export async function getListing(board: number, mls: number): Promise<ListingDetail> {
-  const { data } = await api.get<ListingDetail>(`/api/listings/${board}/${mls}`)
-  return data
+export async function getListing(
+  board: number,
+  mls: number,
+): Promise<ListingDetail> {
+  const { data } = await api.get<ListingDetail>(
+    `/api/listings/${board}/${mls}`,
+  );
+  return data;
 }
