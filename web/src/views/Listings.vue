@@ -68,6 +68,11 @@ function formatDate(unix: number): string {
     return new Date(unix * 1000).toLocaleDateString("en-CA");
 }
 
+function formatCommute(seconds: number | null): string {
+    if (seconds == null) return "—";
+    return `${Math.round(seconds / 60)} min`;
+}
+
 onMounted(load);
 </script>
 
@@ -158,7 +163,7 @@ onMounted(load);
                             {{ formatPrice(item.currentPrice) }}
                         </td>
                         <td>{{ formatDate(item.firstSeenAt) }}</td>
-                        <td>{{ item.commuteSecondsDowntown || "—" }}</td>
+                        <td>{{ formatCommute(item.commuteSecondsDowntown) }}</td>
                     </tr>
                 </tbody>
             </v-table>

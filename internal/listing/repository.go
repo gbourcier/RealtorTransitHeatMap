@@ -51,7 +51,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 		inserted = len(listings) - int(existing)
 
 		if err := tx.
-			Omit(clause.Associations).
+			Omit(clause.Associations, "FirstSeenAt").
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
 				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status", "slug"}),
@@ -92,11 +92,12 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	}
 
 	col := map[string]string{
-		"price":         "lp.price",
-		"first_seen_at": "listings.first_seen_at",
+		"price":                    "lp.price",
+		"first_seen_at":            "listings.first_seen_at",
+		"commute_seconds_downtown": "listings.commute_seconds_downtown",
 	}[sort.By]
 
-	err := q.Order(col + " " + sort.Dir).
+	err := q.Order(col + " " + sort.Dir + " NULLS LAST").
 		Limit(page.Limit).
 		Offset(page.Offset).
 		Find(&rows).Error
