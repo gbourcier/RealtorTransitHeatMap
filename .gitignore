@@ -7,9 +7,8 @@
 # Go debug artifacts
 __debug_*
 
-# Editor: Zed
-#  .zed/tasks.json is checked in (shared run tasks).
-#  User-local Zed state lives in ~/.config/zed and is not in this repo.
+# Exo data
+data
 
 # Local environment files (DB credentials, etc.)
 .env
