@@ -21,8 +21,9 @@ type listingHandlers struct {
 }
 
 var validSortBy = map[string]bool{
-	"price":         true,
-	"first_seen_at": true,
+	"price":                    true,
+	"first_seen_at":            true,
+	"commute_seconds_downtown": true,
 }
 
 func (h *listingHandlers) list(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,11 @@ func (h *listingHandlers) list(w http.ResponseWriter, r *http.Request) {
 	if sortBy == "" {
 		sortBy = "first_seen_at"
 	}
+
+	if sortBy == "commute_time" {
+		sortBy = "commute_seconds_downtown"
+	}
+
 	if !validSortBy[sortBy] {
 		writeError(w, http.StatusBadRequest, "invalid 'sortBy' param")
 		return

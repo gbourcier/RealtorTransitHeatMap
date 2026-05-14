@@ -1,9 +1,0 @@
-[
-  {
-    "adapter": "Delve",
-    "label": "attach: air dlv :2345",
-    "request": "attach",
-    "mode": "remote",
-    "tcp_connection": { "host": "127.0.0.1", "port": 2345 },
-  },
-]

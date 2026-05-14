@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Backend",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "host": "127.0.0.1",
+      "port": 2345,
+      "preLaunchTask": "air: serve",
+      "presentation": { "group": "1_stack", "order": 1 }
+    },
+    {
+      "name": "Start Backend (debug)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/api",
+      "cwd": "${workspaceFolder}",
+      "presentation": { "group": "1_stack", "order": 2 }
+    },
+    {
+      "name": "Start Frontend",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/web",
+      "preLaunchTask": "vite: serve",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${workspaceFolder}/web/src/*",
+        "webpack:///src/*": "${workspaceFolder}/web/src/*",
+        "/src/*": "${workspaceFolder}/web/src/*"
+      },
+      "presentation": { "group": "1_stack", "order": 2 }
+    },
+    {
+      "name": "attach: air dlv :2345",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "host": "127.0.0.1",
+      "port": 2345,
+      "presentation": { "group": "2_attach", "order": 1 }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Start Stack",
+      "configurations": ["Start Backend", "Start Frontend"],
+      "stopAll": true,
+      "presentation": { "group": "0_compound", "order": 1 }
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/tmp": true
+    },
+    "search.exclude": {
+      "**/tmp": true,
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build-errors.log": true,
+      "**/go.sum": true,
+      "**/package-lock.json": true
+    },
+    "files.watcherExclude": {
+      "**/tmp/**": true,
+      "**/node_modules/**": true,
+      "**/dist/**": true
+    },
+
+    "go.useLanguageServer": true,
+    "go.formatTool": "goimports",
+    "go.lintTool": "golangci-lint",
+    "go.testFlags": ["-v"],
+    "[go]": {
+      "editor.tabSize": 4,
+      "editor.insertSpaces": false,
+      "editor.defaultFormatter": "golang.go",
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+      }
+    },
+    "gopls": {
+      "ui.semanticTokens": true,
+      "ui.completion.usePlaceholders": true
+    },
+
+    "typescript.tsdk": "web/node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "[vue]": {
+      "editor.defaultFormatter": "Vue.volar"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
+
+    "yaml.schemas": {
+      "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "docker-compose*.yml"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "golang.go",
+      "Vue.volar",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml"
+    ]
+  }
+}
