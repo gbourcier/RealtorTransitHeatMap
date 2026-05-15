@@ -25,18 +25,39 @@ func main() {
 	cacheDir := flag.String("cache", "data/gtfs", "directory to cache downloaded GTFS zips")
 	skipDownload := flag.Bool("skip-download", false, "skip downloading if cache files exist")
 	dryRun := flag.Bool("dry-run", false, "compute but don't write to database")
+	ifEmpty := flag.Bool("if-empty", false, "skip work if transit_stops already has rows")
 	flag.Parse()
 
-	if err := run(*cacheDir, *skipDownload, *dryRun); err != nil {
+	if err := run(*cacheDir, *skipDownload, *dryRun, *ifEmpty); err != nil {
 		slog.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(cacheDir string, skipDownload, dryRun bool) error {
+func run(cacheDir string, skipDownload, dryRun, ifEmpty bool) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+
+	if ifEmpty {
+		gormDB, err := db.Open(cfg.DB.URL)
+		if err != nil {
+			return err
+		}
+		sqlDB, err := gormDB.DB()
+		if err != nil {
+			return err
+		}
+		n, err := transit.NewRepository(gormDB).Count(context.Background())
+		sqlDB.Close()
+		if err != nil {
+			return fmt.Errorf("count transit_stops: %w", err)
+		}
+		if n > 0 {
+			slog.Info("transit_stops already populated; skipping", "rows", n)
+			return nil
+		}
 	}
 
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
