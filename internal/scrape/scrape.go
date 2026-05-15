@@ -1,4 +1,4 @@
-package worker
+package scrape
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrBusy = errors.New("worker: scrape already in progress")
+var ErrBusy = errors.New("scrape: already in progress")
 
 type RealtorClient interface {
 	FetchPrices(ctx context.Context) ([]listing.Observation, error)

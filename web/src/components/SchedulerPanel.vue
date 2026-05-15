@@ -6,9 +6,14 @@ import {
   createSchedule,
   updateSchedule,
   deleteSchedule,
+  type JobType,
   type Schedule,
 } from '../api/schedules'
 import ScheduleDialog from './ScheduleDialog.vue'
+
+const props = defineProps<{
+  jobType?: JobType
+}>()
 
 const items = ref<Schedule[]>([])
 const total = ref(0)
@@ -24,7 +29,11 @@ async function refresh() {
   loading.value = true
   error.value = null
   try {
-    const res = await listSchedules({ limit: limit.value, offset: offset.value })
+    const res = await listSchedules({
+      limit: limit.value,
+      offset: offset.value,
+      ...(props.jobType ? { jobType: props.jobType } : {}),
+    })
     items.value = res.items
     total.value = res.total
   } catch (e: any) {
@@ -59,7 +68,7 @@ async function onSubmit(payload: { name: string; cronExpr: string; enabled: bool
     if (editing.value) {
       await updateSchedule(editing.value.id, payload)
     } else {
-      await createSchedule(payload)
+      await createSchedule({ ...payload, ...(props.jobType ? { jobType: props.jobType } : {}) })
     }
     dialogOpen.value = false
     await refresh()
@@ -91,7 +100,7 @@ async function onDelete(s: Schedule) {
 <template>
   <v-card>
     <v-card-title class="d-flex align-center">
-      <span>Schedules</span>
+      <span>{{ 'Schedules' }}</span>
       <v-spacer />
       <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreate">New</v-btn>
     </v-card-title>
