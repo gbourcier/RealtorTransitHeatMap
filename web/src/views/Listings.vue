@@ -73,6 +73,30 @@ function formatCommute(seconds: number | null): string {
     return `${Math.round(seconds / 60)} min`;
 }
 
+function nextTuesday9amUnix(): number {
+    const target = new Date();
+    target.setHours(9, 0, 0, 0);
+    const dayOfWeek = target.getDay();
+    let daysToAdd = (2 - dayOfWeek + 7) % 7;
+    if (daysToAdd === 0 && target.getTime() <= Date.now()) {
+        daysToAdd = 7;
+    }
+    target.setDate(target.getDate() + daysToAdd);
+    return Math.floor(target.getTime() / 1000);
+}
+
+function commuteMapUrl(address: string | null): string | null {
+    if (!address) return null;
+    const params = new URLSearchParams({
+        api: "1",
+        origin: address,
+        destination: "McGill Station, Montreal, QC",
+        travelmode: "transit",
+        arrival_time: String(nextTuesday9amUnix()),
+    });
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
 onMounted(load);
 </script>
 
@@ -163,7 +187,23 @@ onMounted(load);
                             {{ formatPrice(item.currentPrice) }}
                         </td>
                         <td>{{ formatDate(item.firstSeenAt) }}</td>
-                        <td>{{ formatCommute(item.commuteSecondsDowntown) }}</td>
+                        <td>
+                            <a
+                                v-if="
+                                    item.commuteSecondsDowntown != null &&
+                                    item.address
+                                "
+                                :href="commuteMapUrl(item.address) ?? '#'"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="commute-link"
+                            >
+                                {{ formatCommute(item.commuteSecondsDowntown) }}
+                            </a>
+                            <template v-else>
+                                {{ formatCommute(item.commuteSecondsDowntown) }}
+                            </template>
+                        </td>
                     </tr>
                 </tbody>
             </v-table>
@@ -208,5 +248,12 @@ onMounted(load);
 .link-col {
     width: 40px;
     padding-right: 0 !important;
+}
+.commute-link {
+    color: rgb(var(--v-theme-primary));
+    text-decoration: none;
+}
+.commute-link:hover {
+    text-decoration: underline;
 }
 </style>
