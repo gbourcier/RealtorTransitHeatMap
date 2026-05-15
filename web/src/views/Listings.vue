@@ -13,7 +13,7 @@ const limit = ref(50);
 const page = ref(1);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const sortBy = ref<SortBy>("commute_time");
+const sortBy = ref<SortBy>("first_seen_at");
 const sortDir = ref<SortDir>("desc");
 
 const offset = computed(() => (page.value - 1) * limit.value);
@@ -64,8 +64,27 @@ function formatPrice(price: number | null): string {
     }).format(price);
 }
 
+function daysSince(unix: number): number {
+    const date = new Date(unix * 1000);
+    const now = new Date();
+    const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86400000);
+}
+
 function formatDate(unix: number): string {
-    return new Date(unix * 1000).toLocaleDateString("en-CA");
+    const diff = daysSince(unix);
+    if (diff === 0) return "today";
+    if (diff === 1) return "yesterday";
+    const date = new Date(unix * 1000);
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+}
+
+function isNew(unix: number): boolean {
+    return daysSince(unix) === 0;
 }
 
 function formatCommute(seconds: number | null): string {
@@ -148,7 +167,13 @@ onMounted(load);
                         <td class="text-right">
                             {{ formatPrice(item.currentPrice) }}
                         </td>
-                        <td>{{ formatDate(item.firstSeenAt) }}</td>
+                        <td>
+                            <span class="first-seen">
+                                <span>{{ formatDate(item.firstSeenAt) }}</span>
+                                <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary"
+                                    variant="outlined">new</v-chip>
+                            </span>
+                        </td>
                         <td>
                             <v-tooltip v-if="
                                 item.commuteSecondsDowntown != null &&
@@ -226,7 +251,7 @@ onMounted(load);
     opacity: 0;
     transform: translateX(-4px);
     transition: opacity 120ms ease, transform 120ms ease;
-    color: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-secondary));
 }
 
 .listing-row:hover .address-link__icon {
@@ -235,7 +260,7 @@ onMounted(load);
 }
 
 .address-link:hover {
-    color: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-secondary));
     text-decoration: underline;
 }
 
@@ -243,8 +268,14 @@ onMounted(load);
     opacity: 1;
 }
 
+.first-seen {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .commute-link {
-    color: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-secondary));
     text-decoration: none;
     display: inline-flex;
     align-items: center;
