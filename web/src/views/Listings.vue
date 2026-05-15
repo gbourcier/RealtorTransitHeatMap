@@ -16,6 +16,68 @@ const error = ref<string | null>(null);
 const sortBy = ref<SortBy>("first_seen_at");
 const sortDir = ref<SortDir>("desc");
 
+const maxPrice = ref<number | null>(null);
+const maxCommuteSec = ref<number | null>(null);
+const newWithinDays = ref<number | null>(null);
+
+const priceOptions = [400000, 500000, 600000, 700000, 800000, 1000000, 1500000, 2000000];
+const commuteOptions = [15, 30, 45, 60, 90];
+
+const activeFilterCount = computed(() => {
+    let n = 0;
+    if (maxPrice.value != null) n++;
+    if (maxCommuteSec.value != null) n++;
+    if (newWithinDays.value != null) n++;
+    return n;
+});
+
+function formatCompactPrice(price: number): string {
+    if (price >= 1_000_000) {
+        const m = price / 1_000_000;
+        return `$${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+    }
+    return `$${Math.round(price / 1000)}k`;
+}
+
+function priceChipLabel(): string {
+    return maxPrice.value == null
+        ? "Max price"
+        : `≤ ${formatCompactPrice(maxPrice.value)}`;
+}
+
+function commuteChipLabel(): string {
+    return maxCommuteSec.value == null
+        ? "Max commute"
+        : `≤ ${Math.round(maxCommuteSec.value / 60)} min`;
+}
+
+function applyFilters() {
+    page.value = 1;
+    load();
+}
+
+function setMaxPrice(value: number | null) {
+    maxPrice.value = value;
+    applyFilters();
+}
+
+function setMaxCommute(minutes: number | null) {
+    maxCommuteSec.value = minutes == null ? null : minutes * 60;
+    applyFilters();
+}
+
+function toggleNewOnly() {
+    newWithinDays.value = newWithinDays.value == null ? 7 : null;
+    applyFilters();
+}
+
+function clearAllFilters() {
+    maxPrice.value = null;
+    maxCommuteSec.value = null;
+    newWithinDays.value = null;
+    applyFilters();
+}
+
 const offset = computed(() => (page.value - 1) * limit.value);
 const pageCount = computed(() => Math.ceil(total.value / limit.value));
 
@@ -28,6 +90,9 @@ async function load() {
             offset: offset.value,
             sortBy: sortBy.value,
             sortDir: sortDir.value,
+            ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
+            ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
+            ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
         });
         items.value = res.items;
         total.value = res.total;
@@ -103,19 +168,111 @@ function commuteMapUrl(address: string | null): string | null {
     return `https://www.google.com/maps?${params.toString()}`;
 }
 
+function openListing(item: Listing): void {
+    if (!item.slug) return;
+    window.open(item.slug, "_blank", "noopener,noreferrer");
+}
+
+function parseAddress(raw: string | null | undefined): {
+    street: string;
+    locality: string;
+} {
+    if (!raw) return { street: "—", locality: "" };
+    const parts = raw.split("|").map((s) => s.trim()).filter(Boolean);
+    const street = parts[0] ?? raw;
+    const rest = parts.slice(1).join(", ");
+    const locality = rest
+        .replace(/\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\s*$/i, "")
+        .trim();
+    return { street, locality };
+}
+
 onMounted(load);
 </script>
 
 <template>
-    <v-container fluid class="pa-6">
+    <v-container fluid class="pa-2 pa-sm-6">
         <v-card>
             <v-card-title class="d-flex align-center">
                 <span>Listings</span>
                 <v-spacer />
-                <span v-if="total > 0" class="text-body-2 text-medium-emphasis mr-4">{{ total }} total</span>
-                <v-btn variant="text" icon="mdi-refresh" :loading="loading" @click="load" />
+                <span v-if="total > 0" class="text-body-2 text-medium-emphasis">{{ total }} total</span>
             </v-card-title>
             <v-divider />
+
+            <div class="filter-bar px-3 py-2">
+                <v-menu>
+                    <template #activator="{ props }">
+                        <v-btn
+                            v-bind="props"
+                            :variant="maxPrice != null ? 'tonal' : 'text'"
+                            :color="maxPrice != null ? 'secondary' : undefined"
+                            rounded="pill"
+                            append-icon="mdi-chevron-down"
+                            class="filter-btn text-none"
+                        >{{ priceChipLabel() }}</v-btn>
+                    </template>
+                    <v-list density="compact">
+                        <v-list-item
+                            :active="maxPrice == null"
+                            title="No max"
+                            @click="setMaxPrice(null)"
+                        />
+                        <v-divider />
+                        <v-list-item
+                            v-for="p in priceOptions"
+                            :key="p"
+                            :active="maxPrice === p"
+                            :title="`Up to ${formatCompactPrice(p)}`"
+                            @click="setMaxPrice(p)"
+                        />
+                    </v-list>
+                </v-menu>
+
+                <v-menu>
+                    <template #activator="{ props }">
+                        <v-btn
+                            v-bind="props"
+                            :variant="maxCommuteSec != null ? 'tonal' : 'text'"
+                            :color="maxCommuteSec != null ? 'secondary' : undefined"
+                            rounded="pill"
+                            append-icon="mdi-chevron-down"
+                            class="filter-btn text-none"
+                        >{{ commuteChipLabel() }}</v-btn>
+                    </template>
+                    <v-list density="compact">
+                        <v-list-item
+                            :active="maxCommuteSec == null"
+                            title="No max"
+                            @click="setMaxCommute(null)"
+                        />
+                        <v-divider />
+                        <v-list-item
+                            v-for="m in commuteOptions"
+                            :key="m"
+                            :active="maxCommuteSec === m * 60"
+                            :title="`Up to ${m} min`"
+                            @click="setMaxCommute(m)"
+                        />
+                    </v-list>
+                </v-menu>
+
+                <v-btn
+                    :variant="newWithinDays != null ? 'tonal' : 'text'"
+                    :color="newWithinDays != null ? 'secondary' : undefined"
+                    rounded="pill"
+                    class="filter-btn text-none"
+                    @click="toggleNewOnly"
+                >New only</v-btn>
+
+                <v-btn
+                    v-if="activeFilterCount > 0"
+                    variant="text"
+                    size="small"
+                    class="filter-clear text-none"
+                    @click="clearAllFilters"
+                >Clear</v-btn>
+            </div>
 
             <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
                 error
@@ -125,7 +282,8 @@ onMounted(load);
                 <v-progress-circular indeterminate />
             </v-card-text>
 
-            <v-table v-else-if="items.length > 0" density="comfortable" class="listings-table">
+            <template v-else-if="items.length > 0">
+            <v-table density="comfortable" class="listings-table d-none d-md-table">
                 <thead>
                     <tr>
                         <th>Address</th>
@@ -196,6 +354,64 @@ onMounted(load);
                 </tbody>
             </v-table>
 
+            <div class="d-md-none listing-cards">
+                <div
+                    v-for="item in items"
+                    :key="`m-${item.board}-${item.mls}`"
+                    role="link"
+                    tabindex="0"
+                    class="listing-card"
+                    @click="openListing(item)"
+                    @keydown.enter.prevent="openListing(item)"
+                    @keydown.space.prevent="openListing(item)"
+                >
+                    <div class="listing-card__top">
+                        <span class="listing-card__price">{{
+                            formatPrice(item.currentPrice)
+                        }}</span>
+                        <v-chip
+                            v-if="isNew(item.firstSeenAt)"
+                            size="x-small"
+                            color="secondary"
+                            variant="flat"
+                            class="listing-card__new"
+                        >new</v-chip>
+                    </div>
+                    <div class="listing-card__street">
+                        {{ parseAddress(item.address).street }}
+                    </div>
+                    <div
+                        v-if="parseAddress(item.address).locality"
+                        class="listing-card__locality"
+                    >
+                        {{ parseAddress(item.address).locality }}
+                    </div>
+                    <div class="listing-card__meta">
+                        <a
+                            v-if="item.commuteSecondsDowntown != null && item.address"
+                            :href="commuteMapUrl(item.address) ?? '#'"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="listing-card__commute listing-card__commute--link"
+                            @click.stop
+                        >
+                            <v-icon size="small">mdi-train</v-icon>
+                            <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                            <span class="listing-card__commute-label">to downtown</span>
+                            <v-icon size="x-small" class="listing-card__commute-chevron">mdi-chevron-right</v-icon>
+                        </a>
+                        <span v-else class="listing-card__commute listing-card__commute--muted">
+                            <v-icon size="small">mdi-train</v-icon>
+                            —
+                        </span>
+                        <span class="listing-card__seen">{{
+                            formatDate(item.firstSeenAt)
+                        }}</span>
+                    </div>
+                </div>
+            </div>
+            </template>
+
             <v-card-text v-else class="text-medium-emphasis text-center py-8">
                 No listings found.
             </v-card-text>
@@ -216,6 +432,28 @@ onMounted(load);
 </template>
 
 <style scoped>
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    letter-spacing: normal;
+    font-weight: 500;
+}
+
+.filter-btn :deep(.v-btn__append) {
+    margin-inline-start: 4px;
+    opacity: 0.7;
+}
+
+.filter-clear {
+    margin-left: auto;
+    opacity: 0.75;
+}
+
 .sortable-col {
     cursor: pointer;
     user-select: none;
@@ -294,5 +532,117 @@ onMounted(load);
 
 .commute-link:hover .commute-link__icon {
     opacity: 1;
+}
+
+.listing-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+}
+
+.listing-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background-color: rgba(var(--v-theme-on-surface), 0.03);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.listing-card:active {
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.listing-card:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
+}
+
+.listing-card__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.listing-card__price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.listing-card__new {
+    margin-left: auto;
+}
+
+.listing-card__street {
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.listing-card__locality {
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.65);
+    margin-top: 2px;
+}
+
+.listing-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.8125rem;
+}
+
+.listing-card__commute {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: rgb(var(--v-theme-secondary));
+    font-weight: 500;
+}
+
+.listing-card__commute--link {
+    text-decoration: none;
+    padding: 6px 10px 6px 8px;
+    margin: -6px 0 -6px -8px;
+    border-radius: 999px;
+    background-color: rgba(var(--v-theme-secondary), 0.1);
+    border: 1px solid rgba(var(--v-theme-secondary), 0.25);
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.listing-card__commute--link:active {
+    background-color: rgba(var(--v-theme-secondary), 0.2);
+}
+
+.listing-card__commute--link:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
+}
+
+.listing-card__commute-chevron {
+    opacity: 0.6;
+    margin-left: 2px;
+}
+
+.listing-card__commute--muted {
+    color: rgba(var(--v-theme-on-surface), 0.5);
+    font-weight: 400;
+}
+
+.listing-card__commute-label {
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    font-weight: 400;
+    margin-left: 2px;
+}
+
+.listing-card__seen {
+    color: rgba(var(--v-theme-on-surface), 0.55);
 }
 </style>

@@ -44,6 +44,9 @@ type Sort struct {
 
 type Where struct {
 	ShowUnavailable bool
+	MaxPrice        *float64
+	MaxCommuteSec   *int
+	NewSince        *time.Time
 }
 
 type ListingRow struct {
