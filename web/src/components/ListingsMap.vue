@@ -14,13 +14,17 @@ const props = defineProps<{
     newWithinDays: number | null;
 }>();
 
+const emit = defineEmits<{
+    (e: "update:count", n: number): void;
+}>();
+
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
 const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
 const stopsLayer = shallowRef<L.LayerGroup | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const pinCount = ref(0);
+let hasFitBounds = false;
 
 const MONTREAL_CENTER: L.LatLngTuple = [45.5048, -73.5772];
 
@@ -122,12 +126,13 @@ async function load() {
             markers.push(m);
         }
         cluster.value.addLayers(markers);
-        pinCount.value = markers.length;
-        if (markers.length > 0) {
+        emit("update:count", markers.length);
+        if (markers.length > 0 && !hasFitBounds) {
             const bounds = L.latLngBounds(
                 markers.map((m) => m.getLatLng()),
             );
             map.value.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+            hasFitBounds = true;
         }
     } catch (e: any) {
         error.value =
@@ -233,11 +238,8 @@ watch(
 
 <template>
     <div class="listings-map-wrap">
-        <div class="listings-map-status">
+        <div v-if="loading || error" class="listings-map-status">
             <v-progress-circular v-if="loading" indeterminate size="20" width="2" class="mr-2" />
-            <span v-if="!loading && !error" class="text-body-2 text-medium-emphasis">
-                {{ pinCount }} on map
-            </span>
             <v-alert v-if="error" type="error" density="compact" variant="tonal" class="ma-0">{{ error }}</v-alert>
         </div>
         <div ref="mapEl" class="listings-map" />
@@ -247,11 +249,15 @@ watch(
 <style scoped>
 .listings-map-wrap {
     position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 480px;
+    width: 100%;
 }
 
 .listings-map {
     width: 100%;
-    height: calc(100vh - 280px);
+    flex: 1 1 auto;
     min-height: 480px;
     border-radius: 4px;
     overflow: hidden;
