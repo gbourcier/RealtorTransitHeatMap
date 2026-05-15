@@ -86,6 +86,15 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	if !where.ShowUnavailable {
 		q = q.Where("listings.status = ?", statusAvailable)
 	}
+	if where.MaxPrice != nil {
+		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
+	}
+	if where.MaxCommuteSec != nil {
+		q = q.Where("listings.commute_seconds_downtown IS NOT NULL AND listings.commute_seconds_downtown <= ?", *where.MaxCommuteSec)
+	}
+	if where.NewSince != nil {
+		q = q.Where("listings.first_seen_at >= ?", *where.NewSince)
+	}
 
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/go-chi/chi/v5"
@@ -52,9 +53,36 @@ func (h *listingHandlers) list(w http.ResponseWriter, r *http.Request) {
 		sortDir = "desc"
 	}
 
+	where := listing.Where{}
+	if v := r.URL.Query().Get("maxPrice"); v != "" {
+		n, perr := strconv.ParseFloat(v, 64)
+		if perr != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "invalid 'maxPrice' query param")
+			return
+		}
+		where.MaxPrice = &n
+	}
+	if v := r.URL.Query().Get("maxCommuteSec"); v != "" {
+		n, perr := strconv.Atoi(v)
+		if perr != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "invalid 'maxCommuteSec' query param")
+			return
+		}
+		where.MaxCommuteSec = &n
+	}
+	if v := r.URL.Query().Get("newWithinDays"); v != "" {
+		n, perr := strconv.Atoi(v)
+		if perr != nil || n < 1 {
+			writeError(w, http.StatusBadRequest, "invalid 'newWithinDays' query param")
+			return
+		}
+		since := time.Now().AddDate(0, 0, -n)
+		where.NewSince = &since
+	}
+
 	rows, total, err := h.svc.ListListings(
 		r.Context(),
-		listing.Where{},
+		where,
 		listing.Page{Limit: limit, Offset: offset},
 		listing.Sort{By: sortBy, Dir: sortDir},
 	)

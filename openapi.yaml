@@ -236,6 +236,27 @@ paths:
             type: string
             enum: [asc, desc]
             default: desc
+        - in: query
+          name: maxPrice
+          required: false
+          description: Only include listings whose current price is at most this value (CAD).
+          schema:
+            type: number
+            minimum: 0
+        - in: query
+          name: maxCommuteSec
+          required: false
+          description: Only include listings whose commute to downtown is at most this many seconds.
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: newWithinDays
+          required: false
+          description: Only include listings first seen within the last N days.
+          schema:
+            type: integer
+            minimum: 1
       responses:
         "200":
           description: Paginated listings.
