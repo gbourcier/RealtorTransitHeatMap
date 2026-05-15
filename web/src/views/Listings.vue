@@ -73,28 +73,15 @@ function formatCommute(seconds: number | null): string {
     return `${Math.round(seconds / 60)} min`;
 }
 
-function nextTuesday9amUnix(): number {
-    const target = new Date();
-    target.setHours(9, 0, 0, 0);
-    const dayOfWeek = target.getDay();
-    let daysToAdd = (2 - dayOfWeek + 7) % 7;
-    if (daysToAdd === 0 && target.getTime() <= Date.now()) {
-        daysToAdd = 7;
-    }
-    target.setDate(target.getDate() + daysToAdd);
-    return Math.floor(target.getTime() / 1000);
-}
-
 function commuteMapUrl(address: string | null): string | null {
     if (!address) return null;
     const params = new URLSearchParams({
-        api: "1",
-        origin: address,
-        destination: "McGill Station, Montreal, QC",
-        travelmode: "transit",
-        arrival_time: String(nextTuesday9amUnix()),
+        saddr: address,
+        daddr: "McGill Station, Montreal, QC",
+        dirflg: "r",
+        ttype: "arr",
     });
-    return `https://www.google.com/maps/dir/?${params.toString()}`;
+    return `https://www.google.com/maps?${params.toString()}`;
 }
 
 onMounted(load);
@@ -106,17 +93,8 @@ onMounted(load);
             <v-card-title class="d-flex align-center">
                 <span>Listings</span>
                 <v-spacer />
-                <span
-                    v-if="total > 0"
-                    class="text-body-2 text-medium-emphasis mr-4"
-                    >{{ total }} total</span
-                >
-                <v-btn
-                    variant="text"
-                    icon="mdi-refresh"
-                    :loading="loading"
-                    @click="load"
-                />
+                <span v-if="total > 0" class="text-body-2 text-medium-emphasis mr-4">{{ total }} total</span>
+                <v-btn variant="text" icon="mdi-refresh" :loading="loading" @click="load" />
             </v-card-title>
             <v-divider />
 
@@ -124,40 +102,27 @@ onMounted(load);
                 error
             }}</v-alert>
 
-            <v-card-text
-                v-if="loading && items.length === 0"
-                class="text-center py-8"
-            >
+            <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
                 <v-progress-circular indeterminate />
             </v-card-text>
 
-            <v-table v-else-if="items.length > 0" density="comfortable">
+            <v-table v-else-if="items.length > 0" density="comfortable" class="listings-table">
                 <thead>
                     <tr>
-                        <th class="link-col" />
                         <th>Address</th>
-                        <th
-                            class="sortable-col text-right"
-                            @click="toggleSort('price')"
-                        >
+                        <th class="sortable-col text-right" @click="toggleSort('price')">
                             Price
                             <v-icon size="small" class="sort-icon">{{
                                 sortIcon("price")
                             }}</v-icon>
                         </th>
-                        <th
-                            class="sortable-col"
-                            @click="toggleSort('first_seen_at')"
-                        >
+                        <th class="sortable-col" @click="toggleSort('first_seen_at')">
                             First Seen
                             <v-icon size="small" class="sort-icon">{{
                                 sortIcon("first_seen_at")
                             }}</v-icon>
                         </th>
-                        <th
-                            class="sortable-col"
-                            @click="toggleSort('commute_time')"
-                        >
+                        <th class="sortable-col" @click="toggleSort('commute_time')">
                             Commute Time
                             <v-icon size="small" class="sort-icon">{{
                                 sortIcon("commute_time")
@@ -166,43 +131,41 @@ onMounted(load);
                     </tr>
                 </thead>
                 <tbody>
-                    <tr
-                        v-for="item in items"
-                        :key="`${item.board}-${item.mls}`"
-                    >
-                        <td class="link-col">
-                            <v-btn
-                                v-if="item.slug"
-                                :href="item.slug"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                variant="text"
-                                icon="mdi-open-in-new"
-                                size="small"
-                                density="compact"
-                            />
+                    <tr v-for="item in items" :key="`${item.board}-${item.mls}`" class="listing-row">
+                        <td>
+                            <v-tooltip v-if="item.slug && item.address" location="top" open-delay="400">
+                                <template #activator="{ props }">
+                                    <a v-bind="props" :href="item.slug" target="_blank" rel="noopener noreferrer"
+                                        class="address-link">
+                                        <span>{{ item.address }}</span>
+                                        <v-icon size="small" class="address-link__icon">mdi-open-in-new</v-icon>
+                                    </a>
+                                </template>
+                                <span>View on Realtor.ca</span>
+                            </v-tooltip>
+                            <template v-else>{{ item.address || "—" }}</template>
                         </td>
-                        <td>{{ item.address || "—" }}</td>
                         <td class="text-right">
                             {{ formatPrice(item.currentPrice) }}
                         </td>
                         <td>{{ formatDate(item.firstSeenAt) }}</td>
                         <td>
-                            <a
-                                v-if="
-                                    item.commuteSecondsDowntown != null &&
-                                    item.address
-                                "
-                                :href="commuteMapUrl(item.address) ?? '#'"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="commute-link"
-                            >
+                            <v-tooltip v-if="
+                                item.commuteSecondsDowntown != null &&
+                                item.address
+                            " location="top" open-delay="400">
+                                <template #activator="{ props }">
+                                    <a v-bind="props" :href="commuteMapUrl(item.address) ?? '#'" target="_blank"
+                                        rel="noopener noreferrer" class="commute-link">
+                                        <v-icon size="small" class="commute-link__icon">mdi-directions</v-icon>
+                                        <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                                    </a>
+                                </template>
+                                <span>Get directions to downtown</span>
+                            </v-tooltip>
+                            <span v-else class="text-medium-emphasis">
                                 {{ formatCommute(item.commuteSecondsDowntown) }}
-                            </a>
-                            <template v-else>
-                                {{ formatCommute(item.commuteSecondsDowntown) }}
-                            </template>
+                            </span>
                         </td>
                     </tr>
                 </tbody>
@@ -215,17 +178,12 @@ onMounted(load);
             <template v-if="pageCount > 1">
                 <v-divider />
                 <v-card-text class="d-flex justify-center pa-3">
-                    <v-pagination
-                        :model-value="page"
-                        :length="pageCount"
-                        density="comfortable"
-                        @update:model-value="
-                            (p) => {
-                                page = p;
-                                load();
-                            }
-                        "
-                    />
+                    <v-pagination :model-value="page" :length="pageCount" density="comfortable" @update:model-value="
+                        (p) => {
+                            page = p;
+                            load();
+                        }
+                    " />
                 </v-card-text>
             </template>
         </v-card>
@@ -238,22 +196,72 @@ onMounted(load);
     user-select: none;
     white-space: nowrap;
 }
+
 .sortable-col:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
+
 .sort-icon {
     opacity: 0.5;
     vertical-align: middle;
 }
-.link-col {
-    width: 40px;
-    padding-right: 0 !important;
+
+.listings-table :deep(tbody tr.listing-row) {
+    transition: background-color 120ms ease;
 }
+
+.listings-table :deep(tbody tr.listing-row:hover) {
+    background-color: rgba(var(--v-theme-on-surface), 0.035);
+}
+
+.address-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.address-link__icon {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    color: rgb(var(--v-theme-primary));
+}
+
+.listing-row:hover .address-link__icon {
+    opacity: 0.75;
+    transform: translateX(0);
+}
+
+.address-link:hover {
+    color: rgb(var(--v-theme-primary));
+    text-decoration: underline;
+}
+
+.address-link:hover .address-link__icon {
+    opacity: 1;
+}
+
 .commute-link {
     color: rgb(var(--v-theme-primary));
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
 }
+
+.commute-link__icon {
+    opacity: 0.7;
+    transition: opacity 120ms ease;
+}
+
 .commute-link:hover {
     text-decoration: underline;
+}
+
+.commute-link:hover .commute-link__icon {
+    opacity: 1;
 }
 </style>
