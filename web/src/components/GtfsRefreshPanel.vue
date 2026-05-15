@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { listRuns, startScrape, type ScrapeRun, type ScrapeStatus } from '../api/scrapes'
+import {
+  listRefreshRuns,
+  startRefresh,
+  type RefreshRun,
+  type RefreshStatus,
+} from '../api/gtfsRefresh'
 
-const items = ref<ScrapeRun[]>([])
+const items = ref<RefreshRun[]>([])
 const total = ref(0)
 const limit = ref(20)
 const offset = ref(0)
@@ -18,7 +23,7 @@ async function refresh() {
   loading.value = true
   error.value = null
   try {
-    const res = await listRuns({ limit: limit.value, offset: offset.value })
+    const res = await listRefreshRuns({ limit: limit.value, offset: offset.value })
     items.value = res.items
     total.value = res.total
   } catch (e: any) {
@@ -32,11 +37,11 @@ async function onTrigger() {
   triggering.value = true
   error.value = null
   try {
-    await startScrape()
+    await startRefresh()
     await refresh()
   } catch (e: any) {
     if (e?.response?.status === 409) {
-      error.value = 'A scrape is already in progress.'
+      error.value = 'A refresh is already in progress.'
     } else {
       error.value = e?.response?.data?.error ?? e?.message ?? 'trigger failed'
     }
@@ -45,7 +50,7 @@ async function onTrigger() {
   }
 }
 
-function statusColor(s: ScrapeStatus): string {
+function statusColor(s: RefreshStatus): string {
   switch (s) {
     case 'running':
       return 'info'
@@ -81,7 +86,7 @@ function formatTimeShort(unix?: number | null): string {
   return `${dd}/${mm} ${time}`
 }
 
-function durationLabel(r: ScrapeRun): string {
+function durationLabel(r: RefreshRun): string {
   const end = r.completedAt ?? Math.floor(Date.now() / 1000)
   const secs = Math.max(0, end - r.startedAt)
   if (secs < 60) return `${secs}s`
@@ -105,13 +110,13 @@ onUnmounted(() => {
 <template>
   <v-card>
     <v-card-title class="d-flex align-center">
-      <span>Scrape Jobs</span>
+      <span>GTFS Refresh Jobs</span>
       <v-spacer />
-      <v-btn color="primary" prepend-icon="mdi-play" :loading="triggering" :disabled="hasRunning"
+      <v-btn color="primary" prepend-icon="mdi-refresh" :loading="triggering" :disabled="hasRunning"
         class="d-none d-sm-inline-flex" @click="onTrigger">
-        Run scrape now
+        Refresh now
       </v-btn>
-      <v-btn color="primary" icon="mdi-play" :loading="triggering" :disabled="hasRunning" size="small"
+      <v-btn color="primary" icon="mdi-refresh" :loading="triggering" :disabled="hasRunning" size="small"
         class="d-inline-flex d-sm-none" @click="onTrigger" />
     </v-card-title>
     <v-divider />
@@ -126,8 +131,7 @@ onUnmounted(() => {
             <th>Status</th>
             <th>Started</th>
             <th>Duration</th>
-            <th class="text-right">Total</th>
-            <th class="text-right">New</th>
+            <th class="text-right">Stops written</th>
             <th>Trigger</th>
             <th>Error</th>
           </tr>
@@ -141,53 +145,48 @@ onUnmounted(() => {
             </td>
             <td>{{ formatTime(r.startedAt) }}</td>
             <td>{{ durationLabel(r) }}</td>
-            <td class="text-right">{{ r.totalCount ?? '—' }}</td>
-            <td class="text-right">{{ r.newCount ?? '—' }}</td>
+            <td class="text-right">{{ r.stopsWritten != null ? r.stopsWritten.toLocaleString() : '—' }}</td>
             <td>
               <v-chip v-if="r.scheduleId" size="x-small" variant="outlined">scheduled</v-chip>
               <v-chip v-else size="x-small" variant="outlined" color="grey">manual</v-chip>
             </td>
             <td class="text-caption">
-              <span v-if="r.errorKind">{{ r.errorKind }}: {{ r.errorMessage }}</span>
+              <span v-if="r.errorMessage">{{ r.errorMessage }}</span>
             </td>
           </tr>
         </tbody>
       </v-table>
 
-      <div class="d-md-none scrape-cards">
-        <div v-for="r in items" :key="`m-${r.id}`" class="scrape-card">
-          <div class="scrape-card__top">
+      <div class="d-md-none refresh-cards">
+        <div v-for="r in items" :key="`m-${r.id}`" class="refresh-card">
+          <div class="refresh-card__top">
             <v-chip size="small" :color="statusColor(r.status)" variant="tonal">
               {{ r.status }}
             </v-chip>
-            <span class="scrape-card__when">{{ formatTimeShort(r.startedAt) }}</span>
+            <span class="refresh-card__when">{{ formatTimeShort(r.startedAt) }}</span>
           </div>
-          <div class="scrape-card__stats">
-            <span class="scrape-card__stat">
-              <span class="scrape-card__stat-label">Duration</span>
-              <span class="scrape-card__stat-value">{{ durationLabel(r) }}</span>
+          <div class="refresh-card__stats">
+            <span class="refresh-card__stat">
+              <span class="refresh-card__stat-label">Duration</span>
+              <span class="refresh-card__stat-value">{{ durationLabel(r) }}</span>
             </span>
-            <span class="scrape-card__stat">
-              <span class="scrape-card__stat-label">Total</span>
-              <span class="scrape-card__stat-value">{{ r.totalCount ?? '—' }}</span>
-            </span>
-            <span class="scrape-card__stat">
-              <span class="scrape-card__stat-label">New</span>
-              <span class="scrape-card__stat-value">{{ r.newCount ?? '—' }}</span>
+            <span class="refresh-card__stat">
+              <span class="refresh-card__stat-label">Stops</span>
+              <span class="refresh-card__stat-value">
+                {{ r.stopsWritten != null ? r.stopsWritten.toLocaleString() : '—' }}
+              </span>
             </span>
           </div>
-          <div class="scrape-card__bottom">
+          <div class="refresh-card__bottom">
             <v-chip v-if="r.scheduleId" size="x-small" variant="outlined">scheduled</v-chip>
             <v-chip v-else size="x-small" variant="outlined" color="grey">manual</v-chip>
-            <span v-if="r.errorKind" class="scrape-card__error">
-              {{ r.errorKind }}: {{ r.errorMessage }}
-            </span>
+            <span v-if="r.errorMessage" class="refresh-card__error">{{ r.errorMessage }}</span>
           </div>
         </div>
       </div>
     </template>
     <v-card-text v-else class="text-medium-emphasis text-center py-8">
-      No runs yet. Click "Run scrape now" to start one.
+      No runs yet. Click "Refresh now" to start one.
     </v-card-text>
     <v-card-text v-if="total > limit" class="text-caption">
       Showing {{ items.length }} of {{ total }}
@@ -196,57 +195,57 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.scrape-cards {
+.refresh-cards {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 8px;
 }
 
-.scrape-card {
+.refresh-card {
   background-color: rgba(var(--v-theme-on-surface), 0.03);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 10px;
   padding: 12px 14px;
 }
 
-.scrape-card__top {
+.refresh-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.scrape-card__when {
+.refresh-card__when {
   font-size: 0.8125rem;
   color: rgba(var(--v-theme-on-surface), 0.65);
 }
 
-.scrape-card__stats {
+.refresh-card__stats {
   display: flex;
   gap: 18px;
   margin-top: 10px;
 }
 
-.scrape-card__stat {
+.refresh-card__stat {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.scrape-card__stat-label {
+.refresh-card__stat-label {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: rgba(var(--v-theme-on-surface), 0.55);
 }
 
-.scrape-card__stat-value {
+.refresh-card__stat-value {
   font-size: 0.9375rem;
   font-weight: 500;
 }
 
-.scrape-card__bottom {
+.refresh-card__bottom {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -254,7 +253,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
-.scrape-card__error {
+.refresh-card__error {
   font-size: 0.8125rem;
   color: rgb(var(--v-theme-error));
 }
