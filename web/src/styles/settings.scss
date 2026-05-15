@@ -1,0 +1,9 @@
+@use 'vuetify/settings' with (
+  $button-font-weight: 400,
+  $button-text-transform: none,
+  $utilities: (
+    'width': (
+      responsive: true
+    )
+  )
+);
