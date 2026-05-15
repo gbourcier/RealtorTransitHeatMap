@@ -28,6 +28,9 @@ export interface ListListingsParams {
   offset?: number;
   sortBy?: SortBy;
   sortDir?: SortDir;
+  maxPrice?: number;
+  maxCommuteSec?: number;
+  newWithinDays?: number;
 }
 
 export async function listListings(
