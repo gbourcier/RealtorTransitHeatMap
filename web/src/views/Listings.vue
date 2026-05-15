@@ -6,6 +6,9 @@ import {
     type SortBy,
     type SortDir,
 } from "../api/listings";
+import ListingsMap from "../components/ListingsMap.vue";
+
+const viewMode = ref<"list" | "map">("list");
 
 const items = ref<Listing[]>([]);
 const total = ref(0);
@@ -196,7 +199,25 @@ onMounted(load);
             <v-card-title class="d-flex align-center">
                 <span>Listings</span>
                 <v-spacer />
-                <span v-if="total > 0" class="text-body-2 text-medium-emphasis">{{ total }} total</span>
+                <v-btn-toggle
+                    v-model="viewMode"
+                    mandatory
+                    density="comfortable"
+                    color="secondary"
+                    variant="outlined"
+                    divided
+                    class="mr-3 view-toggle"
+                >
+                    <v-btn value="list" size="small" class="text-none">
+                        <v-icon start size="small">mdi-format-list-bulleted</v-icon>
+                        List
+                    </v-btn>
+                    <v-btn value="map" size="small" class="text-none">
+                        <v-icon start size="small">mdi-map</v-icon>
+                        Map
+                    </v-btn>
+                </v-btn-toggle>
+                <span v-if="total > 0 && viewMode === 'list'" class="text-body-2 text-medium-emphasis">{{ total }} total</span>
             </v-card-title>
             <v-divider />
 
@@ -274,6 +295,17 @@ onMounted(load);
                 >Clear</v-btn>
             </div>
 
+            <template v-if="viewMode === 'map'">
+                <div class="pa-3">
+                    <ListingsMap
+                        :max-price="maxPrice"
+                        :max-commute-sec="maxCommuteSec"
+                        :new-within-days="newWithinDays"
+                    />
+                </div>
+            </template>
+
+            <template v-else>
             <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
                 error
             }}</v-alert>
@@ -427,6 +459,7 @@ onMounted(load);
                     " />
                 </v-card-text>
             </template>
+            </template>
         </v-card>
     </v-container>
 </template>
@@ -452,6 +485,14 @@ onMounted(load);
 .filter-clear {
     margin-left: auto;
     opacity: 0.75;
+}
+
+.view-toggle {
+    border-radius: 999px;
+}
+
+.view-toggle :deep(.v-btn) {
+    letter-spacing: normal;
 }
 
 .sortable-col {

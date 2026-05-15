@@ -158,6 +158,32 @@ type ListingResponse struct {
 	Slug                   string   `json:"slug"`
 }
 
+type ListingMapPinResponse struct {
+	Board                  int      `json:"board"`
+	MLS                    int      `json:"mls"`
+	Latitude               float64  `json:"latitude"`
+	Longitude              float64  `json:"longitude"`
+	Address                string   `json:"address"`
+	CurrentPrice           *float64 `json:"currentPrice"`
+	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
+	FirstSeenAt            int64    `json:"firstSeenAt"`
+	Slug                   string   `json:"slug"`
+}
+
+func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
+	return ListingMapPinResponse{
+		Board:                  row.Board,
+		MLS:                    row.MLS,
+		Latitude:               row.Latitude,
+		Longitude:              row.Longitude,
+		Address:                row.Address,
+		CurrentPrice:           row.CurrentPrice,
+		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
+		FirstSeenAt:            row.FirstSeenAt.Unix(),
+		Slug:                   "https://www.realtor.ca" + row.Slug,
+	}
+}
+
 type PriceHistoryResponse struct {
 	ObservedAt int64   `json:"observedAt"`
 	Price      float64 `json:"price"`

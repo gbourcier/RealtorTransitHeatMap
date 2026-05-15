@@ -33,10 +33,37 @@ export interface ListListingsParams {
   newWithinDays?: number;
 }
 
+export interface ListingMapPin {
+  board: number;
+  mls: number;
+  latitude: number;
+  longitude: number;
+  address: string;
+  currentPrice: number | null;
+  commuteSecondsDowntown: number | null;
+  firstSeenAt: number;
+  slug: string;
+}
+
+export interface MapFilterParams {
+  maxPrice?: number;
+  maxCommuteSec?: number;
+  newWithinDays?: number;
+}
+
 export async function listListings(
   params: ListListingsParams = {},
 ): Promise<Paginated<Listing>> {
   const { data } = await api.get<Paginated<Listing>>("/api/listings", {
+    params,
+  });
+  return data;
+}
+
+export async function listListingsForMap(
+  params: MapFilterParams = {},
+): Promise<ListingMapPin[]> {
+  const { data } = await api.get<ListingMapPin[]>("/api/listings/map", {
     params,
   });
   return data;

@@ -53,6 +53,7 @@ func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshServic
 		})
 		r.Route("/listings", func(r chi.Router) {
 			r.Get("/", lh.list)
+			r.Get("/map", lh.mapList)
 			r.Get("/{board}/{mls}", lh.get)
 		})
 		r.Route("/transit", func(r chi.Router) {
