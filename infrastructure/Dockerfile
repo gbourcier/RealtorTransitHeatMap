@@ -32,5 +32,5 @@ RUN chmod +x /app/entrypoint.sh /app/api /app/gtfs-precompute /app/migrate
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -q -O- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1
+  CMD wget -q -O- http://127.0.0.1:3000/healthz >/dev/null 2>&1 || exit 1
 ENTRYPOINT ["/app/entrypoint.sh"]

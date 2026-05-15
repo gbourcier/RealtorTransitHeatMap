@@ -27,6 +27,11 @@ func NewServer(addr string, scrapes ScrapeService, schedRepo ScheduleRepo, reloa
 	sh := &scheduleHandlers{repo: schedRepo, reloader: reloader}
 	lh := &listingHandlers{svc: listings}
 	th := &transitHandlers{svc: transitSvc}
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte("ok"))
+	})
+
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/scrapes", func(r chi.Router) {
 			r.Post("/", h.startScrape)
