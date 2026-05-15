@@ -15,5 +15,8 @@ DB_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POST
 echo "==> running migrations"
 /app/migrate -path /app/migrations -database "$DB_URL" up
 
+echo "==> ensuring transit graph is populated"
+/app/gtfs-precompute -cache /app/data/gtfs -if-empty
+
 echo "==> starting api on ${HTTP_ADDR:-0.0.0.0:3000}"
 exec /app/api
