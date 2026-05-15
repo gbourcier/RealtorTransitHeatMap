@@ -2,35 +2,34 @@ package schedule
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"sync"
 	"time"
 
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 )
 
-type WorkerTrigger interface {
-	StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error)
+type Dispatcher interface {
+	Dispatch(s Schedule) (uuid.UUID, error)
+	IsBusy(err error) bool
 }
 
 type Scheduler struct {
-	repo    *Repository
-	trigger WorkerTrigger
+	repo       *Repository
+	dispatcher Dispatcher
 
 	mu      sync.Mutex
 	cron    *cron.Cron
 	entries map[uuid.UUID]cron.EntryID
 }
 
-func New(repo *Repository, trigger WorkerTrigger) *Scheduler {
+func New(repo *Repository, dispatcher Dispatcher) *Scheduler {
 	return &Scheduler{
-		repo:    repo,
-		trigger: trigger,
-		cron:    cron.New(cron.WithLocation(time.UTC)),
-		entries: make(map[uuid.UUID]cron.EntryID),
+		repo:       repo,
+		dispatcher: dispatcher,
+		cron:       cron.New(cron.WithLocation(time.UTC)),
+		entries:    make(map[uuid.UUID]cron.EntryID),
 	}
 }
 
@@ -58,7 +57,7 @@ func (s *Scheduler) Reload(ctx context.Context) error {
 	s.entries = make(map[uuid.UUID]cron.EntryID, len(schedules))
 
 	for _, sch := range schedules {
-		entryID, err := s.cron.AddFunc(sch.CronExpr, s.fire(sch.ID, sch.Name))
+		entryID, err := s.cron.AddFunc(sch.CronExpr, s.fire(sch))
 		if err != nil {
 			slog.Error("scheduler: skipping invalid cron",
 				"schedule_id", sch.ID, "name", sch.Name, "cron_expr", sch.CronExpr, "err", err)
@@ -74,19 +73,19 @@ func (s *Scheduler) Stop() {
 	s.cron.Stop()
 }
 
-func (s *Scheduler) fire(scheduleID uuid.UUID, name string) func() {
+func (s *Scheduler) fire(sch Schedule) func() {
 	return func() {
-		runID, err := s.trigger.StartScrapeForSchedule(scheduleID)
+		runID, err := s.dispatcher.Dispatch(sch)
 		switch {
-		case errors.Is(err, worker.ErrBusy):
+		case s.dispatcher.IsBusy(err):
 			slog.Info("scheduler: worker busy, skipping tick",
-				"schedule_id", scheduleID, "name", name)
+				"schedule_id", sch.ID, "name", sch.Name, "job_type", sch.JobType)
 		case err != nil:
-			slog.Error("scheduler: trigger failed",
-				"err", err, "schedule_id", scheduleID, "name", name)
+			slog.Error("scheduler: dispatch failed",
+				"err", err, "schedule_id", sch.ID, "name", sch.Name, "job_type", sch.JobType)
 		default:
-			slog.Info("scheduler: triggered scrape",
-				"schedule_id", scheduleID, "name", name, "run_id", runID)
+			slog.Info("scheduler: dispatched",
+				"schedule_id", sch.ID, "name", sch.Name, "job_type", sch.JobType, "run_id", runID)
 		}
 	}
 }

@@ -1,8 +1,17 @@
-package main
+package refresh
 
 import "github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs"
 
-var defaultFeeds = []FeedDef{
+type FeedDef struct {
+	Agency string
+	URL    string
+}
+
+func (f FeedDef) toSource(zipPath string) gtfs.FeedSource {
+	return gtfs.FeedSource{Agency: f.Agency, ZipPath: zipPath}
+}
+
+var DefaultFeeds = []FeedDef{
 	{Agency: "stm", URL: "https://www.stm.info/sites/default/files/gtfs/gtfs_stm.zip"},
 	{Agency: "stl", URL: "https://www.stlaval.ca/datas/opendata/GTF_STL.zip"},
 	{Agency: "rtl", URL: "https://www.rtl-longueuil.qc.ca/transit/latestfeed/RTL.zip"},
@@ -19,13 +28,4 @@ var defaultFeeds = []FeedDef{
 	{Agency: "exo-mrclm", URL: "https://exo.quebec/xdata/mrclm/google_transit.zip"},
 	{Agency: "exo-omitsju", URL: "https://exo.quebec/xdata/omitsju/google_transit.zip"},
 	{Agency: "exo-lrrs", URL: "https://exo.quebec/xdata/lrrs/google_transit.zip"},
-}
-
-type FeedDef struct {
-	Agency string
-	URL    string
-}
-
-func (f FeedDef) toSource(zipPath string) gtfs.FeedSource {
-	return gtfs.FeedSource{Agency: f.Agency, ZipPath: zipPath}
 }

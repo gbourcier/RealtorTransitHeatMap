@@ -13,12 +13,14 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/api"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/dispatch"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/transit"
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/worker"
 	"github.com/joho/godotenv"
 )
 
@@ -52,7 +54,8 @@ func run() error {
 
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
-	runs := scraperun.NewRepository(gormDB)
+	scrapeRuns := scraperun.NewRepository(gormDB)
+	refreshRuns := refresh.NewRepository(gormDB)
 	schedules := schedule.NewRepository(gormDB)
 	stops := transit.NewRepository(gormDB)
 
@@ -63,15 +66,20 @@ func run() error {
 	})
 	transitWorker.Bind(ctx)
 
-	w := worker.New(realtorClient, listings, runs, transitWorker)
-	w.Bind(ctx)
+	scrapeWorker := scrape.New(realtorClient, listings, scrapeRuns, transitWorker)
+	scrapeWorker.Bind(ctx)
 
-	scheduler := schedule.New(schedules, w)
+	refreshWorker := refresh.NewWorker(stops, refreshRuns, cfg.Transit)
+	refreshWorker.Bind(ctx)
+
+	dispatcher := dispatch.New(scrapeWorker, refreshWorker)
+
+	scheduler := schedule.New(schedules, dispatcher)
 	if err := scheduler.Start(ctx); err != nil {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, w, schedules, scheduler, listings, transitWorker)
+	srv := api.NewServer(cfg.HTTP.Addr, scrapeWorker, refreshWorker, schedules, scheduler, listings, transitWorker)
 
 	serverErr := make(chan error, 1)
 	go func() {
@@ -94,7 +102,8 @@ func run() error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Warn("server shutdown error", "err", err)
 	}
-	w.Wait()
+	scrapeWorker.Wait()
+	refreshWorker.Wait()
 	transitWorker.Wait()
 	return nil
 }

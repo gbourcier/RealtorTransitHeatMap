@@ -14,11 +14,13 @@ tags:
   - name: scrapes
     description: Manually trigger and inspect scrape runs
   - name: schedules
-    description: CRUD on recurring scrape schedules (cron-driven)
+    description: CRUD on recurring schedules (cron-driven). Each schedule has a `jobType` (`scrape_realtor` or `refresh_gtfs`) that selects which worker fires when the cron ticks.
   - name: listings
     description: Browse scraped property listings
   - name: transit
     description: Trigger transit commute-time computation
+  - name: gtfs-refresh-runs
+    description: Trigger and inspect GTFS dataset refresh runs
 
 paths:
   /api/scrapes:
@@ -105,6 +107,13 @@ paths:
           description: Filter by enabled flag. Omit for all.
           schema:
             type: boolean
+        - in: query
+          name: jobType
+          required: false
+          description: Filter by job type. Omit for all.
+          schema:
+            type: string
+            enum: [scrape_realtor, refresh_gtfs]
       responses:
         "200":
           description: Paginated schedules.
@@ -321,6 +330,77 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/gtfs-refresh-runs:
+    get:
+      tags: [gtfs-refresh-runs]
+      summary: List GTFS refresh runs
+      description: Returns GTFS refresh runs newest-first.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - in: query
+          name: status
+          required: false
+          description: Filter by run status.
+          schema:
+            type: string
+            enum: [running, success, error]
+        - in: query
+          name: scheduleId
+          required: false
+          description: Filter by triggering schedule id.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Paginated GTFS refresh runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginatedGtfsRefreshRuns" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [gtfs-refresh-runs]
+      summary: Start a manual GTFS refresh
+      description: >-
+        Kicks off a GTFS refresh in the background and returns the run id.
+        Returns 409 if a refresh is already in flight (single-flight worker).
+      responses:
+        "202":
+          description: Refresh accepted; runId returned for polling.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StartGtfsRefreshResponse" }
+        "409":
+          description: A GTFS refresh is already in progress.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/gtfs-refresh-runs/{id}:
+    get:
+      tags: [gtfs-refresh-runs]
+      summary: Get a GTFS refresh run by id
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: The GTFS refresh run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GtfsRefreshRun" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /api/transit/compute/{board}/{mls}:
     post:
       tags: [transit]
@@ -471,7 +551,7 @@ components:
 
     Schedule:
       type: object
-      required: [id, name, cronExpr, enabled, createdAt, updatedAt]
+      required: [id, name, cronExpr, jobType, enabled, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -482,6 +562,10 @@ components:
           type: string
           description: 5-field cron expression interpreted in UTC.
           example: "0 */6 * * *"
+        jobType:
+          type: string
+          enum: [scrape_realtor, refresh_gtfs]
+          description: Which worker the scheduler dispatches to when this cron fires.
         enabled:
           type: boolean
         createdAt:
@@ -501,6 +585,10 @@ components:
         cronExpr:
           type: string
           description: 5-field cron expression interpreted in UTC.
+        jobType:
+          type: string
+          enum: [scrape_realtor, refresh_gtfs]
+          description: Defaults to `scrape_realtor` if omitted.
         enabled:
           type: boolean
           description: Defaults to true if omitted.
@@ -512,8 +600,59 @@ components:
           type: string
         cronExpr:
           type: string
+        jobType:
+          type: string
+          enum: [scrape_realtor, refresh_gtfs]
         enabled:
           type: boolean
+
+    StartGtfsRefreshResponse:
+      type: object
+      required: [runId]
+      properties:
+        runId:
+          type: string
+          format: uuid
+
+    GtfsRefreshRun:
+      type: object
+      required: [id, status, startedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [running, success, error]
+        startedAt:
+          type: integer
+          format: int64
+          description: Unix seconds.
+        completedAt:
+          type: integer
+          format: int64
+          nullable: true
+        stopsWritten:
+          type: integer
+          nullable: true
+          description: Number of transit_stops rows replaced on success.
+        errorMessage:
+          type: string
+        scheduleId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Set when the run was triggered by a schedule; null for manual triggers.
+
+    PaginatedGtfsRefreshRuns:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/GtfsRefreshRun" }
 
     PaginationMeta:
       type: object

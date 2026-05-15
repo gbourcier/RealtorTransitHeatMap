@@ -1,0 +1,55 @@
+package dispatch
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
+	"github.com/google/uuid"
+)
+
+var (
+	ErrUnknownJobType = errors.New("dispatch: unknown job type")
+	ErrBusy           = errors.New("dispatch: worker busy")
+)
+
+// IsBusy reports whether err indicates a worker was already in progress.
+// Recognises both dispatch.ErrBusy and the underlying worker sentinels.
+func (d *Dispatcher) IsBusy(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, ErrBusy) ||
+		errors.Is(err, scrape.ErrBusy) ||
+		errors.Is(err, refresh.ErrBusy)
+}
+
+type ScrapeTrigger interface {
+	StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error)
+}
+
+type GtfsRefreshTrigger interface {
+	StartForSchedule(scheduleID uuid.UUID) (uuid.UUID, error)
+}
+
+type Dispatcher struct {
+	scrape  ScrapeTrigger
+	refresh GtfsRefreshTrigger
+}
+
+func New(scrape ScrapeTrigger, refresh GtfsRefreshTrigger) *Dispatcher {
+	return &Dispatcher{scrape: scrape, refresh: refresh}
+}
+
+func (d *Dispatcher) Dispatch(s schedule.Schedule) (uuid.UUID, error) {
+	switch s.JobType {
+	case schedule.JobTypeScrapeRealtor:
+		return d.scrape.StartScrapeForSchedule(s.ID)
+	case schedule.JobTypeRefreshGtfs:
+		return d.refresh.StartForSchedule(s.ID)
+	default:
+		return uuid.Nil, fmt.Errorf("%w: %q", ErrUnknownJobType, s.JobType)
+	}
+}
