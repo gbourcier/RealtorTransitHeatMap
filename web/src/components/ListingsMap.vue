@@ -6,6 +6,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
+import { listTransitStops } from "../api/transit";
 
 const props = defineProps<{
     maxPrice: number | null;
@@ -16,6 +17,7 @@ const props = defineProps<{
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
 const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
+const stopsLayer = shallowRef<L.LayerGroup | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const pinCount = ref(0);
@@ -137,6 +139,55 @@ async function load() {
     }
 }
 
+function stopColor(commuteSec: number): string {
+    const minutes = commuteSec / 60;
+    if (minutes < 30) return "#2e7d32";
+    if (minutes <= 60) return "#f9a825";
+    return "#c62828";
+}
+
+function radiusForZoom(zoom: number): number {
+    if (zoom <= 9) return 1.5;
+    if (zoom >= 15) return 7;
+    return 1.5 + (zoom - 9) * 0.9;
+}
+
+const stopCircles: L.CircleMarker[] = [];
+
+function applyStopRadius() {
+    if (!map.value) return;
+    const r = radiusForZoom(map.value.getZoom());
+    for (const c of stopCircles) c.setRadius(r);
+}
+
+async function loadStops() {
+    if (!map.value) return;
+    try {
+        const stops = await listTransitStops();
+        const renderer = L.canvas({ padding: 0.5 });
+        const layer = L.layerGroup();
+        const r = radiusForZoom(map.value.getZoom());
+        stopCircles.length = 0;
+        for (const s of stops) {
+            const circle = L.circleMarker([s.latitude, s.longitude], {
+                renderer,
+                radius: r,
+                stroke: false,
+                fillColor: stopColor(s.commuteSec),
+                fillOpacity: 0.6,
+                interactive: false,
+            });
+            layer.addLayer(circle);
+            stopCircles.push(circle);
+        }
+        stopsLayer.value = layer;
+        layer.addTo(map.value);
+        map.value.on("zoomend", applyStopRadius);
+    } catch (e) {
+        console.warn("failed to load transit stops layer", e);
+    }
+}
+
 onMounted(() => {
     if (!mapEl.value) return;
     map.value = L.map(mapEl.value, {
@@ -156,15 +207,19 @@ onMounted(() => {
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
     });
+    loadStops();
     map.value.addLayer(cluster.value);
     load();
 });
 
 onBeforeUnmount(() => {
     if (map.value) {
+        map.value.off("zoomend", applyStopRadius);
         map.value.remove();
         map.value = null;
         cluster.value = null;
+        stopsLayer.value = null;
+        stopCircles.length = 0;
     }
 });
 

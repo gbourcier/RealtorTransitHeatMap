@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService) *http.Server {
+func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService, stopSvc StopService) *http.Server {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -28,6 +28,7 @@ func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshServic
 	sh := &scheduleHandlers{repo: schedRepo, reloader: reloader}
 	lh := &listingHandlers{svc: listings}
 	th := &transitHandlers{svc: transitSvc}
+	sth := &stopHandlers{svc: stopSvc}
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
@@ -59,6 +60,7 @@ func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshServic
 		r.Route("/transit", func(r chi.Router) {
 			r.Post("/compute", th.compute)
 			r.Post("/compute/{board}/{mls}", th.computeOne)
+			r.Get("/stops", sth.list)
 		})
 	})
 
