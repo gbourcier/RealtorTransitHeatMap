@@ -40,6 +40,13 @@ func (h *scheduleHandlers) list(w http.ResponseWriter, r *http.Request) {
 		}
 		where.Enabled = &b
 	}
+	if v := r.URL.Query().Get("jobType"); v != "" {
+		if err := schedule.ValidateJobType(v); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		where.JobType = &v
+	}
 	limit, offset, err := parsePage(r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -96,10 +103,19 @@ func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	jobType := req.JobType
+	if jobType == "" {
+		jobType = schedule.JobTypeScrapeRealtor
+	}
+	if err := schedule.ValidateJobType(jobType); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	s := &schedule.Schedule{
 		Name:     req.Name,
 		CronExpr: req.CronExpr,
+		JobType:  jobType,
 		Enabled:  true,
 	}
 	if req.Enabled != nil {
@@ -138,10 +154,17 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "name cannot be empty")
 		return
 	}
+	if req.JobType != nil {
+		if err := schedule.ValidateJobType(*req.JobType); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	s, err := h.repo.Update(r.Context(), id, schedule.Patch{
 		Name:     req.Name,
 		CronExpr: req.CronExpr,
+		JobType:  req.JobType,
 		Enabled:  req.Enabled,
 	})
 	if err != nil {

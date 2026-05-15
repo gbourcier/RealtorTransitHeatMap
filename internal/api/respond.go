@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
@@ -54,6 +55,7 @@ type ScheduleResponse struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CronExpr  string `json:"cronExpr"`
+	JobType   string `json:"jobType"`
 	Enabled   bool   `json:"enabled"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
@@ -62,12 +64,14 @@ type ScheduleResponse struct {
 type CreateScheduleRequest struct {
 	Name     string `json:"name"`
 	CronExpr string `json:"cronExpr"`
+	JobType  string `json:"jobType"`
 	Enabled  *bool  `json:"enabled,omitempty"`
 }
 
 type UpdateScheduleRequest struct {
 	Name     *string `json:"name,omitempty"`
 	CronExpr *string `json:"cronExpr,omitempty"`
+	JobType  *string `json:"jobType,omitempty"`
 	Enabled  *bool   `json:"enabled,omitempty"`
 }
 
@@ -76,10 +80,46 @@ func scheduleFromModel(s *schedule.Schedule) ScheduleResponse {
 		ID:        s.ID.String(),
 		Name:      s.Name,
 		CronExpr:  s.CronExpr,
+		JobType:   s.JobType,
 		Enabled:   s.Enabled,
 		CreatedAt: s.CreatedAt.Unix(),
 		UpdatedAt: s.UpdatedAt.Unix(),
 	}
+}
+
+type StartGtfsRefreshResponse struct {
+	RunID string `json:"runId"`
+}
+
+type GtfsRefreshRunResponse struct {
+	ID           string  `json:"id"`
+	Status       string  `json:"status"`
+	StartedAt    int64   `json:"startedAt"`
+	CompletedAt  *int64  `json:"completedAt,omitempty"`
+	StopsWritten *int    `json:"stopsWritten,omitempty"`
+	ErrorMessage string  `json:"errorMessage,omitempty"`
+	ScheduleID   *string `json:"scheduleId,omitempty"`
+}
+
+func gtfsRefreshRunFromModel(r *refresh.Run) GtfsRefreshRunResponse {
+	out := GtfsRefreshRunResponse{
+		ID:           r.ID.String(),
+		Status:       r.Status,
+		StartedAt:    r.StartedAt.Unix(),
+		StopsWritten: r.StopsWritten,
+	}
+	if r.CompletedAt != nil {
+		t := r.CompletedAt.Unix()
+		out.CompletedAt = &t
+	}
+	if r.ErrorMessage != nil {
+		out.ErrorMessage = *r.ErrorMessage
+	}
+	if r.ScheduleID != nil {
+		s := r.ScheduleID.String()
+		out.ScheduleID = &s
+	}
+	return out
 }
 
 func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {

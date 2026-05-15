@@ -15,11 +15,13 @@ func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 type Patch struct {
 	Name     *string
 	CronExpr *string
+	JobType  *string
 	Enabled  *bool
 }
 
 type Where struct {
 	Enabled *bool
+	JobType *string
 }
 
 type Page struct {
@@ -31,6 +33,9 @@ func (r *Repository) List(ctx context.Context, where Where, page Page) ([]Schedu
 	q := r.db.WithContext(ctx).Model(&Schedule{})
 	if where.Enabled != nil {
 		q = q.Where("enabled = ?", *where.Enabled)
+	}
+	if where.JobType != nil {
+		q = q.Where("job_type = ?", *where.JobType)
 	}
 	var total int64
 	if err := q.Count(&total).Error; err != nil {
@@ -73,6 +78,9 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, patch Patch) (*Sc
 	}
 	if patch.CronExpr != nil {
 		updates["cron_expr"] = *patch.CronExpr
+	}
+	if patch.JobType != nil {
+		updates["job_type"] = *patch.JobType
 	}
 	if patch.Enabled != nil {
 		updates["enabled"] = *patch.Enabled
