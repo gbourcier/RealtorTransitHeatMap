@@ -206,6 +206,8 @@ onMounted(() => {
     cluster.value = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
+        maxClusterRadius: 50,
+        disableClusteringAtZoom: 14,
     });
     loadStops();
     map.value.addLayer(cluster.value);
@@ -232,23 +234,11 @@ watch(
 <template>
     <div class="listings-map-wrap">
         <div class="listings-map-status">
-            <v-progress-circular
-                v-if="loading"
-                indeterminate
-                size="20"
-                width="2"
-                class="mr-2"
-            />
+            <v-progress-circular v-if="loading" indeterminate size="20" width="2" class="mr-2" />
             <span v-if="!loading && !error" class="text-body-2 text-medium-emphasis">
                 {{ pinCount }} on map
             </span>
-            <v-alert
-                v-if="error"
-                type="error"
-                density="compact"
-                variant="tonal"
-                class="ma-0"
-            >{{ error }}</v-alert>
+            <v-alert v-if="error" type="error" density="compact" variant="tonal" class="ma-0">{{ error }}</v-alert>
         </div>
         <div ref="mapEl" class="listings-map" />
     </div>
