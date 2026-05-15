@@ -106,10 +106,9 @@ onMounted(load);
                 <v-progress-circular indeterminate />
             </v-card-text>
 
-            <v-table v-else-if="items.length > 0" density="comfortable">
+            <v-table v-else-if="items.length > 0" density="comfortable" class="listings-table">
                 <thead>
                     <tr>
-                        <th class="link-col" />
                         <th>Address</th>
                         <th class="sortable-col text-right" @click="toggleSort('price')">
                             Price
@@ -132,27 +131,41 @@ onMounted(load);
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in items" :key="`${item.board}-${item.mls}`">
-                        <td class="link-col">
-                            <v-btn v-if="item.slug" :href="item.slug" target="_blank" rel="noopener noreferrer"
-                                variant="text" icon="mdi-open-in-new" size="small" density="compact" />
+                    <tr v-for="item in items" :key="`${item.board}-${item.mls}`" class="listing-row">
+                        <td>
+                            <v-tooltip v-if="item.slug && item.address" location="top" open-delay="400">
+                                <template #activator="{ props }">
+                                    <a v-bind="props" :href="item.slug" target="_blank" rel="noopener noreferrer"
+                                        class="address-link">
+                                        <span>{{ item.address }}</span>
+                                        <v-icon size="small" class="address-link__icon">mdi-open-in-new</v-icon>
+                                    </a>
+                                </template>
+                                <span>View on Realtor.ca</span>
+                            </v-tooltip>
+                            <template v-else>{{ item.address || "—" }}</template>
                         </td>
-                        <td>{{ item.address || "—" }}</td>
                         <td class="text-right">
                             {{ formatPrice(item.currentPrice) }}
                         </td>
                         <td>{{ formatDate(item.firstSeenAt) }}</td>
                         <td>
-                            <a v-if="
+                            <v-tooltip v-if="
                                 item.commuteSecondsDowntown != null &&
                                 item.address
-                            " :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
-                                class="commute-link">
+                            " location="top" open-delay="400">
+                                <template #activator="{ props }">
+                                    <a v-bind="props" :href="commuteMapUrl(item.address) ?? '#'" target="_blank"
+                                        rel="noopener noreferrer" class="commute-link">
+                                        <v-icon size="small" class="commute-link__icon">mdi-directions</v-icon>
+                                        <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                                    </a>
+                                </template>
+                                <span>Get directions to downtown</span>
+                            </v-tooltip>
+                            <span v-else class="text-medium-emphasis">
                                 {{ formatCommute(item.commuteSecondsDowntown) }}
-                            </a>
-                            <template v-else>
-                                {{ formatCommute(item.commuteSecondsDowntown) }}
-                            </template>
+                            </span>
                         </td>
                     </tr>
                 </tbody>
@@ -193,17 +206,62 @@ onMounted(load);
     vertical-align: middle;
 }
 
-.link-col {
-    width: 40px;
-    padding-right: 0 !important;
+.listings-table :deep(tbody tr.listing-row) {
+    transition: background-color 120ms ease;
+}
+
+.listings-table :deep(tbody tr.listing-row:hover) {
+    background-color: rgba(var(--v-theme-on-surface), 0.035);
+}
+
+.address-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.address-link__icon {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    color: rgb(var(--v-theme-primary));
+}
+
+.listing-row:hover .address-link__icon {
+    opacity: 0.75;
+    transform: translateX(0);
+}
+
+.address-link:hover {
+    color: rgb(var(--v-theme-primary));
+    text-decoration: underline;
+}
+
+.address-link:hover .address-link__icon {
+    opacity: 1;
 }
 
 .commute-link {
     color: rgb(var(--v-theme-primary));
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.commute-link__icon {
+    opacity: 0.7;
+    transition: opacity 120ms ease;
 }
 
 .commute-link:hover {
     text-decoration: underline;
+}
+
+.commute-link:hover .commute-link__icon {
+    opacity: 1;
 }
 </style>

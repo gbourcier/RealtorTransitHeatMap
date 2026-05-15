@@ -12,3 +12,6 @@ data
 
 # Local environment files (DB credentials, etc.)
 .env
+
+# Assets
+assets
