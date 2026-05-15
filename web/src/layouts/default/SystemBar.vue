@@ -5,7 +5,7 @@
   >
     <div class="d-flex align-center">
       <v-app-bar-nav-icon
-        class="d-inline-block d-md-none"
+        class="d-inline-block d-lg-none"
         @click="emit('click:toggle')"
       />
 
