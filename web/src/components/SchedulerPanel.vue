@@ -113,7 +113,7 @@ async function onDelete(s: Schedule) {
       <template v-for="(s, i) in items" :key="s.id">
         <v-list-item>
           <template #prepend>
-            <v-switch :model-value="s.enabled" hide-details density="compact" color="primary" class="mr-2"
+            <v-switch :model-value="s.enabled" hide-details density="compact" color="primary" class="mr-4"
               style="margin-top: 0; margin-bottom: 0;" @update:model-value="toggleEnabled(s)" />
           </template>
           <v-list-item-title>{{ s.name }}</v-list-item-title>

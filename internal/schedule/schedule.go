@@ -24,7 +24,7 @@ type Schedule struct {
 	Name      string    `gorm:"column:name;not null;uniqueIndex"`
 	CronExpr  string    `gorm:"column:cron_expr;not null"`
 	JobType   string    `gorm:"column:job_type;not null;default:scrape_realtor"`
-	Enabled   bool      `gorm:"column:enabled;not null;default:true"`
+	Enabled   bool      `gorm:"column:enabled;not null"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }

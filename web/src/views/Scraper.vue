@@ -7,7 +7,7 @@ import ScrapeJobsPanel from "../components/ScrapeJobsPanel.vue";
     <v-container fluid class="pa-2 pa-sm-6">
         <v-row>
             <v-col cols="12" md="4">
-                <SchedulerPanel />
+                <SchedulerPanel job-type="scrape_realtor" />
             </v-col>
             <v-col cols="12" md="8">
                 <ScrapeJobsPanel />
