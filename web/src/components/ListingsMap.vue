@@ -251,14 +251,14 @@ watch(
     position: relative;
     display: flex;
     flex: 1 1 auto;
-    min-height: 480px;
+    min-height: 0;
     width: 100%;
 }
 
 .listings-map {
     width: 100%;
     flex: 1 1 auto;
-    min-height: 480px;
+    min-height: 320px;
     border-radius: 4px;
     overflow: hidden;
 }

@@ -54,18 +54,6 @@ function formatCompactPrice(price: number): string {
     return `$${Math.round(price / 1000)}k`;
 }
 
-function priceChipLabel(): string {
-    return maxPrice.value == null
-        ? "Max price"
-        : `≤ ${formatCompactPrice(maxPrice.value)}`;
-}
-
-function commuteChipLabel(): string {
-    return maxCommuteSec.value == null
-        ? "Max commute"
-        : `≤ ${Math.round(maxCommuteSec.value / 60)} min`;
-}
-
 function applyFilters() {
     page.value = 1;
     load();
@@ -217,11 +205,67 @@ onMounted(load);
             <v-divider />
 
             <div class="filter-bar px-3 py-2">
-                <v-menu>
+                <v-menu :close-on-content-click="false" location="bottom start" offset="6">
                     <template #activator="{ props }">
-                        <v-btn v-bind="props" :variant="maxPrice != null ? 'tonal' : 'text'"
-                            :color="maxPrice != null ? 'secondary' : undefined" rounded="pill"
-                            append-icon="mdi-chevron-down" class="filter-btn text-none">{{ priceChipLabel() }}</v-btn>
+                        <v-btn v-bind="props" rounded="pill" variant="tonal"
+                            prepend-icon="mdi-tune-variant" class="filter-btn text-none">
+                            Filters
+                            <v-badge v-if="activeFilterCount > 0" inline color="secondary"
+                                :content="activeFilterCount" class="filter-btn__badge" />
+                        </v-btn>
+                    </template>
+                    <v-card min-width="260" class="filter-menu">
+                        <div class="filter-menu__section">
+                            <div class="filter-menu__title">Max price</div>
+                            <div class="filter-menu__chips">
+                                <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
+                                    :color="maxPrice == null ? 'secondary' : undefined"
+                                    @click="setMaxPrice(null)">No max</v-chip>
+                                <v-chip v-for="p in priceOptions" :key="p" size="small"
+                                    :variant="maxPrice === p ? 'flat' : 'outlined'"
+                                    :color="maxPrice === p ? 'secondary' : undefined"
+                                    @click="setMaxPrice(maxPrice === p ? null : p)">{{ formatCompactPrice(p) }}</v-chip>
+                            </div>
+                        </div>
+                        <v-divider />
+                        <div class="filter-menu__section">
+                            <div class="filter-menu__title">Max commute</div>
+                            <div class="filter-menu__chips">
+                                <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
+                                    :color="maxCommuteSec == null ? 'secondary' : undefined"
+                                    @click="setMaxCommute(null)">No max</v-chip>
+                                <v-chip v-for="m in commuteOptions" :key="m" size="small"
+                                    :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
+                                    :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
+                                    @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
+                            </div>
+                        </div>
+                        <v-divider />
+                        <div class="filter-menu__section">
+                            <div class="filter-menu__title">Recency</div>
+                            <div class="filter-menu__chips">
+                                <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
+                                    :color="newWithinDays != null ? 'secondary' : undefined"
+                                    @click="toggleNewOnly">New today only</v-chip>
+                            </div>
+                        </div>
+                        <template v-if="activeFilterCount > 0">
+                            <v-divider />
+                            <div class="filter-menu__footer">
+                                <v-btn variant="text" size="small" class="text-none"
+                                    @click="clearAllFilters">Clear all</v-btn>
+                            </div>
+                        </template>
+                    </v-card>
+                </v-menu>
+
+                <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
+                    <template #activator="{ props }">
+                        <v-chip v-bind="props" color="secondary" variant="tonal"
+                            class="filter-chip" closable
+                            @click:close.stop="setMaxPrice(null)">
+                            ≤ {{ formatCompactPrice(maxPrice) }}
+                        </v-chip>
                     </template>
                     <v-list density="compact">
                         <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
@@ -231,11 +275,13 @@ onMounted(load);
                     </v-list>
                 </v-menu>
 
-                <v-menu>
+                <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
                     <template #activator="{ props }">
-                        <v-btn v-bind="props" :variant="maxCommuteSec != null ? 'tonal' : 'text'"
-                            :color="maxCommuteSec != null ? 'secondary' : undefined" rounded="pill"
-                            append-icon="mdi-chevron-down" class="filter-btn text-none">{{ commuteChipLabel() }}</v-btn>
+                        <v-chip v-bind="props" color="secondary" variant="tonal"
+                            class="filter-chip" closable
+                            @click:close.stop="setMaxCommute(null)">
+                            ≤ {{ Math.round(maxCommuteSec / 60) }} min
+                        </v-chip>
                     </template>
                     <v-list density="compact">
                         <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
@@ -245,12 +291,11 @@ onMounted(load);
                     </v-list>
                 </v-menu>
 
-                <v-btn :variant="newWithinDays != null ? 'tonal' : 'text'"
-                    :color="newWithinDays != null ? 'secondary' : undefined" rounded="pill" class="filter-btn text-none"
-                    @click="toggleNewOnly">New only</v-btn>
-
-                <v-btn v-if="activeFilterCount > 0" variant="text" size="small" class="filter-clear text-none"
-                    @click="clearAllFilters">Clear</v-btn>
+                <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal"
+                    class="filter-chip" closable
+                    @click:close.stop="toggleNewOnly">
+                    New today
+                </v-chip>
             </div>
 
             <template v-if="viewMode === 'map'">
@@ -419,14 +464,41 @@ onMounted(load);
     font-weight: 500;
 }
 
-.filter-btn :deep(.v-btn__append) {
-    margin-inline-start: 4px;
-    opacity: 0.7;
+.filter-btn__badge {
+    margin-inline-start: 8px;
 }
 
-.filter-clear {
-    margin-left: auto;
-    opacity: 0.75;
+.filter-chip {
+    font-weight: 500;
+}
+
+.filter-menu {
+    padding: 4px 0;
+}
+
+.filter-menu__section {
+    padding: 12px 14px;
+}
+
+.filter-menu__title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    margin-bottom: 8px;
+}
+
+.filter-menu__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filter-menu__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 6px 8px;
 }
 
 .listings-container {
