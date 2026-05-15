@@ -1,0 +1,4675 @@
+{
+  "ErrorCode": {
+    "Id": 200,
+    "Description": "Success - OK",
+    "Status": "Pins-Via-Cache:false;Sidebar-Items-Via-Cache:0;",
+    "ProductName": "Realtor API 7 | 20260504.2 | 867cb5f4839eab42133b5a26925b65c04d660d92 | Monday, May 4, 2026 10:34:31 AM",
+    "Version": "1.0.9620.26248"
+  },
+  "Paging": {
+    "RecordsPerPage": 11,
+    "CurrentPage": 1,
+    "TotalRecords": 9039,
+    "MaxRecords": 600,
+    "TotalPages": 55,
+    "RecordsShowing": 600,
+    "Pins": 406
+  },
+  "Results": [
+    {
+      "Id": "29727721",
+      "MlsNumber": "18465520",
+      "PublicRemarks": "Beautiful 2-bedroom condo in the heart of Griffintown featuring a full bathroom, spacious bedrooms, a private balcony, and an indoor storage space. Enjoy premium amenities including a rooftop pool, indoor pool, sauna, gym, game room, and elegant common areas. Ideally located near the Lachine Canal, parks, bike paths, restaurants, cafés, and everyday services, with quick access to downtown Montreal. The area of the private portion is taken from the municipal assessment roll. (48193241)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "1",
+        "SizeInterior": "827.74 sqft",
+        "StoriesTotal": "",
+        "Type": "Apartment",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "828 sqft",
+            "AreaUnformatted": "828 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 2137633,
+          "Name": "Mehdi Abdesmad",
+          "Organization": {
+            "OrganizationID": 54155,
+            "Name": "RE\/MAX 2000",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS638956398600000000\/lowres\/1007955.jpg",
+            "Address": {
+              "AddressText": "1620 boul. de l'Avenir |Laval, Quebec H7S2N4",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "682-0101",
+                "AreaCode": "450",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "682-9269",
+                "AreaCode": "450",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "525777791" }],
+            "Websites": [
+              {
+                "Website": "https:\/\/www.remax-quebec.com\/fr\/agences-immobilieres\/remax-2000",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/54155\/remax-2000-1620-boul-de-lavenir-laval-quebec-h7s2n4",
+            "PhotoLastupdate": "2025-10-09 8:51:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "868-4532",
+              "AreaCode": "438",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "547330112" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639009874200000000\/lowres\/1389846.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Mehdi",
+          "LastName": "Abdesmad",
+          "CorporationName": "Mehdi Abdesmad Inc.",
+          "CorporationDisplayTypeId": "1",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2137633\/mehdi-abdesmad-1620-boul-de-lavenir-laval-quebec-h7s2n4",
+          "AgentPhotoLastUpdated": "2025-12-10 18:17:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639009874200000000\/highres\/1389846.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$545,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "170 Rue Rioux|#202|Montréal (Le Sud-Ouest), Quebec H3C0X3",
+          "Longitude": "-73.560545",
+          "Latitude": "45.491211",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196971800000\/reb5\/highres\/0\/18465520_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196971800000\/reb5\/medres\/0\/18465520_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196971800000\/reb5\/lowres\/0\/18465520_1.jpg",
+            "Description": "Kitchen",
+            "LastUpdated": "2026-05-09 10:34:57 AM",
+            "TypeId": "0"
+          }
+        ],
+        "TypeId": "300",
+        "FarmType": "Other",
+        "OwnershipType": "Condominium\/Strata",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, Hospital, Public Transit, University",
+        "OwnershipTypeGroupIds": [2],
+        "PriceUnformattedValue": "545000",
+        "ShortValue": "545K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": {},
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=REMAX&NoMLS=18465520&Lang=E"
+      },
+      "PostalCode": "H3C0X3",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727721\/170-rue-rioux-202-montreal-le-sud-ouest-griffintown",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:34:57 PM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727721\/170-rue-rioux-202-montreal-le-sud-ouest-griffintown",
+      "RelativeURLFr": "\/immobilier\/29727721\/170-rue-rioux-202-montreal-le-sud-ouest-griffintown",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=REMAX&NoMLS=18465520&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639139340971730000",
+      "TimeOnRealtor": "1 min ago",
+      "Tags": [
+        {
+          "Label": "1 min ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639139341468655840"
+    },
+    {
+      "Id": "29727709",
+      "MlsNumber": "17178928",
+      "PublicRemarks": "Polyvalente et pleine de potentiel, cette propriété est parfaite pour un investisseur, un propriétaire occupant avec revenu ou pour héberger un proche. Le logement principal s'étend sur le RDC et le sous-sol avec 2 chambres, salle familiale, poêle à bois et foyer électrique. À l'étage, un grand 3 ½ lumineux avec balcon. Terrain clôturé, jardin et remise complètent l'extérieur. Emplacement stratégique dans un secteur prisé, à proximité de tous les services : épicerie, CLSC, Place Desormeaux, parc régional de Longueuil. Accès facile aux transports en commun vers Montréal, au métro Longueuil et aux principales artères. (46906637)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "StoriesTotal": "",
+        "Type": "Duplex",
+        "UnitTotal": "2",
+        "FloorAreaMeasurements": [],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 1571656,
+          "Name": "Marc Haccoun",
+          "Organization": {
+            "OrganizationID": 284519,
+            "Name": "ROYAL LEPAGE URBAIN",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS638974332600000000\/lowres\/1342476.jpg",
+            "Address": {
+              "AddressText": "6500 av. de Lorimier |Montréal, Quebec H2G2P6",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "787-1234",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "787-1235",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "500992911" }],
+            "Websites": [
+              {
+                "Website": "https:\/\/urbain.royallepage.ca\/",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/284519\/royal-lepage-urbain-6500-av-de-lorimier-montreal-quebec-h2g2p6",
+            "PhotoLastupdate": "2025-10-30 3:01:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "991-1413",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "543213137" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639015744600000000\/lowres\/1152031.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Marc",
+          "LastName": "Haccoun",
+          "CorporationName": "Services Immobiliers Marc Haccoun Inc.",
+          "CorporationDisplayTypeId": "2",
+          "CorporationType": "Business Corporation Owned by a residential and Commercial Real Estate Broker",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1571656\/marc-haccoun-6500-av-de-lorimier-montreal-quebec-h2g2p6",
+          "AgentPhotoLastUpdated": "2025-12-17 13:21:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639015744600000000\/highres\/1152031.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$675,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "229-231 Rue Brodeur|Longueuil (Le Vieux-Longueuil), Quebec J4J2S3",
+          "Longitude": "-73.47482583",
+          "Latitude": "45.53019771",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196398330000\/reb5\/highres\/8\/17178928_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196398330000\/reb5\/medres\/8\/17178928_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139196398330000\/reb5\/lowres\/8\/17178928_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-09 10:33:59 AM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Other" }],
+        "ParkingSpaceTotal": "4",
+        "TypeId": "300",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, CEGEP, Golf Course, Hospital, Park, Schools, Public Transit, University",
+        "ParkingType": "Other",
+        "PriceUnformattedValue": "675000",
+        "ShortValue": "675K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "4500 sqft", "SizeFrontage": "50 ft" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=ROYALLEPAGE&NoMLS=17178928&Lang=E"
+      },
+      "PostalCode": "J4J2S3",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727709\/229-231-rue-brodeur-longueuil-le-vieux-longueuil-east",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:33:59 PM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727709\/229-231-rue-brodeur-longueuil-le-vieux-longueuil-east",
+      "RelativeURLFr": "\/immobilier\/29727709\/229-231-rue-brodeur-longueuil-le-vieux-longueuil-est",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=ROYALLEPAGE&NoMLS=17178928&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639139340398270000",
+      "TimeOnRealtor": "2 min ago",
+      "Tags": [
+        {
+          "Label": "2 min ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639139341481785304"
+    },
+    {
+      "Id": "29727544",
+      "MlsNumber": "13073744",
+      "PublicRemarks": "SOUTHWEST facing 2-bedroom, 1-bathroom corner unit at EST WEST, just steps to Atwater Metro, downtown, and Alexis Nihon. Features soaring 10-ft ceilings and abundant natural light. Residents enjoy luxury amenities: indoor pool with semi-Olympic lanes, hot tub, sauna, massive fitness centre, rooftop lounge, coworking space, 2 rooftop pools, BBQ stations and more. Walkable to top restaurants, shopping, and green spaces. Discover urban living at its best--schedule a tour today! (42801288)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "SizeInterior": "666.29 sqft",
+        "StoriesTotal": "",
+        "Type": "Apartment",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "666 sqft",
+            "AreaUnformatted": "666 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 2178132,
+          "Name": "Michael Son",
+          "Organization": {
+            "OrganizationID": 275614,
+            "Name": "KELLER WILLIAMS PRESTIGE",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1266873.jpg",
+            "Address": {
+              "AddressText": "101 rue Amherst |Beaconsfield, Quebec H9W5Y7",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "426-0047",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "426-0048",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "468643014" }],
+            "Websites": [
+              { "Website": "http:\/\/www.kwprestige.com", "WebsiteTypeId": "1" }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/275614\/keller-williams-prestige-101-rue-amherst-beaconsfield-quebec-h9w5y7",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "261-4069",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Websites": [
+            { "Website": "http:\/\/www.kwprestige.com", "WebsiteTypeId": "1" }
+          ],
+          "Emails": [{ "ContactId": "505750672" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639047881800000000\/lowres\/1428348.jpg",
+          "Position": "Residential Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Michael",
+          "LastName": "Son",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2178132\/michael-son-101-rue-amherst-beaconsfield-quebec-h9w5y7",
+          "AgentPhotoLastUpdated": "2026-01-23 18:03:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639047881800000000\/highres\/1428348.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        },
+        {
+          "IndividualID": 1873663,
+          "Name": "George Wu",
+          "Organization": {
+            "OrganizationID": 275614,
+            "Name": "KELLER WILLIAMS PRESTIGE",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1266873.jpg",
+            "Address": {
+              "AddressText": "101 rue Amherst |Beaconsfield, Quebec H9W5Y7",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "426-0047",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "426-0048",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "468643014" }],
+            "Websites": [
+              { "Website": "http:\/\/www.kwprestige.com", "WebsiteTypeId": "1" }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/275614\/keller-williams-prestige-101-rue-amherst-beaconsfield-quebec-h9w5y7",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "991-6680",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Websites": [
+            {
+              "Website": "https:\/\/www.kwprestige.com\/courtier.php?Codelang=En&codemembre=100060",
+              "WebsiteTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "551729684" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873000000000\/lowres\/1203742.jpg",
+          "Position": "Certified Residential and Commercial Real Estate Broker AEO",
+          "PermitFreetextEmail": true,
+          "FirstName": "George",
+          "LastName": "Wu",
+          "CorporationName": "George Wu Inc.",
+          "CorporationDisplayTypeId": "1",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1873663\/george-wu-101-rue-amherst-beaconsfield-quebec-h9w5y7",
+          "AgentPhotoLastUpdated": "2025-12-10 18:15:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873000000000\/highres\/1203742.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$585,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "2300 Rue Tupper|#2314|Montréal (Ville-Marie), Quebec H3H0B9",
+          "Longitude": "-73.58316286",
+          "Latitude": "45.48897872",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139133354170000\/reb5\/highres\/4\/13073744_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139133354170000\/reb5\/medres\/4\/13073744_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639139133354170000\/reb5\/lowres\/4\/13073744_1.jpg",
+            "Description": "Living room",
+            "LastUpdated": "2026-05-09 8:48:55 AM",
+            "TypeId": "0"
+          }
+        ],
+        "TypeId": "300",
+        "FarmType": "Other",
+        "OwnershipType": "Condominium\/Strata",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, CEGEP, Hospital, Park, Public Transit, University",
+        "OwnershipTypeGroupIds": [2],
+        "PriceUnformattedValue": "585000",
+        "ShortValue": "585K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": {},
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=KWPRESTIGE&NoMLS=13073744&Lang=E"
+      },
+      "PostalCode": "H3H0B9",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727544\/2300-rue-tupper-2314-montreal-ville-marie-central-west",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 12:48:55 PM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727544\/2300-rue-tupper-2314-montreal-ville-marie-central-west",
+      "RelativeURLFr": "\/immobilier\/29727544\/2300-rue-tupper-2314-montreal-ville-marie-centre-ouest",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=KWPRESTIGE&NoMLS=13073744&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639139277354070000",
+      "TimeOnRealtor": "1 hour ago",
+      "Tags": [
+        {
+          "Label": "1 hour ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639139278677042079"
+    },
+    {
+      "Id": "29727336",
+      "MlsNumber": "11956400",
+      "PublicRemarks": "See listing broker(s) (41683736)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "3",
+        "SizeInterior": "1850.32 sqft",
+        "StoriesTotal": "",
+        "Type": "Duplex",
+        "UnitTotal": "3",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "1850 sqft",
+            "AreaUnformatted": "1850 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 2037981,
+          "Name": "Kuo Quan",
+          "Organization": {
+            "OrganizationID": 53770,
+            "Name": "GROUPE SUTTON-CLODEM INC.",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1098712.jpg",
+            "Address": {
+              "AddressText": "9515 boul. Lasalle |Lasalle, Quebec H8R2M9",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "364-3315",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "364-3649",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "574656734" }],
+            "Websites": [
+              {
+                "Website": "https:\/\/www.suttonquebec.com\/fr\/agence-immobiliere\/278-groupe-sutton-c",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/53770\/groupe-sutton-clodem-inc-9515-boul-lasalle-lasalle-quebec-h8r2m9",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "561-3202",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            },
+            {
+              "PhoneType": "Fax",
+              "PhoneNumber": "364-3649",
+              "AreaCode": "514",
+              "PhoneTypeId": "4"
+            }
+          ],
+          "Emails": [{ "ContactId": "458246039" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639047881200000000\/lowres\/1314678.jpg",
+          "Position": "Residential Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Kuo",
+          "LastName": "Quan",
+          "CorporationName": "Kuo Quan Inc.",
+          "CorporationDisplayTypeId": "1",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2037981\/kuo-quan-9515-boul-lasalle-lasalle-quebec-h8r2m9",
+          "AgentPhotoLastUpdated": "2026-01-23 18:02:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639047881200000000\/highres\/1314678.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$1,080,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "1710-1712 Rue Allard|Montréal (Le Sud-Ouest), Quebec H4E2K5",
+          "Longitude": "-73.588241",
+          "Latitude": "45.451241",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138833382700000\/reb5\/highres\/0\/11956400_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138833382700000\/reb5\/medres\/0\/11956400_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138833382700000\/reb5\/lowres\/0\/11956400_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-09 12:28:58 AM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Garage" }],
+        "ParkingSpaceTotal": "1",
+        "TypeId": "300",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, CEGEP, Park, Schools, Public Transit",
+        "ParkingType": "Garage",
+        "PriceUnformattedValue": "1080000",
+        "ShortValue": "1.08M",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "197.4 m2" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=SUTTON&NoMLS=11956400&Lang=E"
+      },
+      "PostalCode": "H4E2K5",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727336\/1710-1712-rue-allard-montreal-le-sud-ouest-cote-saint-paul",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 4:28:58 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727336\/1710-1712-rue-allard-montreal-le-sud-ouest-cote-saint-paul",
+      "RelativeURLFr": "\/immobilier\/29727336\/1710-1712-rue-allard-montreal-le-sud-ouest-cote-saint-paul",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=SUTTON&NoMLS=11956400&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138977382600000",
+      "TimeOnRealtor": "10 hours ago",
+      "Tags": [
+        {
+          "Label": "10 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138978976630000"
+    },
+    {
+      "Id": "29727170",
+      "MlsNumber": "25160737",
+      "PublicRemarks": "Five-unit building, the ground floor of which is currently available for occupancy by the buyer. The five-unit building is located in a desirable area of the Montreal southwest, facing a park and close to several amenities. (54887907)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "StoriesTotal": "3",
+        "Type": "Multi-Family",
+        "UnitTotal": "5",
+        "FloorAreaMeasurements": [],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 1827723,
+          "Name": "Lise Matte",
+          "Organization": {
+            "OrganizationID": 54263,
+            "Name": "GROUPE SUTTON - PERFORMER INC.",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1008036.jpg",
+            "Address": {
+              "AddressText": "160 - 755 boul. Saint-Jean |Pointe-Claire, Quebec H9R5M9",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "426-9595",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "426-9596",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "463986345" }],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/54263\/groupe-sutton-performer-inc-160-755-boul-saint-jean-pointe-claire-quebec-h9r5m9",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "707-2979",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            },
+            {
+              "PhoneType": "Fax",
+              "PhoneNumber": "426-9596",
+              "AreaCode": "514",
+              "PhoneTypeId": "4"
+            }
+          ],
+          "Websites": [
+            { "Website": "http:\/\/www.lisematte.com", "WebsiteTypeId": "1" }
+          ],
+          "Emails": [{ "ContactId": "487351610" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639096168600000000\/lowres\/1195212.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Lise",
+          "LastName": "Matte",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1827723\/lise-matte-160-755-boul-saint-jean-pointe-claire-quebec-h9r5m9",
+          "AgentPhotoLastUpdated": "2026-03-20 15:21:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639096168600000000\/highres\/1195212.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$1,300,000",
+        "Type": "Multi-family",
+        "Address": {
+          "AddressText": "3925-3933 Rue St-Antoine O.|Montréal (Le Sud-Ouest), Quebec H4C1B6",
+          "Longitude": "-73.5870208",
+          "Latitude": "45.48029255",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767309270000\/reb5\/highres\/7\/25160737_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767309270000\/reb5\/medres\/7\/25160737_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767309270000\/reb5\/lowres\/7\/25160737_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-08 10:38:50 PM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Other" }],
+        "ParkingSpaceTotal": "1",
+        "TypeId": "310",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, Park, Schools, Public Transit",
+        "ParkingType": "Other",
+        "PriceUnformattedValue": "1300000",
+        "ShortValue": "1.3M",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "312.2 m2", "SizeFrontage": "10.67 m" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=SUTTON&NoMLS=25160737&Lang=E",
+        "VideoLink": "https:\/\/tour.bonnevisite.com\/2382817?idx=1"
+      },
+      "PostalCode": "H4C1B6",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727170\/3925-3933-rue-st-antoine-o-montreal-le-sud-ouest-saint-henri",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:38:50 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727170\/3925-3933-rue-st-antoine-o-montreal-le-sud-ouest-saint-henri",
+      "RelativeURLFr": "\/immobilier\/29727170\/3925-3933-rue-st-antoine-o-montreal-le-sud-ouest-saint-henri",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=SUTTON&NoMLS=25160737&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        },
+        {
+          "MediaCategoryId": "2",
+          "MediaCategoryURL": "https:\/\/tour.bonnevisite.com\/2382817?idx=1",
+          "Description": "VideoTourWebsite",
+          "Order": 5,
+          "VideoType": "Other"
+        }
+      ],
+      "InsertedDateUTC": "639138911309100000",
+      "TimeOnRealtor": "11 hours ago",
+      "Tags": [
+        {
+          "Label": "11 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138912368030000"
+    },
+    {
+      "Id": "29727169",
+      "MlsNumber": "25037898",
+      "PublicRemarks": "Stunning corner condo bathed in natural light thanks to its large windows and excellent orientation. Features include 9-foot ceilings, engineered hardwood floors, and a welcoming open-concept kitchen, dining room, and living room. The modern kitchen boasts granite countertops and includes appliances. The spacious master bedroom has a walk-in closet, and there's a good-sized second bedroom and a large bathroom with a separate glass shower. Enjoy a large balcony with a view of downtown. A 2021 heat pump is included. Indoor garage, outdoor parking, and storage are also included. The condo features an elevator and an outdoor pool. (54765067)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "SizeInterior": "1115.14 sqft",
+        "StoriesTotal": "4",
+        "Type": "Apartment",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "1115 sqft",
+            "AreaUnformatted": "1115 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 1615811,
+          "Name": "Sonia Sanhueza",
+          "Organization": {
+            "OrganizationID": 261177,
+            "Name": "VENDIRECT INC.",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS638853654600000000\/lowres\/1221184.jpg",
+            "Address": {
+              "AddressText": "5-3055 boul. St-Martin Ouest |Laval, Quebec H7T0J3",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "262-3131",
+                "AreaCode": "855",
+                "PhoneTypeId": "1"
+              }
+            ],
+            "Emails": [{ "ContactId": "570482804" }],
+            "Websites": [
+              { "Website": "http:\/\/vendirect.ca\/", "WebsiteTypeId": "1" }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/261177\/vendirect-inc-5-3055-boul-st-martin-ouest-laval-quebec-h7t0j3",
+            "PhotoLastupdate": "2025-06-12 10:51:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "991-2752",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            },
+            {
+              "PhoneType": "Fax",
+              "PhoneNumber": "765-8337",
+              "AreaCode": "514",
+              "PhoneTypeId": "4"
+            }
+          ],
+          "Websites": [
+            {
+              "Website": "http:\/\/www.soniasanhueza.com\/",
+              "WebsiteTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "539702407" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639009872400000000\/lowres\/1159698.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Sonia",
+          "LastName": "Sanhueza",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1615811\/sonia-sanhueza-5-3055-boul-st-martin-ouest-laval-quebec-h7t0j3",
+          "AgentPhotoLastUpdated": "2025-12-10 18:14:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639009872400000000\/highres\/1159698.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$578,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "8005 Boul. St-Laurent|#207|Brossard, Quebec J4X0A9",
+          "Longitude": "-73.49344238",
+          "Latitude": "45.45658599",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767267100000\/reb5\/highres\/8\/25037898_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767267100000\/reb5\/medres\/8\/25037898_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138767267100000\/reb5\/lowres\/8\/25037898_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-08 10:38:46 PM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Garage" }, { "Name": "Other" }],
+        "ParkingSpaceTotal": "2",
+        "TypeId": "300",
+        "FarmType": "Other",
+        "OwnershipType": "Condominium\/Strata",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, Golf Course, Hospital, Schools",
+        "OwnershipTypeGroupIds": [2],
+        "ParkingType": "Garage, Other",
+        "PriceUnformattedValue": "578000",
+        "ShortValue": "578K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": {},
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=VENDIRECT&NoMLS=25037898&Lang=E"
+      },
+      "PostalCode": "J4X0A9",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727169\/8005-boul-st-laurent-207-brossard-street-names-s",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:38:46 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727169\/8005-boul-st-laurent-207-brossard-street-names-s",
+      "RelativeURLFr": "\/immobilier\/29727169\/8005-boul-st-laurent-207-brossard-noms-de-rues-s",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=VENDIRECT&NoMLS=25037898&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138911267000000",
+      "TimeOnRealtor": "11 hours ago",
+      "Tags": [
+        {
+          "Label": "11 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138912359900000"
+    },
+    {
+      "Id": "29727150",
+      "MlsNumber": "16404265",
+      "PublicRemarks": "Welcome to this charming 5-plex,  with addresses on two streets; featuring classic Montreal architecture and timeless elegance. Spacious main unit available for occupancy, offering high ceilings, large windows, and abundant natural light. Well-maintained property with bright interiors throughout. Includes two parking spaces for added convenience. Located in a sought-after area close to shops, transit, and amenities. Other units occupied by good tenants, providing steady income. Ideal for owner-occupant or investor seeking charm and value. (46131415)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "4",
+        "StoriesTotal": "3",
+        "Type": "Multi-Family",
+        "UnitTotal": "5",
+        "FloorAreaMeasurements": [],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 2074314,
+          "Name": "Mikhail Stechine",
+          "Organization": {
+            "OrganizationID": 280856,
+            "Name": "BLVD IMMOBILIER",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639034920600000000\/lowres\/1317922.jpg",
+            "Address": {
+              "AddressText": "203 - 6600 Rte Transcanadienne |Pointe-Claire, Quebec H9R4S2",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "944-2583",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              }
+            ],
+            "Emails": [{ "ContactId": "541954891" }],
+            "Websites": [
+              {
+                "Website": "http:\/\/www.blvdimmobilier.com\/",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/280856\/blvd-immobilier-203-6600-rte-transcanadienne-pointe-claire-quebec-h9r4s2",
+            "PhotoLastupdate": "2026-01-08 6:01:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "983-8459",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "574411696" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS638677272000000000\/lowres\/1349502.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Mikhail",
+          "LastName": "Stechine",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2074314\/mikhail-stechine-203-6600-rte-transcanadienne-pointe-claire-quebec-h9r4s2",
+          "AgentPhotoLastUpdated": "2024-11-20 19:20:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS638677272000000000\/highres\/1349502.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$1,575,000",
+        "Type": "Multi-family",
+        "Address": {
+          "AddressText": "3494-3498 Rue Ste-Catherine E.|Montréal (Mercier\/Hochelaga-Maisonneuve), Quebec H1W2E2",
+          "Longitude": "-73.538991",
+          "Latitude": "45.542258",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138764422770000\/reb5\/highres\/5\/16404265_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138764422770000\/reb5\/medres\/5\/16404265_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138764422770000\/reb5\/lowres\/5\/16404265_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-08 10:34:02 PM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Other" }],
+        "ParkingSpaceTotal": "2",
+        "TypeId": "310",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, Park, Public Transit",
+        "ParkingType": "Other",
+        "PriceUnformattedValue": "1575000",
+        "ShortValue": "1.58M",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "310.2 m2", "SizeFrontage": "9.14 m" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=ID3&NoMLS=16404265&Lang=E"
+      },
+      "PostalCode": "H1W2E2",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727150\/3494-3498-rue-ste-catherine-e-montreal-mercierhochelaga-maisonneuve-hochelaga-maisonneuve",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:34:02 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727150\/3494-3498-rue-ste-catherine-e-montreal-mercierhochelaga-maisonneuve-hochelaga-maisonneuve",
+      "RelativeURLFr": "\/immobilier\/29727150\/3494-3498-rue-ste-catherine-e-montreal-mercierhochelaga-maisonneuve-hochelaga-maisonneuve",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=ID3&NoMLS=16404265&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138908422700000",
+      "TimeOnRealtor": "12 hours ago",
+      "Tags": [
+        {
+          "Label": "12 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138909449330000"
+    },
+    {
+      "Id": "29727138",
+      "MlsNumber": "13474951",
+      "PublicRemarks": "See listing broker(s) (43202089)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "SizeInterior": "686 sqft",
+        "StoriesTotal": "3",
+        "Type": "Apartment",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "686 sqft",
+            "AreaUnformatted": "686 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 1942824,
+          "Name": "Sophie Anne Papineau",
+          "Organization": {
+            "OrganizationID": 297516,
+            "Name": "SERGIC QUÉBEC L'AGENCE IMMOBILIÈRE",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670800000000\/lowres\/1467043.jpg",
+            "Address": {
+              "AddressText": "500 - 5160 Boul.Décarie |Montréal, Quebec H3X2H9",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "271-8222",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              }
+            ],
+            "Emails": [{ "ContactId": "570084482" }],
+            "Websites": [
+              {
+                "Website": "https:\/\/lagence-immobiliere.ca\/",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/297516\/sergic-quebec-lagence-immobiliere-500-5160-bouldecarie-montreal-quebec-h3x2h9",
+            "PhotoLastupdate": "2026-04-14 12:38:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "583-4232",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            },
+            {
+              "PhoneType": "Fax",
+              "PhoneNumber": "788-8818",
+              "AreaCode": "514",
+              "PhoneTypeId": "4"
+            }
+          ],
+          "Websites": [
+            {
+              "Website": "https:\/\/lagence-immobiliere.ca\/",
+              "WebsiteTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "576407416" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS638929338600000000\/lowres\/1239178.jpg",
+          "Position": "Residential Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Sophie Anne",
+          "LastName": "Papineau",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1942824\/sophie-anne-papineau-500-5160-bouldecarie-montreal-quebec-h3x2h9",
+          "AgentPhotoLastUpdated": "2025-09-08 13:11:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS638929338600000000\/highres\/1239178.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$475,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "340 Rue Ste-Madeleine|#6|Montréal (Le Sud-Ouest), Quebec H3K0A5",
+          "Longitude": "-73.55151127",
+          "Latitude": "45.48058368",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138763165370000\/reb5\/highres\/1\/13474951_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138763165370000\/reb5\/medres\/1\/13474951_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138763165370000\/reb5\/lowres\/1\/13474951_1.jpg",
+            "Description": "Kitchen",
+            "LastUpdated": "2026-05-08 10:31:56 PM",
+            "TypeId": "0"
+          }
+        ],
+        "TypeId": "300",
+        "FarmType": "Other",
+        "OwnershipType": "Condominium\/Strata",
+        "ZoningType": "Residential",
+        "OwnershipTypeGroupIds": [2],
+        "PriceUnformattedValue": "475000",
+        "ShortValue": "475K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": {},
+      "AlternateURL": {
+        "VideoLink": "https:\/\/tour.bonnevisite.com\/2385149?idx=1"
+      },
+      "PostalCode": "H3K0A5",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727138\/340-rue-ste-madeleine-6-montreal-le-sud-ouest-pointe-saint-charles",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:31:56 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727138\/340-rue-ste-madeleine-6-montreal-le-sud-ouest-pointe-saint-charles",
+      "RelativeURLFr": "\/immobilier\/29727138\/340-rue-ste-madeleine-6-montreal-le-sud-ouest-pointe-saint-charles",
+      "Media": [
+        {
+          "MediaCategoryId": "2",
+          "MediaCategoryURL": "https:\/\/tour.bonnevisite.com\/2385149?idx=1",
+          "Description": "VideoTourWebsite",
+          "Order": 5,
+          "VideoType": "Other"
+        }
+      ],
+      "InsertedDateUTC": "639138907165270000",
+      "TimeOnRealtor": "12 hours ago",
+      "Tags": [
+        {
+          "Label": "12 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138909359170000"
+    },
+    {
+      "Id": "29727126",
+      "MlsNumber": "11567797",
+      "PublicRemarks": "Beautifully renovated 3-bedroom condo on a quiet street in Brossard. Bright and spacious layout with a tastefully updated bathroom and generous living space, ideal for a family. Perfect for dog owners with direct access to the yard. Includes 2 outdoor parking and a cabano for added storage. Conveniently located near Mail Champlain, Quartier DIX30, parks, schools, and public transportation. A turnkey property in a sought-after location. (41294923)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "3",
+        "SizeInterior": "1092 sqft",
+        "StoriesTotal": "2",
+        "Type": "Apartment",
+        "FloorAreaMeasurements": [
+          {
+            "Area": "1092 sqft",
+            "AreaUnformatted": "1092 sqft",
+            "Type": "Square Footage",
+            "Source": "",
+            "MeasureUnitId": "1",
+            "TypeId": "1",
+            "SourceId": "0",
+            "SortBy": "1"
+          }
+        ],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 1987802,
+          "Name": "Stéphanie Burgos",
+          "Organization": {
+            "OrganizationID": 274477,
+            "Name": "RE\/MAX ACTION - Westmount",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1255351.jpg",
+            "Address": {
+              "AddressText": "1225 av. Greene |Westmount, Quebec H3Z2A4",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "933-6781",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "933-5024",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "545944879" }],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/274477\/remax-action-westmount-1225-av-greene-westmount-quebec-h3z2a4",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "245-2196",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Websites": [
+            {
+              "Website": "https:\/\/www.joellebitar.ca\/",
+              "WebsiteTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "578011840" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS638995350600000000\/lowres\/1272000.jpg",
+          "Position": "Residential Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Stéphanie",
+          "LastName": "Burgos",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1987802\/stephanie-burgos-1225-av-greene-westmount-quebec-h3z2a4",
+          "AgentPhotoLastUpdated": "2025-11-23 22:51:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS638995350600000000\/highres\/1272000.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        },
+        {
+          "IndividualID": 1675167,
+          "Name": "Joelle Bitar",
+          "Organization": {
+            "OrganizationID": 274477,
+            "Name": "RE\/MAX ACTION - Westmount",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS639117670200000000\/lowres\/1255351.jpg",
+            "Address": {
+              "AddressText": "1225 av. Greene |Westmount, Quebec H3Z2A4",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "933-6781",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "933-5024",
+                "AreaCode": "514",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "545944879" }],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/274477\/remax-action-westmount-1225-av-greene-westmount-quebec-h3z2a4",
+            "PhotoLastupdate": "2026-04-14 12:37:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "239-1414",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Websites": [
+            { "Website": "https:\/\/joellebitar.com\/", "WebsiteTypeId": "1" }
+          ],
+          "Emails": [{ "ContactId": "576573965" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS637406367600000000\/lowres\/1171334.jpg",
+          "Position": "Certified Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Joelle",
+          "LastName": "Bitar",
+          "CorporationName": "Joëlle Bitar Inc.",
+          "CorporationDisplayTypeId": "1",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/1675167\/joelle-bitar-1225-av-greene-westmount-quebec-h3z2a4",
+          "AgentPhotoLastUpdated": "2020-11-10 20:26:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS637406367600000000\/highres\/1171334.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$430,000",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "5942 Av. Auteuil|Brossard, Quebec J4Z1N2",
+          "Longitude": "-73.459279",
+          "Latitude": "45.471137",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138762229130000\/reb5\/highres\/7\/11567797_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138762229130000\/reb5\/medres\/7\/11567797_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138762229130000\/reb5\/lowres\/7\/11567797_1.jpg",
+            "Description": "Exterior",
+            "LastUpdated": "2026-05-08 10:30:22 PM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Other" }],
+        "ParkingSpaceTotal": "2",
+        "TypeId": "300",
+        "FarmType": "Other",
+        "OwnershipType": "Condominium\/Strata",
+        "ZoningType": "Residential",
+        "OwnershipTypeGroupIds": [2],
+        "ParkingType": "Other",
+        "PriceUnformattedValue": "430000",
+        "ShortValue": "430K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": {},
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=REMAX&NoMLS=11567797&Lang=E"
+      },
+      "PostalCode": "J4Z1N2",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29727126\/5942-av-auteuil-brossard-street-names-a",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 2:30:22 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29727126\/5942-av-auteuil-brossard-street-names-a",
+      "RelativeURLFr": "\/immobilier\/29727126\/5942-av-auteuil-brossard-noms-de-rues-a",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=REMAX&NoMLS=11567797&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138906228970000",
+      "TimeOnRealtor": "12 hours ago",
+      "Tags": [
+        {
+          "Label": "12 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138909309770000"
+    },
+    {
+      "Id": "29726867",
+      "MlsNumber": "23434264",
+      "PublicRemarks": "Semi-detached triplex offering an excellent investment opportunity. The building comprises three units: two 5 ½ apartments and one 4 ½ apartment, all carefully designed for optimal comfort, each including a parking space in the garage. (53161131)",
+      "Building": {
+        "BathroomTotal": "1",
+        "Bedrooms": "2",
+        "StoriesTotal": "",
+        "Type": "Triplex",
+        "UnitTotal": "3",
+        "FloorAreaMeasurements": [],
+        "HalfBathTotal": "0"
+      },
+      "Individual": [
+        {
+          "IndividualID": 2001694,
+          "Name": "Chantal Bibeau",
+          "Organization": {
+            "OrganizationID": 60403,
+            "Name": "ROYAL LEPAGE VILLAGE - ILE PERROT",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS638992326600000000\/lowres\/1124996.jpg",
+            "Address": {
+              "AddressText": "93 boul. Don Quichotte |L'Île-Perrot, Quebec J7V6X2",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "453-1414",
+                "AreaCode": "514",
+                "PhoneTypeId": "1"
+              },
+              {
+                "PhoneType": "Fax",
+                "PhoneNumber": "947-4757",
+                "AreaCode": "855",
+                "PhoneTypeId": "4"
+              }
+            ],
+            "Emails": [{ "ContactId": "554194966" }],
+            "Websites": [
+              {
+                "Website": "http:\/\/www.royallepagevillage.com\/",
+                "WebsiteTypeId": "1"
+              }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/60403\/royal-lepage-village-ile-perrot-93-boul-don-quichotte-lile-perrot-quebec-j7v6x2",
+            "PhotoLastupdate": "2025-11-20 10:51:00 AM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "928-9342",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            },
+            {
+              "PhoneType": "Fax",
+              "PhoneNumber": "453-1401",
+              "AreaCode": "514",
+              "PhoneTypeId": "4"
+            }
+          ],
+          "Websites": [
+            {
+              "Website": "https:\/\/royallepagevillage.com\/",
+              "WebsiteTypeId": "1"
+            }
+          ],
+          "Emails": [{ "ContactId": "501012745" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873600000000\/lowres\/1284542.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "Chantal",
+          "LastName": "Bibeau",
+          "CorporationName": "Chantal Bibeau Inc.",
+          "CorporationDisplayTypeId": "1",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2001694\/chantal-bibeau-93-boul-don-quichotte-lile-perrot-quebec-j7v6x2",
+          "AgentPhotoLastUpdated": "2025-12-10 18:16:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873600000000\/highres\/1284542.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$1,399,900",
+        "Type": "Single Family",
+        "Address": {
+          "AddressText": "12427-12431 Rue Trefflé-Berthiaume|Montréal (Rivière-des-Prairies\/Pointe-aux-Trembles), Quebec H1C0E4",
+          "Longitude": "-73.532547",
+          "Latitude": "45.674203",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138694681870000\/reb5\/highres\/4\/23434264_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138694681870000\/reb5\/medres\/4\/23434264_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138694681870000\/reb5\/lowres\/4\/23434264_1.jpg",
+            "Description": "Frontage",
+            "LastUpdated": "2026-05-08 8:37:48 PM",
+            "TypeId": "0"
+          }
+        ],
+        "Parking": [{ "Name": "Garage" }, { "Name": "Integrated Garage" }],
+        "ParkingSpaceTotal": "3",
+        "TypeId": "300",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, Hospital, Park",
+        "ParkingType": "Garage, Integrated Garage",
+        "PriceUnformattedValue": "1399900",
+        "ShortValue": "1.4M",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "347.2 m2", "SizeFrontage": "11.3 m" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=JUMPTOOLS&NoMLS=23434264&Lang=E"
+      },
+      "PostalCode": "H1C0E4",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29726867\/12427-12431-rue-treffle-berthiaume-montreal-riviere-des-prairiespointe-aux-trembles-riviere-des-prairies",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 12:37:48 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29726867\/12427-12431-rue-treffle-berthiaume-montreal-riviere-des-prairiespointe-aux-trembles-riviere-des-prairies",
+      "RelativeURLFr": "\/immobilier\/29726867\/12427-12431-rue-treffle-berthiaume-montreal-riviere-des-prairiespointe-aux-trembles-riviere-des-prairies",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=JUMPTOOLS&NoMLS=23434264&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138838681770000",
+      "TimeOnRealtor": "13 hours ago",
+      "Tags": [
+        {
+          "Label": "13 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138840330400000"
+    },
+    {
+      "Id": "29726854",
+      "MlsNumber": "19474413",
+      "PublicRemarks": "The property is being offered both as a residence and as a real estate development opportunity. According to the municipality, a project could allow for the construction of a building of up to three storeys, comprising between one and six units. However, final approval remains subject to the review and approval of the architectural plans by the City. Offers cannot be conditional upon municipal approval of any renderings or architectural plans.Pyrite Inspection attached (49201267)",
+      "Building": { "StoriesTotal": "" },
+      "Individual": [
+        {
+          "IndividualID": 2052398,
+          "Name": "George Spiropoulos",
+          "Organization": {
+            "OrganizationID": 261177,
+            "Name": "VENDIRECT INC.",
+            "Logo": "https:\/\/cdn.realtor.ca\/organizations\/en-CA\/TS638853654600000000\/lowres\/1221184.jpg",
+            "Address": {
+              "AddressText": "5-3055 boul. St-Martin Ouest |Laval, Quebec H7T0J3",
+              "PermitShowAddress": true
+            },
+            "Phones": [
+              {
+                "PhoneType": "Telephone",
+                "PhoneNumber": "262-3131",
+                "AreaCode": "855",
+                "PhoneTypeId": "1"
+              }
+            ],
+            "Emails": [{ "ContactId": "570482804" }],
+            "Websites": [
+              { "Website": "http:\/\/vendirect.ca\/", "WebsiteTypeId": "1" }
+            ],
+            "OrganizationType": "Firm",
+            "Designation": "Real Estate Agency",
+            "HasEmail": true,
+            "PermitFreetextEmail": true,
+            "PermitShowListingLink": true,
+            "RelativeDetailsURL": "\/office\/firm\/261177\/vendirect-inc-5-3055-boul-st-martin-ouest-laval-quebec-h7t0j3",
+            "PhotoLastupdate": "2025-06-12 10:51:00 PM"
+          },
+          "Phones": [
+            {
+              "PhoneType": "Telephone",
+              "PhoneNumber": "651-4644",
+              "AreaCode": "514",
+              "PhoneTypeId": "1"
+            }
+          ],
+          "Websites": [
+            { "Website": "https:\/\/www.buyersbroker.ca", "WebsiteTypeId": "1" }
+          ],
+          "Emails": [{ "ContactId": "487362557" }],
+          "Photo": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873600000000\/lowres\/1327903.jpg",
+          "Position": "Residential and Commercial Real Estate Broker",
+          "PermitFreetextEmail": true,
+          "FirstName": "George",
+          "LastName": "Spiropoulos",
+          "CorporationDisplayTypeId": "0",
+          "PermitShowListingLink": true,
+          "RelativeDetailsURL": "\/agent\/2052398\/george-spiropoulos-5-3055-boul-st-martin-ouest-laval-quebec-h7t0j3",
+          "AgentPhotoLastUpdated": "2025-12-10 18:16:00",
+          "PhotoHighRes": "https:\/\/cdn.realtor.ca\/individuals\/TS639009873600000000\/highres\/1327903.jpg",
+          "RankMyAgentKey": "",
+          "RealSatisfiedKey": "",
+          "TestimonialTreeKey": ""
+        }
+      ],
+      "Property": {
+        "Price": "$595,000",
+        "Type": "Vacant Land",
+        "Address": {
+          "AddressText": "1429Z Rue de la Providence|Longueuil (Le Vieux-Longueuil), Quebec J4K1B6",
+          "Longitude": "-73.51683088",
+          "Latitude": "45.51736296",
+          "PermitShowAddress": true
+        },
+        "Photo": [
+          {
+            "SequenceId": "1",
+            "HighResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138693287070000\/reb5\/highres\/3\/19474413_1.jpg",
+            "MedResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138693287070000\/reb5\/medres\/3\/19474413_1.jpg",
+            "LowResPath": "https:\/\/cdn.realtor.ca\/listings\/TS639138693287070000\/reb5\/lowres\/3\/19474413_1.jpg",
+            "Description": "View",
+            "LastUpdated": "2026-05-08 8:35:28 PM",
+            "TypeId": "0"
+          }
+        ],
+        "TypeId": "303",
+        "FarmType": "Other",
+        "ZoningType": "Residential",
+        "AmmenitiesNearBy": "Highway, CEGEP, Hospital, Park, Schools, Public Transit, University",
+        "PriceUnformattedValue": "595000",
+        "ShortValue": "595K",
+        "PriceChangeTimeOnRealtor": "",
+        "PriceChangeTagDateUTC": "12:00:00 AM"
+      },
+      "Business": {},
+      "Land": { "SizeTotal": "545 m2" },
+      "AlternateURL": {
+        "DetailsLink": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=VENDIRECT&NoMLS=19474413&Lang=E"
+      },
+      "PostalCode": "J4K1B6",
+      "HistoricalDataIsCleared": false,
+      "ProvinceName": "Quebec",
+      "RelativeDetailsURL": "\/real-estate\/29726854\/1429z-rue-de-la-providence-longueuil-le-vieux-longueuil-montreal-south",
+      "StatusId": "1",
+      "PhotoChangeDateUTC": "2026-05-09 12:35:28 AM",
+      "HasNewImageUpdate": true,
+      "Distance": "",
+      "RelativeURLEn": "\/real-estate\/29726854\/1429z-rue-de-la-providence-longueuil-le-vieux-longueuil-montreal-south",
+      "RelativeURLFr": "\/immobilier\/29726854\/1429z-rue-de-la-providence-longueuil-le-vieux-longueuil-montreal-sud",
+      "Media": [
+        {
+          "MediaCategoryId": "1",
+          "MediaCategoryURL": "https:\/\/passerelle.centris.ca\/redirect.aspx?CodeDest=VENDIRECT&NoMLS=19474413&Lang=E",
+          "Description": "AlternateFeatureSheetWebsite",
+          "Order": 1
+        }
+      ],
+      "InsertedDateUTC": "639138837287000000",
+      "TimeOnRealtor": "14 hours ago",
+      "Tags": [
+        {
+          "Label": "14 hours ago",
+          "HTMLColorCode": "#23A1C0",
+          "ListingTagTypeID": "1"
+        }
+      ],
+      "UploadedBy": 5,
+      "DataPrepInsertedDateUTC": "639138840296170000"
+    }
+  ],
+  "Pins": [
+    {
+      "key": "L8|45.42|-73.6",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.6",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.42|-73.61",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.61",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.42|-73.62",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.62",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.42|-73.63",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.63",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.42|-73.64",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.64",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.42|-73.65",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.65",
+      "latitude": "45.42"
+    },
+    {
+      "key": "L8|45.43|-73.44",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.44",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.45",
+      "propertyId": "",
+      "count": 54,
+      "longitude": "-73.45",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.46",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.46",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.47",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.47",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.48",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.48",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.49",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.49",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.59",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.59",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.6",
+      "propertyId": "",
+      "count": 27,
+      "longitude": "-73.6",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.61",
+      "propertyId": "",
+      "count": 24,
+      "longitude": "-73.61",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.62",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.62",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.63",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.63",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.64",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.64",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.43|-73.66",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.66",
+      "latitude": "45.43"
+    },
+    {
+      "key": "L8|45.44|-73.44",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.44",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.45",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.45",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.46",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.46",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.47",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.47",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.48",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.48",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.49",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.49",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.58",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.58",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.59",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.59",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.6",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.6",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.61",
+      "propertyId": "",
+      "count": 48,
+      "longitude": "-73.61",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.62",
+      "propertyId": "",
+      "count": 47,
+      "longitude": "-73.62",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.63",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.63",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.64",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.64",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.44|-73.65",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.65",
+      "latitude": "45.44"
+    },
+    {
+      "key": "L8|45.45|-73.43",
+      "propertyId": "",
+      "count": 80,
+      "longitude": "-73.43",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.44",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.44",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.45",
+      "propertyId": "",
+      "count": 31,
+      "longitude": "-73.45",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.46",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.46",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.47",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.47",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.48",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.48",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.49",
+      "propertyId": "",
+      "count": 33,
+      "longitude": "-73.49",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.5",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.5",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.55",
+      "propertyId": "",
+      "count": 32,
+      "longitude": "-73.55",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.56",
+      "propertyId": "",
+      "count": 58,
+      "longitude": "-73.56",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.57",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.57",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.58",
+      "propertyId": "",
+      "count": 23,
+      "longitude": "-73.58",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.59",
+      "propertyId": "",
+      "count": 28,
+      "longitude": "-73.59",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.6",
+      "propertyId": "",
+      "count": 41,
+      "longitude": "-73.6",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.61",
+      "propertyId": "",
+      "count": 81,
+      "longitude": "-73.61",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.45|-73.64",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.64",
+      "latitude": "45.45"
+    },
+    {
+      "key": "L8|45.46|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.43",
+      "propertyId": "",
+      "count": 37,
+      "longitude": "-73.43",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.44",
+      "propertyId": "",
+      "count": 36,
+      "longitude": "-73.44",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.45",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.45",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.46",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.46",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.47",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.47",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.48",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.48",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.49",
+      "propertyId": "",
+      "count": 24,
+      "longitude": "-73.49",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.5",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.5",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.54",
+      "propertyId": "",
+      "count": 33,
+      "longitude": "-73.54",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.55",
+      "propertyId": "",
+      "count": 42,
+      "longitude": "-73.55",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.56",
+      "propertyId": "",
+      "count": 30,
+      "longitude": "-73.56",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.57",
+      "propertyId": "",
+      "count": 40,
+      "longitude": "-73.57",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.58",
+      "propertyId": "",
+      "count": 24,
+      "longitude": "-73.58",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.59",
+      "propertyId": "",
+      "count": 41,
+      "longitude": "-73.59",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.6",
+      "propertyId": "",
+      "count": 31,
+      "longitude": "-73.6",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.46|-73.62",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.62",
+      "latitude": "45.46"
+    },
+    {
+      "key": "L8|45.47|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.43",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.43",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.44",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.44",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.45",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.45",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.46",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.46",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.47",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.47",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.48",
+      "propertyId": "",
+      "count": 23,
+      "longitude": "-73.48",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.49",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.49",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.5",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.5",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.54",
+      "propertyId": "",
+      "count": 129,
+      "longitude": "-73.54",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.55",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.55",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.56",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.56",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.57",
+      "propertyId": "",
+      "count": 48,
+      "longitude": "-73.57",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.58",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.58",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.59",
+      "propertyId": "",
+      "count": 42,
+      "longitude": "-73.59",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.6",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.6",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.61",
+      "propertyId": "",
+      "count": 47,
+      "longitude": "-73.61",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.47|-73.62",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.62",
+      "latitude": "45.47"
+    },
+    {
+      "key": "L8|45.48|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.43",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.43",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.44",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.44",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.45",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.45",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.46",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.46",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.47",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.47",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.48",
+      "propertyId": "",
+      "count": 25,
+      "longitude": "-73.48",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.49",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.49",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.5",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.5",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.51",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.51",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.55",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.55",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.56",
+      "propertyId": "",
+      "count": 34,
+      "longitude": "-73.56",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.57",
+      "propertyId": "",
+      "count": 64,
+      "longitude": "-73.57",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.58",
+      "propertyId": "",
+      "count": 69,
+      "longitude": "-73.58",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.59",
+      "propertyId": "",
+      "count": 68,
+      "longitude": "-73.59",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.6",
+      "propertyId": "",
+      "count": 43,
+      "longitude": "-73.6",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.61",
+      "propertyId": "",
+      "count": 32,
+      "longitude": "-73.61",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.48|-73.62",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.62",
+      "latitude": "45.48"
+    },
+    {
+      "key": "L8|45.49|-73.41",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.41",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.42",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.42",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.43",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.43",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.44",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.44",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.45",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.45",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.46",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.46",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.47",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.47",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.48",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.48",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.49",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.49",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.5",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.5",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.51",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.51",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.56",
+      "propertyId": "",
+      "count": 450,
+      "longitude": "-73.56",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.57",
+      "propertyId": "",
+      "count": 230,
+      "longitude": "-73.57",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.58",
+      "propertyId": "",
+      "count": 254,
+      "longitude": "-73.58",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.59",
+      "propertyId": "",
+      "count": 89,
+      "longitude": "-73.59",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.6",
+      "propertyId": "",
+      "count": 47,
+      "longitude": "-73.6",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.61",
+      "propertyId": "",
+      "count": 56,
+      "longitude": "-73.61",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.49|-73.62",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.62",
+      "latitude": "45.49"
+    },
+    {
+      "key": "L8|45.5|-73.42",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.42",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.43",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.43",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.44",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.44",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.45",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.45",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.46",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.46",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.47",
+      "propertyId": "",
+      "count": 22,
+      "longitude": "-73.47",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.48",
+      "propertyId": "",
+      "count": 18,
+      "longitude": "-73.48",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.49",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.49",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.5",
+      "propertyId": "",
+      "count": 33,
+      "longitude": "-73.5",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.51",
+      "propertyId": "",
+      "count": 28,
+      "longitude": "-73.51",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.52",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.52",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.54",
+      "propertyId": "",
+      "count": 34,
+      "longitude": "-73.54",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.55",
+      "propertyId": "",
+      "count": 44,
+      "longitude": "-73.55",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.56",
+      "propertyId": "",
+      "count": 293,
+      "longitude": "-73.56",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.57",
+      "propertyId": "",
+      "count": 531,
+      "longitude": "-73.57",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.58",
+      "propertyId": "",
+      "count": 242,
+      "longitude": "-73.58",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.59",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.59",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.6",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.6",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.61",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.61",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.5|-73.62",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.62",
+      "latitude": "45.5"
+    },
+    {
+      "key": "L8|45.51|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.43",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.43",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.44",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.44",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.45",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.45",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.46",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.46",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.47",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.47",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.48",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.48",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.49",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.49",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.5",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.5",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.51",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.51",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.55",
+      "propertyId": "",
+      "count": 121,
+      "longitude": "-73.55",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.56",
+      "propertyId": "",
+      "count": 172,
+      "longitude": "-73.56",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.57",
+      "propertyId": "",
+      "count": 224,
+      "longitude": "-73.57",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.58",
+      "propertyId": "",
+      "count": 26,
+      "longitude": "-73.58",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.6",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.6",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.61",
+      "propertyId": "",
+      "count": 38,
+      "longitude": "-73.61",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.51|-73.62",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.62",
+      "latitude": "45.51"
+    },
+    {
+      "key": "L8|45.52|-73.43",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.43",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.44",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.44",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.45",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.45",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.46",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.46",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.47",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.47",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.48",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.48",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.49",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.49",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.5",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.5",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.51",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.51",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.52",
+      "propertyId": "",
+      "count": 42,
+      "longitude": "-73.52",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.55",
+      "propertyId": "",
+      "count": 101,
+      "longitude": "-73.55",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.56",
+      "propertyId": "",
+      "count": 116,
+      "longitude": "-73.56",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.57",
+      "propertyId": "",
+      "count": 88,
+      "longitude": "-73.57",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.58",
+      "propertyId": "",
+      "count": 74,
+      "longitude": "-73.58",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.59",
+      "propertyId": "",
+      "count": 43,
+      "longitude": "-73.59",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.52|-73.6",
+      "propertyId": "",
+      "count": 53,
+      "longitude": "-73.6",
+      "latitude": "45.52"
+    },
+    {
+      "key": "L8|45.53|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.43",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.43",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.44",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.44",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.45",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.45",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.46",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.46",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.47",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.47",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.48",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.48",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.49",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.49",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.5",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.5",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.51",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.51",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.52",
+      "propertyId": "",
+      "count": 24,
+      "longitude": "-73.52",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.55",
+      "propertyId": "",
+      "count": 95,
+      "longitude": "-73.55",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.56",
+      "propertyId": "",
+      "count": 64,
+      "longitude": "-73.56",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.57",
+      "propertyId": "",
+      "count": 85,
+      "longitude": "-73.57",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.58",
+      "propertyId": "",
+      "count": 73,
+      "longitude": "-73.58",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.59",
+      "propertyId": "",
+      "count": 51,
+      "longitude": "-73.59",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.53|-73.6",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.6",
+      "latitude": "45.53"
+    },
+    {
+      "key": "L8|45.54|-73.44",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.44",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.45",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.45",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.46",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.46",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.47",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.47",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.48",
+      "propertyId": "",
+      "count": 22,
+      "longitude": "-73.48",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.49",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.49",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.5",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.5",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.51",
+      "propertyId": "",
+      "count": 23,
+      "longitude": "-73.51",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.54",
+      "propertyId": "",
+      "count": 52,
+      "longitude": "-73.54",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.55",
+      "propertyId": "",
+      "count": 37,
+      "longitude": "-73.55",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.56",
+      "propertyId": "",
+      "count": 43,
+      "longitude": "-73.56",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.57",
+      "propertyId": "",
+      "count": 60,
+      "longitude": "-73.57",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.58",
+      "propertyId": "",
+      "count": 48,
+      "longitude": "-73.58",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.59",
+      "propertyId": "",
+      "count": 32,
+      "longitude": "-73.59",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.54|-73.6",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.6",
+      "latitude": "45.54"
+    },
+    {
+      "key": "L8|45.55|-73.44",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.44",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.45",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.45",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.46",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.46",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.47",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.47",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.48",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.48",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.49",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.49",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.5",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.5",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.51",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.51",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.53",
+      "propertyId": "",
+      "count": 18,
+      "longitude": "-73.53",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.54",
+      "propertyId": "",
+      "count": 47,
+      "longitude": "-73.54",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.55",
+      "propertyId": "",
+      "count": 49,
+      "longitude": "-73.55",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.56",
+      "propertyId": "",
+      "count": 26,
+      "longitude": "-73.56",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.57",
+      "propertyId": "",
+      "count": 43,
+      "longitude": "-73.57",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.58",
+      "propertyId": "",
+      "count": 31,
+      "longitude": "-73.58",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.59",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.59",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.6",
+      "propertyId": "",
+      "count": 32,
+      "longitude": "-73.6",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.61",
+      "propertyId": "",
+      "count": 25,
+      "longitude": "-73.61",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.55|-73.62",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.62",
+      "latitude": "45.55"
+    },
+    {
+      "key": "L8|45.56|-73.44",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.44",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.45",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.45",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.46",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.46",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.47",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.47",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.48",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.48",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.49",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.49",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.53",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.53",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.54",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.54",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.55",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.55",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.56",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.56",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.57",
+      "propertyId": "",
+      "count": 27,
+      "longitude": "-73.57",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.58",
+      "propertyId": "",
+      "count": 22,
+      "longitude": "-73.58",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.59",
+      "propertyId": "",
+      "count": 26,
+      "longitude": "-73.59",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.6",
+      "propertyId": "",
+      "count": 19,
+      "longitude": "-73.6",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.61",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.61",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.62",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.62",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.64",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.64",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.65",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.65",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.56|-73.66",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.66",
+      "latitude": "45.56"
+    },
+    {
+      "key": "L8|45.57|-73.42",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.42",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.43",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.43",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.48",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.48",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.49",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.49",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.52",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.52",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.53",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.53",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.54",
+      "propertyId": "",
+      "count": 44,
+      "longitude": "-73.54",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.55",
+      "propertyId": "",
+      "count": 34,
+      "longitude": "-73.55",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.56",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.56",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.57",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.57",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.58",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.58",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.59",
+      "propertyId": "",
+      "count": 26,
+      "longitude": "-73.59",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.6",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.6",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.61",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.61",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.62",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.62",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.63",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.63",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.64",
+      "propertyId": "",
+      "count": 18,
+      "longitude": "-73.64",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.65",
+      "propertyId": "",
+      "count": 18,
+      "longitude": "-73.65",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.57|-73.66",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.66",
+      "latitude": "45.57"
+    },
+    {
+      "key": "L8|45.58|-73.4",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.4",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.41",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.41",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.42",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.42",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.43",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.43",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.44",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.44",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.45",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.45",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.48",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.48",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.51",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.51",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.52",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.52",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.53",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.53",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.54",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.54",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.55",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.55",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.56",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.56",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.57",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.57",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.58",
+      "propertyId": "",
+      "count": 32,
+      "longitude": "-73.58",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.59",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.59",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.6",
+      "propertyId": "",
+      "count": 19,
+      "longitude": "-73.6",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.61",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.61",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.62",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.62",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.63",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.63",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.64",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.64",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.65",
+      "propertyId": "",
+      "count": 27,
+      "longitude": "-73.65",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.58|-73.66",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.66",
+      "latitude": "45.58"
+    },
+    {
+      "key": "L8|45.59|-73.41",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.41",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.42",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.42",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.43",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.43",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.44",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.44",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.45",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.45",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.46",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.46",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.51",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.51",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.52",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.52",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.53",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.53",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.54",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.54",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.55",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.55",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.56",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.56",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.57",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.57",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.58",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.58",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.59",
+      "propertyId": "",
+      "count": 18,
+      "longitude": "-73.59",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.6",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.6",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.61",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.61",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.62",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.62",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.63",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.63",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.64",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.64",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.59|-73.65",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.65",
+      "latitude": "45.59"
+    },
+    {
+      "key": "L8|45.6|-73.41",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.41",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.42",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.42",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.43",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.43",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.44",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.44",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.45",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.45",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.46",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.46",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.51",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.51",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.52",
+      "propertyId": "",
+      "count": 29,
+      "longitude": "-73.52",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.53",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.53",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.54",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.54",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.55",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.55",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.56",
+      "propertyId": "",
+      "count": 24,
+      "longitude": "-73.56",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.57",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.57",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.58",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.58",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.59",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.59",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.6",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.6",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.61",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.61",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.62",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.62",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.63",
+      "propertyId": "",
+      "count": 20,
+      "longitude": "-73.63",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.64",
+      "propertyId": "",
+      "count": 21,
+      "longitude": "-73.64",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.6|-73.65",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.65",
+      "latitude": "45.6"
+    },
+    {
+      "key": "L8|45.61|-73.43",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.43",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.44",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.44",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.45",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.45",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.51",
+      "propertyId": "",
+      "count": 34,
+      "longitude": "-73.51",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.52",
+      "propertyId": "",
+      "count": 38,
+      "longitude": "-73.52",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.53",
+      "propertyId": "",
+      "count": 19,
+      "longitude": "-73.53",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.54",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.54",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.55",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.55",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.56",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.56",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.58",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.58",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.59",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.59",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.61",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.61",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.62",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.62",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.63",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.63",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.61|-73.64",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.64",
+      "latitude": "45.61"
+    },
+    {
+      "key": "L8|45.62|-73.44",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.44",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.45",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.45",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.46",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.46",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.55",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.55",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.59",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.59",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.6",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.6",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.61",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.61",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.62",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.62",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.63",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.63",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.62|-73.64",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.64",
+      "latitude": "45.62"
+    },
+    {
+      "key": "L8|45.63|-73.44",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.44",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.45",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.45",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.49",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.49",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.5",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.5",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.51",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.51",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.57",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.57",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.58",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.58",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.59",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.59",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.6",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.6",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.61",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.61",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.63|-73.62",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.62",
+      "latitude": "45.63"
+    },
+    {
+      "key": "L8|45.64|-73.49",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.49",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.5",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.5",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.51",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.51",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.57",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.57",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.58",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.58",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.59",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.59",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.6",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.6",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.64|-73.61",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.61",
+      "latitude": "45.64"
+    },
+    {
+      "key": "L8|45.65|-73.49",
+      "propertyId": "",
+      "count": 4,
+      "longitude": "-73.49",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.5",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.5",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.51",
+      "propertyId": "",
+      "count": 9,
+      "longitude": "-73.51",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.55",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.55",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.56",
+      "propertyId": "",
+      "count": 8,
+      "longitude": "-73.56",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.57",
+      "propertyId": "",
+      "count": 19,
+      "longitude": "-73.57",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.58",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.58",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.65|-73.59",
+      "propertyId": "",
+      "count": 11,
+      "longitude": "-73.59",
+      "latitude": "45.65"
+    },
+    {
+      "key": "L8|45.66|-73.49",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.49",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.5",
+      "propertyId": "",
+      "count": 14,
+      "longitude": "-73.5",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.51",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.51",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.55",
+      "propertyId": "",
+      "count": 10,
+      "longitude": "-73.55",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.56",
+      "propertyId": "",
+      "count": 15,
+      "longitude": "-73.56",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.57",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.57",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.66|-73.58",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.58",
+      "latitude": "45.66"
+    },
+    {
+      "key": "L8|45.67|-73.49",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.49",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.5",
+      "propertyId": "",
+      "count": 12,
+      "longitude": "-73.5",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.51",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.51",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.53",
+      "propertyId": "",
+      "count": 6,
+      "longitude": "-73.53",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.54",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.54",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.67|-73.55",
+      "propertyId": "",
+      "count": 7,
+      "longitude": "-73.55",
+      "latitude": "45.67"
+    },
+    {
+      "key": "L8|45.68|-73.49",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.49",
+      "latitude": "45.68"
+    },
+    {
+      "key": "L8|45.68|-73.5",
+      "propertyId": "",
+      "count": 13,
+      "longitude": "-73.5",
+      "latitude": "45.68"
+    },
+    {
+      "key": "L8|45.68|-73.54",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.54",
+      "latitude": "45.68"
+    },
+    {
+      "key": "L8|45.69|-73.48",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.48",
+      "latitude": "45.69"
+    },
+    {
+      "key": "L8|45.69|-73.49",
+      "propertyId": "",
+      "count": 17,
+      "longitude": "-73.49",
+      "latitude": "45.69"
+    },
+    {
+      "key": "L8|45.69|-73.5",
+      "propertyId": "",
+      "count": 2,
+      "longitude": "-73.5",
+      "latitude": "45.69"
+    },
+    {
+      "key": "L8|45.69|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.69"
+    },
+    {
+      "key": "L8|45.7|-73.48",
+      "propertyId": "",
+      "count": 5,
+      "longitude": "-73.48",
+      "latitude": "45.7"
+    },
+    {
+      "key": "L8|45.7|-73.49",
+      "propertyId": "",
+      "count": 16,
+      "longitude": "-73.49",
+      "latitude": "45.7"
+    },
+    {
+      "key": "L8|45.7|-73.5",
+      "propertyId": "",
+      "count": 3,
+      "longitude": "-73.5",
+      "latitude": "45.7"
+    },
+    {
+      "key": "L8|45.7|-73.52",
+      "propertyId": "",
+      "count": 1,
+      "longitude": "-73.52",
+      "latitude": "45.7"
+    }
+  ],
+  "GroupingLevel": "8"
+}
