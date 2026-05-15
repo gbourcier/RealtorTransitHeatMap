@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/web"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -14,6 +15,7 @@ func NewServer(addr string, scrapes ScrapeService, schedRepo ScheduleRepo, reloa
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5))
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -47,6 +49,8 @@ func NewServer(addr string, scrapes ScrapeService, schedRepo ScheduleRepo, reloa
 			r.Post("/compute/{board}/{mls}", th.computeOne)
 		})
 	})
+
+	r.Handle("/*", staticHandler(web.Dist()))
 
 	return &http.Server{
 		Addr:              addr,
