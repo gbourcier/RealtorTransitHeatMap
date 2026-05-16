@@ -69,7 +69,7 @@ func run() error {
 	scrapeWorker := scrape.New(realtorClient, listings, scrapeRuns, transitWorker)
 	scrapeWorker.Bind(ctx)
 
-	refreshWorker := refresh.NewWorker(stops, refreshRuns, cfg.Transit)
+	refreshWorker := refresh.NewWorker(stops, refreshRuns, transitWorker, cfg.Transit)
 	refreshWorker.Bind(ctx)
 
 	dispatcher := dispatch.New(scrapeWorker, refreshWorker)
