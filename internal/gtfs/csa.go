@@ -73,11 +73,19 @@ func propagateWalkBackward(stopIdx int, latestDep []int, transfers [][]transfer)
 	return any
 }
 
+const targetNameMatchRadiusMeters = 2000.0
+
 func (d *Dataset) ResolveTarget(refLat, refLon float64, nameQuery string) ([]int, error) {
 	if nameQuery != "" {
 		matches := d.FindStopsByName(nameQuery)
-		if len(matches) > 0 {
-			return matches, nil
+		filtered := matches[:0]
+		for _, idx := range matches {
+			if haversineMeters(refLat, refLon, d.stops[idx].Latitude, d.stops[idx].Longitude) <= targetNameMatchRadiusMeters {
+				filtered = append(filtered, idx)
+			}
+		}
+		if len(filtered) > 0 {
+			return filtered, nil
 		}
 	}
 	idx, err := d.FindNearestStop(refLat, refLon)
