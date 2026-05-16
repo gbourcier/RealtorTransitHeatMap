@@ -14,6 +14,7 @@ import (
 
 type ListingService interface {
 	ListListings(ctx context.Context, where listing.Where, page listing.Page, sort listing.Sort) ([]listing.ListingRow, int64, error)
+	ListListingsForMap(ctx context.Context, where listing.Where) ([]listing.MapPinRow, error)
 	GetListing(ctx context.Context, board, mls int) (*listing.Listing, error)
 }
 
@@ -102,6 +103,48 @@ func (h *listingHandlers) list(w http.ResponseWriter, r *http.Request) {
 		Limit:  limit,
 		Offset: offset,
 	})
+}
+
+func (h *listingHandlers) mapList(w http.ResponseWriter, r *http.Request) {
+	where := listing.Where{}
+	if v := r.URL.Query().Get("maxPrice"); v != "" {
+		n, perr := strconv.ParseFloat(v, 64)
+		if perr != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "invalid 'maxPrice' query param")
+			return
+		}
+		where.MaxPrice = &n
+	}
+	if v := r.URL.Query().Get("maxCommuteSec"); v != "" {
+		n, perr := strconv.Atoi(v)
+		if perr != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "invalid 'maxCommuteSec' query param")
+			return
+		}
+		where.MaxCommuteSec = &n
+	}
+	if v := r.URL.Query().Get("newWithinDays"); v != "" {
+		n, perr := strconv.Atoi(v)
+		if perr != nil || n < 1 {
+			writeError(w, http.StatusBadRequest, "invalid 'newWithinDays' query param")
+			return
+		}
+		since := time.Now().AddDate(0, 0, -n)
+		where.NewSince = &since
+	}
+
+	rows, err := h.svc.ListListingsForMap(r.Context(), where)
+	if err != nil {
+		slog.Error("listListingsForMap failed", "err", err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	out := make([]ListingMapPinResponse, len(rows))
+	for i := range rows {
+		out[i] = mapPinFromRow(&rows[i])
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 func (h *listingHandlers) get(w http.ResponseWriter, r *http.Request) {

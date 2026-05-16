@@ -54,6 +54,18 @@ type ListingRow struct {
 	CurrentPrice *float64
 }
 
+type MapPinRow struct {
+	Board                  int       `gorm:"column:board"`
+	MLS                    int       `gorm:"column:mls"`
+	Latitude               float64   `gorm:"column:latitude"`
+	Longitude              float64   `gorm:"column:longitude"`
+	Address                string    `gorm:"column:address"`
+	Slug                   string    `gorm:"column:slug"`
+	CommuteSecondsDowntown *int      `gorm:"column:commute_seconds_downtown"`
+	FirstSeenAt            time.Time `gorm:"column:first_seen_at"`
+	CurrentPrice           *float64  `gorm:"column:current_price"`
+}
+
 type PendingCommute struct {
 	Board     int     `gorm:"column:board"`
 	MLS       int     `gorm:"column:mls"`

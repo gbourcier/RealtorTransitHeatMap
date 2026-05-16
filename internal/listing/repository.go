@@ -114,6 +114,36 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	return rows, total, err
 }
 
+func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]MapPinRow, error) {
+	latestPrice := r.db.Model(&PriceHistory{}).
+		Select("DISTINCT ON (board, mls) board, mls, price").
+		Order("board, mls, observed_at DESC")
+
+	q := r.db.WithContext(ctx).Model(&Listing{}).
+		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.commute_seconds_downtown, listings.first_seen_at, lp.price AS current_price").
+		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice).
+		Where("listings.latitude <> 0 AND listings.longitude <> 0")
+
+	if !where.ShowUnavailable {
+		q = q.Where("listings.status = ?", statusAvailable)
+	}
+	if where.MaxPrice != nil {
+		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
+	}
+	if where.MaxCommuteSec != nil {
+		q = q.Where("listings.commute_seconds_downtown IS NOT NULL AND listings.commute_seconds_downtown <= ?", *where.MaxCommuteSec)
+	}
+	if where.NewSince != nil {
+		q = q.Where("listings.first_seen_at >= ?", *where.NewSince)
+	}
+
+	var rows []MapPinRow
+	if err := q.Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (r *Repository) ListPendingCommute(ctx context.Context, refresh bool) ([]PendingCommute, error) {
 	q := r.db.WithContext(ctx).Model(&Listing{}).
 		Select("board, mls, latitude, longitude")
