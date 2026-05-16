@@ -68,11 +68,6 @@ function formatPrice(price: number | null): string {
     }).format(price);
 }
 
-function formatCommute(seconds: number | null): string {
-    if (seconds == null) return "—";
-    return `${Math.round(seconds / 60)} min`;
-}
-
 function escapeHtml(s: string): string {
     return s
         .replace(/&/g, "&amp;")
@@ -82,21 +77,68 @@ function escapeHtml(s: string): string {
         .replace(/'/g, "&#39;");
 }
 
+function parseAddress(raw: string | null | undefined): {
+    street: string;
+    locality: string;
+} {
+    if (!raw) return { street: "—", locality: "" };
+    const parts = raw.split("|").map((s) => s.trim()).filter(Boolean);
+    const street = parts[0] ?? raw;
+    const locality = parts.slice(1).join(", ");
+    return { street, locality };
+}
+
+function commuteMapUrl(address: string | null): string | null {
+    if (!address) return null;
+    const params = new URLSearchParams({
+        saddr: address,
+        daddr: "McGill Station, Montreal, QC",
+        dirflg: "r",
+        ttype: "arr",
+    });
+    return `https://www.google.com/maps?${params.toString()}`;
+}
+
 function popupHtml(pin: ListingMapPin): string {
-    const address = escapeHtml(pin.address ?? "—");
+    const { street, locality } = parseAddress(pin.address);
+    const streetEsc = escapeHtml(street);
+    const localityEsc = escapeHtml(locality);
     const price = escapeHtml(formatPrice(pin.currentPrice));
-    const commute = escapeHtml(formatCommute(pin.commuteSecondsDowntown));
+    const tier = commuteTier(pin.commuteSecondsDowntown);
+    const commuteMin =
+        pin.commuteSecondsDowntown != null
+            ? Math.round(pin.commuteSecondsDowntown / 60).toString()
+            : "—";
     const slug = escapeHtml(pin.slug);
+    const directionsHref = commuteMapUrl(pin.address);
+    const directionsBtn = directionsHref
+        ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--secondary">
+                <i class="mdi mdi-directions" aria-hidden="true"></i><span>Directions</span>
+            </a>`
+        : "";
+    const localityLine = localityEsc
+        ? `<div class="map-popup__locality">${localityEsc}</div>`
+        : "";
     return `
         <div class="map-popup">
-            <div class="map-popup__price">${price}</div>
-            <div class="map-popup__address">${address}</div>
-            <div class="map-popup__commute">
-                <span class="map-popup__label">Commute:</span> ${commute}
+            <div class="map-popup__chip map-popup__chip--${tier}">${price}</div>
+            <div class="map-popup__address">
+                <div class="map-popup__street">${streetEsc}</div>
+                ${localityLine}
             </div>
-            <a href="${slug}" target="_blank" rel="noopener noreferrer" class="map-popup__link">
-                View on Realtor.ca →
-            </a>
+            <div class="map-popup__commute map-popup__commute--${tier}">
+                <i class="mdi mdi-subway-variant map-popup__commute-icon" aria-hidden="true"></i>
+                <div class="map-popup__commute-text">
+                    <div class="map-popup__commute-value">${commuteMin}<span class="map-popup__commute-unit"> min</span></div>
+                    <div class="map-popup__commute-dest">to McGill Station</div>
+                </div>
+            </div>
+            <div class="map-popup__actions">
+                <a href="${slug}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--primary">
+                    <i class="mdi mdi-open-in-new" aria-hidden="true"></i><span>Listing</span>
+                </a>
+                ${directionsBtn}
+            </div>
         </div>
     `;
 }
@@ -348,7 +390,15 @@ watch(
 .leaflet-popup-content-wrapper {
     background-color: rgb(var(--v-theme-surface));
     color: rgb(var(--v-theme-on-surface));
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    padding: 2px;
+}
+
+.leaflet-popup-content {
+    margin: 14px 16px;
 }
 
 .leaflet-popup-tip {
@@ -357,41 +407,167 @@ watch(
 
 .leaflet-container a.leaflet-popup-close-button {
     color: rgba(var(--v-theme-on-surface), 0.65);
+    padding: 6px 8px 0 0;
 }
 
 .map-popup {
-    min-width: 180px;
+    min-width: 260px;
+    max-width: 300px;
     font-size: 0.875rem;
 }
 
-.map-popup__price {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 4px;
+.map-popup__chip {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    background-color: var(--chip-bg);
+    color: var(--chip-fg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.map-popup__chip--fast {
+    --chip-bg: #2e7d32;
+    --chip-fg: #ffffff;
+}
+
+.map-popup__chip--mid {
+    --chip-bg: #f9a825;
+    --chip-fg: #1a1a1a;
+}
+
+.map-popup__chip--slow {
+    --chip-bg: #c62828;
+    --chip-fg: #ffffff;
+}
+
+.map-popup__chip--unknown {
+    --chip-bg: #555555;
+    --chip-fg: #ffffff;
 }
 
 .map-popup__address {
-    color: rgba(var(--v-theme-on-surface), 0.85);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.map-popup__street {
+    font-size: 0.95rem;
+    font-weight: 600;
     line-height: 1.35;
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.map-popup__locality {
+    font-size: 0.78rem;
+    line-height: 1.3;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    margin-top: 2px;
 }
 
 .map-popup__commute {
-    color: rgba(var(--v-theme-on-surface), 0.75);
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    --commute-accent: rgba(var(--v-theme-on-surface), 0.7);
 }
 
-.map-popup__label {
+.map-popup__commute--fast {
+    --commute-accent: #4caf50;
+}
+
+.map-popup__commute--mid {
+    --commute-accent: #ffb300;
+}
+
+.map-popup__commute--slow {
+    --commute-accent: #ef5350;
+}
+
+.map-popup__commute-icon {
+    font-size: 22px;
+    color: var(--commute-accent);
+    flex: 0 0 auto;
+}
+
+.map-popup__commute-text {
+    min-width: 0;
+}
+
+.map-popup__commute-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.map-popup__commute-unit {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.map-popup__commute-dest {
+    margin-top: 2px;
+    font-size: 0.66rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     color: rgba(var(--v-theme-on-surface), 0.55);
 }
 
-.map-popup__link {
-    color: rgb(var(--v-theme-secondary));
-    text-decoration: none;
-    font-weight: 500;
+.map-popup__actions {
+    display: flex;
+    gap: 6px;
 }
 
-.map-popup__link:hover {
-    text-decoration: underline;
+.map-popup__btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        filter 120ms ease,
+        transform 120ms ease,
+        background-color 120ms ease;
+}
+
+.map-popup__btn .mdi {
+    font-size: 16px;
+}
+
+.map-popup__btn--primary {
+    background-color: rgb(var(--v-theme-secondary));
+    color: rgb(var(--v-theme-on-secondary));
+}
+
+.map-popup__btn--primary:hover {
+    filter: brightness(1.1);
+}
+
+.map-popup__btn--secondary {
+    background-color: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.9);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.22);
+}
+
+.map-popup__btn--secondary:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.map-popup__btn:active {
+    transform: translateY(1px);
 }
 </style>
