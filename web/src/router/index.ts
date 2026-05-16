@@ -7,9 +7,9 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", redirect: "/listings" },
-    { path: "/scraper", name: "scraper", component: Scraper },
-    { path: "/transit", name: "transit", component: Transit },
-    { path: "/listings", name: "listings", component: Listings },
+    { path: "/scraper", name: "scraper", component: Scraper, meta: { title: "Realtor Scraper" } },
+    { path: "/transit", name: "transit", component: Transit, meta: { title: "GTFS Data" } },
+    { path: "/listings", name: "listings", component: Listings, meta: { title: "Listings" } },
     { path: "/:pathMatch(.*)*", redirect: "/listings" },
   ],
 });

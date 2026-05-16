@@ -15,10 +15,9 @@ const total = ref(0);
 const mapCount = ref(0);
 
 const countLabel = computed(() => {
-    if (viewMode.value === "list") {
-        return total.value > 0 ? `${total.value} listings` : "";
-    }
-    return mapCount.value > 0 ? `${mapCount.value} on map` : "";
+    const n = viewMode.value === "list" ? total.value : mapCount.value;
+    if (n <= 0) return "";
+    return `${n.toLocaleString()} result${n === 1 ? "" : "s"}`;
 });
 
 function toggleViewMode() {
@@ -197,14 +196,8 @@ onMounted(load);
     <v-container fluid class="pa-2 pa-sm-6 listings-container"
         :class="{ 'listings-container--map': viewMode === 'map' }">
         <v-card :class="{ 'listings-card--map': viewMode === 'map' }">
-            <v-card-title class="d-flex align-center">
-                <span>Listings</span>
-                <v-spacer />
-                <span v-if="countLabel" class="text-body-2 text-medium-emphasis">{{ countLabel }}</span>
-            </v-card-title>
-            <v-divider />
-
             <div class="filter-bar px-3 py-2">
+                <div class="filter-bar__filters">
                 <v-menu :close-on-content-click="false" location="bottom start" offset="6">
                     <template #activator="{ props }">
                         <v-btn v-bind="props" rounded="pill" variant="tonal"
@@ -296,6 +289,9 @@ onMounted(load);
                     @click:close.stop="toggleNewOnly">
                     New today
                 </v-chip>
+                </div>
+
+                <span v-if="countLabel" class="filter-bar__count text-body-2 text-medium-emphasis">{{ countLabel }}</span>
             </div>
 
             <template v-if="viewMode === 'map'">
@@ -454,9 +450,26 @@ onMounted(load);
 <style scoped>
 .filter-bar {
     display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+.filter-bar__filters {
+    display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.filter-bar__count {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    height: 36px;
+    line-height: 36px;
 }
 
 .filter-btn {
@@ -470,6 +483,12 @@ onMounted(load);
 
 .filter-chip {
     font-weight: 500;
+}
+
+@media (max-width: 959.98px) {
+    .filter-chip {
+        display: none;
+    }
 }
 
 .filter-menu {
@@ -533,8 +552,8 @@ onMounted(load);
 
 .view-switch-pill {
     position: fixed;
-    left: 50%;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    left: calc(50% + (var(--v-layout-left, 0px) - var(--v-layout-right, 0px)) / 2);
+    bottom: calc(36px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 1000;
     letter-spacing: normal;
