@@ -146,7 +146,8 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 
 func (r *Repository) ListPendingCommute(ctx context.Context, refresh bool) ([]PendingCommute, error) {
 	q := r.db.WithContext(ctx).Model(&Listing{}).
-		Select("board, mls, latitude, longitude")
+		Select("board, mls, latitude, longitude").
+		Where("status = ?", statusAvailable)
 	if !refresh {
 		q = q.Where("commute_seconds_downtown IS NULL")
 	}

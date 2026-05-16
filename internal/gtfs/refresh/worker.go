@@ -28,17 +28,22 @@ type RunRepo interface {
 	List(ctx context.Context, where Where, page Page) ([]Run, int64, error)
 }
 
+type TransitTrigger interface {
+	StartComputation(refresh bool) error
+}
+
 type Worker struct {
 	stops   StopRepo
 	runs    RunRepo
+	transit TransitTrigger
 	cfg     config.TransitConfig
 	rootCtx context.Context
 	wg      sync.WaitGroup
 	busy    atomic.Bool
 }
 
-func NewWorker(stops StopRepo, runs RunRepo, cfg config.TransitConfig) *Worker {
-	return &Worker{stops: stops, runs: runs, cfg: cfg}
+func NewWorker(stops StopRepo, runs RunRepo, transit TransitTrigger, cfg config.TransitConfig) *Worker {
+	return &Worker{stops: stops, runs: runs, transit: transit, cfg: cfg}
 }
 
 func (w *Worker) Bind(rootCtx context.Context) { w.rootCtx = rootCtx }
@@ -101,6 +106,12 @@ func (w *Worker) execute(ctx context.Context, run *Run) {
 
 	if _, err := w.runs.FinishSuccess(ctx, run.ID, len(stops)); err != nil {
 		slog.Error("gtfs_refresh_runs finish success update failed", "err", err, "run_id", run.ID)
+	}
+
+	if w.transit != nil {
+		if err := w.transit.StartComputation(true); err != nil {
+			slog.Info("transit trigger skipped after gtfs refresh", "reason", err)
+		}
 	}
 }
 
