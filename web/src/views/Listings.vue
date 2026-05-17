@@ -8,7 +8,7 @@ import {
 } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 
-const viewMode = ref<"list" | "map">("list");
+const viewMode = ref<"list" | "map">("map");
 
 const items = ref<Listing[]>([]);
 const total = ref(0);
@@ -189,126 +189,128 @@ function parseAddress(raw: string | null | undefined): {
     return { street, locality };
 }
 
-onMounted(load);
+const teleportReady = ref(false);
+onMounted(() => {
+    teleportReady.value = true;
+    load();
+});
 </script>
 
 <template>
-    <v-container fluid class="pa-2 pa-sm-6 listings-container"
-        :class="{ 'listings-container--map': viewMode === 'map' }">
-        <v-card :class="{ 'listings-card--map': viewMode === 'map' }">
-            <div class="filter-bar px-3 py-2">
-                <div class="filter-bar__filters">
-                <v-menu :close-on-content-click="false" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-btn v-bind="props" rounded="pill" variant="tonal"
-                            prepend-icon="mdi-tune-variant" class="filter-btn text-none">
-                            Filters
-                            <v-badge v-if="activeFilterCount > 0" inline color="secondary"
-                                :content="activeFilterCount" class="filter-btn__badge" />
-                        </v-btn>
-                    </template>
-                    <v-card min-width="260" class="filter-menu">
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Max price</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
-                                    :color="maxPrice == null ? 'secondary' : undefined"
-                                    @click="setMaxPrice(null)">No max</v-chip>
-                                <v-chip v-for="p in priceOptions" :key="p" size="small"
-                                    :variant="maxPrice === p ? 'flat' : 'outlined'"
-                                    :color="maxPrice === p ? 'secondary' : undefined"
-                                    @click="setMaxPrice(maxPrice === p ? null : p)">{{ formatCompactPrice(p) }}</v-chip>
-                            </div>
-                        </div>
-                        <v-divider />
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Max commute</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
-                                    :color="maxCommuteSec == null ? 'secondary' : undefined"
-                                    @click="setMaxCommute(null)">No max</v-chip>
-                                <v-chip v-for="m in commuteOptions" :key="m" size="small"
-                                    :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
-                                    :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
-                                    @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
-                            </div>
-                        </div>
-                        <v-divider />
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Recency</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
-                                    :color="newWithinDays != null ? 'secondary' : undefined"
-                                    @click="toggleNewOnly">New today only</v-chip>
-                            </div>
-                        </div>
-                        <template v-if="activeFilterCount > 0">
-                            <v-divider />
-                            <div class="filter-menu__footer">
-                                <v-btn variant="text" size="small" class="text-none"
-                                    @click="clearAllFilters">Clear all</v-btn>
-                            </div>
-                        </template>
-                    </v-card>
-                </v-menu>
-
-                <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-chip v-bind="props" color="secondary" variant="tonal"
-                            class="filter-chip" closable
-                            @click:close.stop="setMaxPrice(null)">
-                            ≤ {{ formatCompactPrice(maxPrice) }}
-                        </v-chip>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
-                        <v-divider />
-                        <v-list-item v-for="p in priceOptions" :key="p" :active="maxPrice === p"
-                            :title="`Up to ${formatCompactPrice(p)}`" @click="setMaxPrice(p)" />
-                    </v-list>
-                </v-menu>
-
-                <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-chip v-bind="props" color="secondary" variant="tonal"
-                            class="filter-chip" closable
-                            @click:close.stop="setMaxCommute(null)">
-                            ≤ {{ Math.round(maxCommuteSec / 60) }} min
-                        </v-chip>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
-                        <v-divider />
-                        <v-list-item v-for="m in commuteOptions" :key="m" :active="maxCommuteSec === m * 60"
-                            :title="`Up to ${m} min`" @click="setMaxCommute(m)" />
-                    </v-list>
-                </v-menu>
-
-                <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal"
-                    class="filter-chip" closable
-                    @click:close.stop="toggleNewOnly">
-                    New today
-                </v-chip>
-                </div>
-
-                <span v-if="countLabel" class="filter-bar__count text-body-2 text-medium-emphasis">{{ countLabel }}</span>
-            </div>
-
-            <template v-if="viewMode === 'map'">
-                <div class="map-slot pa-3">
-                    <ListingsMap :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                        :new-within-days="newWithinDays" @update:count="mapCount = $event" />
-                </div>
+    <Teleport to="#header-filters-slot" :disabled="!teleportReady">
+        <v-menu :close-on-content-click="false" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-btn v-bind="props" rounded="pill" variant="tonal"
+                    prepend-icon="mdi-tune-variant" class="filter-btn text-none" size="small">
+                    Filters
+                    <v-badge v-if="activeFilterCount > 0" inline color="secondary"
+                        :content="activeFilterCount" class="filter-btn__badge" />
+                </v-btn>
             </template>
+            <v-card min-width="260" class="filter-menu">
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Max price</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
+                            :color="maxPrice == null ? 'secondary' : undefined"
+                            @click="setMaxPrice(null)">No max</v-chip>
+                        <v-chip v-for="p in priceOptions" :key="p" size="small"
+                            :variant="maxPrice === p ? 'flat' : 'outlined'"
+                            :color="maxPrice === p ? 'secondary' : undefined"
+                            @click="setMaxPrice(maxPrice === p ? null : p)">{{ formatCompactPrice(p) }}</v-chip>
+                    </div>
+                </div>
+                <v-divider />
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Max commute</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
+                            :color="maxCommuteSec == null ? 'secondary' : undefined"
+                            @click="setMaxCommute(null)">No max</v-chip>
+                        <v-chip v-for="m in commuteOptions" :key="m" size="small"
+                            :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
+                            :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
+                            @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
+                    </div>
+                </div>
+                <v-divider />
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Recency</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
+                            :color="newWithinDays != null ? 'secondary' : undefined"
+                            @click="toggleNewOnly">New today only</v-chip>
+                    </div>
+                </div>
+                <template v-if="activeFilterCount > 0">
+                    <v-divider />
+                    <div class="filter-menu__footer">
+                        <v-btn variant="text" size="small" class="text-none"
+                            @click="clearAllFilters">Clear all</v-btn>
+                    </div>
+                </template>
+            </v-card>
+        </v-menu>
 
-            <template v-else>
-                <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
-                    error
-                    }}</v-alert>
+        <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-chip v-bind="props" color="secondary" variant="tonal"
+                    class="filter-chip" size="small" closable
+                    @click:close.stop="setMaxPrice(null)">
+                    ≤ {{ formatCompactPrice(maxPrice) }}
+                </v-chip>
+            </template>
+            <v-list density="compact">
+                <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
+                <v-divider />
+                <v-list-item v-for="p in priceOptions" :key="p" :active="maxPrice === p"
+                    :title="`Up to ${formatCompactPrice(p)}`" @click="setMaxPrice(p)" />
+            </v-list>
+        </v-menu>
 
-                <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
-                    <v-progress-circular indeterminate />
-                </v-card-text>
+        <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-chip v-bind="props" color="secondary" variant="tonal"
+                    class="filter-chip" size="small" closable
+                    @click:close.stop="setMaxCommute(null)">
+                    ≤ {{ Math.round(maxCommuteSec / 60) }} min
+                </v-chip>
+            </template>
+            <v-list density="compact">
+                <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
+                <v-divider />
+                <v-list-item v-for="m in commuteOptions" :key="m" :active="maxCommuteSec === m * 60"
+                    :title="`Up to ${m} min`" @click="setMaxCommute(m)" />
+            </v-list>
+        </v-menu>
+
+        <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal"
+            class="filter-chip" size="small" closable
+            @click:close.stop="toggleNewOnly">
+            New today
+        </v-chip>
+    </Teleport>
+
+    <Teleport to="#header-count-slot" :disabled="!teleportReady">
+        <span v-if="countLabel">{{ countLabel }}</span>
+    </Teleport>
+
+    <template v-if="viewMode === 'map'">
+        <div class="map-fullbleed">
+            <ListingsMap :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
+                :new-within-days="newWithinDays" @update:count="mapCount = $event" />
+        </div>
+    </template>
+
+    <v-container v-else fluid class="pa-2 pa-sm-6 listings-container">
+        <v-card>
+            <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
+                error
+                }}</v-alert>
+
+            <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
+                <v-progress-circular indeterminate />
+            </v-card-text>
 
                 <template v-else-if="items.length > 0">
                     <v-table density="comfortable" class="listings-table d-none d-md-table">
@@ -425,53 +427,28 @@ onMounted(load);
                     No listings found.
                 </v-card-text>
 
-                <template v-if="pageCount > 1">
-                    <v-divider />
-                    <v-card-text class="d-flex justify-center pa-3">
-                        <v-pagination :model-value="page" :length="pageCount" density="comfortable" @update:model-value="
-                            (p) => {
-                                page = p;
-                                load();
-                            }
-                        " />
-                    </v-card-text>
-                </template>
+            <template v-if="pageCount > 1">
+                <v-divider />
+                <v-card-text class="d-flex justify-center pa-3">
+                    <v-pagination :model-value="page" :length="pageCount" density="comfortable" @update:model-value="
+                        (p) => {
+                            page = p;
+                            load();
+                        }
+                    " />
+                </v-card-text>
             </template>
         </v-card>
-
-        <v-btn class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill" size="large"
-            elevation="8" @click="toggleViewMode">
-            <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
-            {{ viewMode === "list" ? "Show map" : "Show list" }}
-        </v-btn>
     </v-container>
+
+    <v-btn class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill" size="large"
+        elevation="8" @click="toggleViewMode">
+        <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
+        {{ viewMode === "list" ? "Show map" : "Show list" }}
+    </v-btn>
 </template>
 
 <style scoped>
-.filter-bar {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    flex-wrap: nowrap;
-}
-
-.filter-bar__filters {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.filter-bar__count {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    height: 36px;
-    line-height: 36px;
-}
-
 .filter-btn {
     letter-spacing: normal;
     font-weight: 500;
@@ -524,30 +501,16 @@ onMounted(load);
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
-.listings-container--map {
+.map-fullbleed {
     height: calc(100dvh - 56px);
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 0 !important;
-}
-
-.listings-card--map {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.listings-card--map .map-slot {
-    flex: 1 1 auto;
-    min-height: 0;
+    width: 100%;
     display: flex;
 }
 
-.listings-card--map .map-slot > * {
+.map-fullbleed > * {
     flex: 1 1 auto;
     min-height: 0;
+    min-width: 0;
 }
 
 .view-switch-pill {
