@@ -1,26 +1,53 @@
 <template>
-  <v-navigation-drawer>
-    <v-list>
-      <template v-for="(item, index) in items" :key="index">
-        <template v-if="item.subheader">
-          <v-list-subheader>{{ item.subheader }}</v-list-subheader>
-        </template>
+  <v-navigation-drawer
+    :model-value="modelValue"
+    location="left"
+    temporary
+    width="320"
+    @update:model-value="(v) => emit('update:modelValue', v)"
+  >
+    <div class="settings-drawer__header px-4 pt-4 pb-2">
+      <div class="text-overline text-medium-emphasis">Settings</div>
+    </div>
 
-        <template v-else>
-          <v-list-item :to="item.to" :title="item.title" exact color="primary" variant="elevated" elevation="0"
-            v-bind="item" />
-        </template>
-      </template>
+    <v-list nav density="comfortable">
+      <v-list-item
+        v-for="item in items"
+        :key="item.to"
+        :to="item.to"
+        :title="item.title"
+        :prepend-icon="item.icon"
+        :subtitle="item.subtitle"
+        color="primary"
+        rounded="lg"
+        @click="emit('update:modelValue', false)"
+      />
     </v-list>
   </v-navigation-drawer>
 </template>
 
 <script lang="ts" setup>
+defineProps<{ modelValue: boolean | null }>()
+const emit = defineEmits(['update:modelValue'])
+
 const items = [
-  { subheader: 'Browse' },
-  { title: 'Listings', prependIcon: 'mdi-view-dashboard-outline', to: '/listings' },
-  { subheader: 'Settings' },
-  { title: 'Realtor Scraper', prependIcon: 'mdi-cog-transfer-outline', to: '/scraper' },
-  { title: 'GTFS Data', prependIcon: 'mdi-train', to: '/transit' },
+  {
+    title: 'Realtor Scraper',
+    subtitle: 'Schedules & manual runs',
+    icon: 'mdi-cog-transfer-outline',
+    to: '/scraper',
+  },
+  {
+    title: 'GTFS Data',
+    subtitle: 'Transit feed refresh',
+    icon: 'mdi-train',
+    to: '/transit',
+  },
 ]
 </script>
+
+<style scoped>
+.settings-drawer__header {
+  letter-spacing: 0.08em;
+}
+</style>

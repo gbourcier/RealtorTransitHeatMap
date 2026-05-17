@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "update:count", n: number): void;
+    (e: "pin-click", payload: { board: number; mls: number }): void;
 }>();
 
 const mapEl = ref<HTMLElement | null>(null);
@@ -25,6 +26,12 @@ const stopsLayer = shallowRef<L.LayerGroup | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 let hasFitBounds = false;
+let resizeObserver: ResizeObserver | null = null;
+const markersByKey = new Map<string, L.Marker>();
+
+function listingKey(board: number, mls: number): string {
+    return `${board}-${mls}`;
+}
 
 const MONTREAL_CENTER: L.LatLngTuple = [45.5048, -73.5772];
 
@@ -157,7 +164,9 @@ async function load() {
                 newWithinDays: props.newWithinDays,
             }),
         });
+        clearHighlight();
         cluster.value.clearLayers();
+        markersByKey.clear();
         const markers: L.Marker[] = [];
         for (const pin of pins) {
             const m = L.marker([pin.latitude, pin.longitude], {
@@ -165,7 +174,9 @@ async function load() {
                 riseOnHover: true,
             });
             m.bindPopup(popupHtml(pin));
+            m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
             markers.push(m);
+            markersByKey.set(listingKey(pin.board, pin.mls), m);
         }
         cluster.value.addLayers(markers);
         emit("update:count", markers.length);
@@ -259,9 +270,18 @@ onMounted(() => {
     loadStops();
     map.value.addLayer(cluster.value);
     load();
+
+    resizeObserver = new ResizeObserver(() => {
+        map.value?.invalidateSize();
+    });
+    resizeObserver.observe(mapEl.value);
 });
 
 onBeforeUnmount(() => {
+    if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+    }
     if (map.value) {
         map.value.off("zoomend", applyStopRadius);
         map.value.remove();
@@ -269,6 +289,7 @@ onBeforeUnmount(() => {
         cluster.value = null;
         stopsLayer.value = null;
         stopCircles.length = 0;
+        markersByKey.clear();
     }
 });
 
@@ -276,6 +297,37 @@ watch(
     () => [props.maxPrice, props.maxCommuteSec, props.newWithinDays],
     () => load(),
 );
+
+function focusListing(board: number, mls: number): boolean {
+    const marker = markersByKey.get(listingKey(board, mls));
+    if (!marker || !map.value || !cluster.value) return false;
+    cluster.value.zoomToShowLayer(marker, () => {
+        marker.openPopup();
+    });
+    return true;
+}
+
+let highlightedEl: HTMLElement | null = null;
+
+function highlightListing(board: number, mls: number): void {
+    clearHighlight();
+    const marker = markersByKey.get(listingKey(board, mls));
+    if (!marker || !cluster.value) return;
+    const visible = cluster.value.getVisibleParent(marker) ?? marker;
+    const el = (visible as L.Marker | L.MarkerCluster).getElement?.();
+    if (!el) return;
+    el.classList.add("price-pin--highlighted");
+    highlightedEl = el;
+}
+
+function clearHighlight(): void {
+    if (highlightedEl) {
+        highlightedEl.classList.remove("price-pin--highlighted");
+        highlightedEl = null;
+    }
+}
+
+defineExpose({ focusListing, highlightListing, clearHighlight });
 </script>
 
 <template>
@@ -385,6 +437,30 @@ watch(
         0 2px 6px rgba(0, 0, 0, 0.55),
         0 0 0 1px rgba(0, 0, 0, 0.35);
     z-index: 1000;
+}
+
+.price-pin.price-pin--highlighted {
+    z-index: 1001 !important;
+}
+
+.price-pin.price-pin--highlighted .price-pin__label {
+    transform: translate(-50%, -100%) scale(1.18);
+    box-shadow:
+        0 0 0 2px rgb(var(--v-theme-secondary)),
+        0 6px 14px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.marker-cluster.price-pin--highlighted {
+    z-index: 1001 !important;
+}
+
+.marker-cluster.price-pin--highlighted > div {
+    box-shadow:
+        0 0 0 3px rgb(var(--v-theme-secondary)),
+        0 6px 14px rgba(0, 0, 0, 0.6);
+    transform: scale(1.12);
+    transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .leaflet-popup-content-wrapper {

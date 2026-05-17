@@ -1,8 +1,11 @@
 <template>
   <v-app>
-    <default-system-bar @click:toggle="drawer = !drawer" />
+    <default-system-bar
+      @click:settings="settingsDrawer = !settingsDrawer"
+      @click:home="settingsDrawer = false"
+    />
 
-    <default-drawer v-model="drawer" />
+    <default-drawer v-model="settingsDrawer" />
 
     <default-view />
   </v-app>
@@ -15,5 +18,5 @@ import DefaultView from './View.vue'
 
 import { shallowRef } from 'vue'
 
-const drawer = shallowRef<boolean | null>(null)
+const settingsDrawer = shallowRef<boolean | null>(false)
 </script>

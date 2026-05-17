@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { useDisplay } from "vuetify";
 import {
     listListings,
     type Listing,
@@ -8,25 +9,21 @@ import {
 } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 
-const viewMode = ref<"list" | "map">("list");
+const { mdAndUp } = useDisplay();
+const viewMode = ref<"list" | "map">("map");
+const drawerOpen = ref(true);
 
 const items = ref<Listing[]>([]);
 const total = ref(0);
 const mapCount = ref(0);
 
-const countLabel = computed(() => {
-    const n = viewMode.value === "list" ? total.value : mapCount.value;
-    if (n <= 0) return "";
-    return `${n.toLocaleString()} result${n === 1 ? "" : "s"}`;
-});
-
 function toggleViewMode() {
     viewMode.value = viewMode.value === "list" ? "map" : "list";
 }
 const limit = ref(50);
-const page = ref(1);
 const loading = ref(false);
 const error = ref<string | null>(null);
+let loadGen = 0;
 const sortBy = ref<SortBy>("first_seen_at");
 const sortDir = ref<SortDir>("desc");
 
@@ -36,6 +33,19 @@ const newWithinDays = ref<number | null>(null);
 
 const priceOptions = [400000, 500000, 600000, 700000, 800000, 1000000, 1500000, 2000000];
 const commuteOptions = [15, 30, 45, 60, 90];
+
+const filterTarget = ref<"#drawer-filters-slot" | "#header-filters-slot">(
+    "#header-filters-slot",
+);
+watch(
+    [mdAndUp, drawerOpen],
+    async ([md, open]) => {
+        const desired = md && open ? "#drawer-filters-slot" : "#header-filters-slot";
+        await nextTick();
+        filterTarget.value = desired;
+    },
+    { immediate: true },
+);
 
 const activeFilterCount = computed(() => {
     let n = 0;
@@ -54,8 +64,7 @@ function formatCompactPrice(price: number): string {
 }
 
 function applyFilters() {
-    page.value = 1;
-    load();
+    loadInitial();
 }
 
 function setMaxPrice(value: number | null) {
@@ -80,30 +89,52 @@ function clearAllFilters() {
     applyFilters();
 }
 
-const offset = computed(() => (page.value - 1) * limit.value);
-const pageCount = computed(() => Math.ceil(total.value / limit.value));
+const hasMore = computed(() =>
+    items.value.length === 0 ? true : items.value.length < total.value,
+);
 
-async function load() {
+async function loadInitial(): Promise<void> {
+    const gen = ++loadGen;
+    items.value = [];
+    total.value = 0;
+    await loadMore(gen);
+}
+
+let inFlight: Promise<void> | null = null;
+
+function loadMore(gen: number = loadGen): Promise<void> {
+    if (gen !== loadGen) return Promise.resolve();
+    if (inFlight) return inFlight.then(() => loadMore(gen));
+    if (items.value.length > 0 && items.value.length >= total.value) {
+        return Promise.resolve();
+    }
     loading.value = true;
     error.value = null;
-    try {
-        const res = await listListings({
-            limit: limit.value,
-            offset: offset.value,
-            sortBy: sortBy.value,
-            sortDir: sortDir.value,
-            ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
-            ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
-            ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
-        });
-        items.value = res.items;
-        total.value = res.total;
-    } catch (e: any) {
-        error.value =
-            e?.response?.data?.error ?? e?.message ?? "failed to load listings";
-    } finally {
-        loading.value = false;
-    }
+    inFlight = (async () => {
+        try {
+            const res = await listListings({
+                limit: limit.value,
+                offset: items.value.length,
+                sortBy: sortBy.value,
+                sortDir: sortDir.value,
+                ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
+                ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
+                ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
+            });
+            if (gen !== loadGen) return;
+            items.value = [...items.value, ...res.items];
+            total.value = res.total;
+        } catch (e: any) {
+            if (gen === loadGen) {
+                error.value =
+                    e?.response?.data?.error ?? e?.message ?? "failed to load listings";
+            }
+        } finally {
+            if (gen === loadGen) loading.value = false;
+            inFlight = null;
+        }
+    })();
+    return inFlight;
 }
 
 function toggleSort(col: SortBy) {
@@ -113,8 +144,7 @@ function toggleSort(col: SortBy) {
         sortBy.value = col;
         sortDir.value = "desc";
     }
-    page.value = 1;
-    load();
+    loadInitial();
 }
 
 function sortIcon(col: SortBy): string {
@@ -170,9 +200,29 @@ function commuteMapUrl(address: string | null): string | null {
     return `https://www.google.com/maps?${params.toString()}`;
 }
 
+const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
+const selectedKey = ref<string | null>(null);
+
+function listingKey(item: Listing): string {
+    return `${item.board}-${item.mls}`;
+}
+
 function openListing(item: Listing): void {
     if (!item.slug) return;
     window.open(item.slug, "_blank", "noopener,noreferrer");
+}
+
+function focusListingOnMap(item: Listing): void {
+    selectedKey.value = listingKey(item);
+    mapRef.value?.focusListing(item.board, item.mls);
+}
+
+function highlightListingOnMap(item: Listing): void {
+    mapRef.value?.highlightListing(item.board, item.mls);
+}
+
+function clearMapHighlight(): void {
+    mapRef.value?.clearHighlight();
 }
 
 function parseAddress(raw: string | null | undefined): {
@@ -189,207 +239,181 @@ function parseAddress(raw: string | null | undefined): {
     return { street, locality };
 }
 
-onMounted(load);
+const teleportReady = ref(false);
+const sidePanelBodyEl = ref<HTMLElement | null>(null);
+const panelSentinelEl = ref<HTMLElement | null>(null);
+const mobileSentinelEl = ref<HTMLElement | null>(null);
+let panelObserver: IntersectionObserver | null = null;
+let mobileObserver: IntersectionObserver | null = null;
+
+function makeObserver(
+    sentinel: HTMLElement | null,
+    root: HTMLElement | null,
+): IntersectionObserver | null {
+    if (!sentinel) return null;
+    const obs = new IntersectionObserver(
+        (entries) => {
+            if (entries.some((e) => e.isIntersecting)) loadMore();
+        },
+        { root, rootMargin: "200px" },
+    );
+    obs.observe(sentinel);
+    return obs;
+}
+
+watch(
+    [panelSentinelEl, sidePanelBodyEl],
+    ([sentinel, body]) => {
+        panelObserver?.disconnect();
+        panelObserver = makeObserver(sentinel, body);
+    },
+    { flush: "post" },
+);
+
+watch(
+    mobileSentinelEl,
+    (sentinel) => {
+        mobileObserver?.disconnect();
+        mobileObserver = makeObserver(sentinel, null);
+    },
+    { flush: "post" },
+);
+
+onMounted(() => {
+    teleportReady.value = true;
+    loadInitial();
+});
+
+onBeforeUnmount(() => {
+    panelObserver?.disconnect();
+    mobileObserver?.disconnect();
+});
 </script>
 
 <template>
-    <v-container fluid class="pa-2 pa-sm-6 listings-container"
-        :class="{ 'listings-container--map': viewMode === 'map' }">
-        <v-card :class="{ 'listings-card--map': viewMode === 'map' }">
-            <div class="filter-bar px-3 py-2">
-                <div class="filter-bar__filters">
-                <v-menu :close-on-content-click="false" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-btn v-bind="props" rounded="pill" variant="tonal"
-                            prepend-icon="mdi-tune-variant" class="filter-btn text-none">
-                            Filters
-                            <v-badge v-if="activeFilterCount > 0" inline color="secondary"
-                                :content="activeFilterCount" class="filter-btn__badge" />
-                        </v-btn>
-                    </template>
-                    <v-card min-width="260" class="filter-menu">
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Max price</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
-                                    :color="maxPrice == null ? 'secondary' : undefined"
-                                    @click="setMaxPrice(null)">No max</v-chip>
-                                <v-chip v-for="p in priceOptions" :key="p" size="small"
-                                    :variant="maxPrice === p ? 'flat' : 'outlined'"
-                                    :color="maxPrice === p ? 'secondary' : undefined"
-                                    @click="setMaxPrice(maxPrice === p ? null : p)">{{ formatCompactPrice(p) }}</v-chip>
-                            </div>
-                        </div>
-                        <v-divider />
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Max commute</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
-                                    :color="maxCommuteSec == null ? 'secondary' : undefined"
-                                    @click="setMaxCommute(null)">No max</v-chip>
-                                <v-chip v-for="m in commuteOptions" :key="m" size="small"
-                                    :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
-                                    :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
-                                    @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
-                            </div>
-                        </div>
-                        <v-divider />
-                        <div class="filter-menu__section">
-                            <div class="filter-menu__title">Recency</div>
-                            <div class="filter-menu__chips">
-                                <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
-                                    :color="newWithinDays != null ? 'secondary' : undefined"
-                                    @click="toggleNewOnly">New today only</v-chip>
-                            </div>
-                        </div>
-                        <template v-if="activeFilterCount > 0">
-                            <v-divider />
-                            <div class="filter-menu__footer">
-                                <v-btn variant="text" size="small" class="text-none"
-                                    @click="clearAllFilters">Clear all</v-btn>
-                            </div>
-                        </template>
-                    </v-card>
-                </v-menu>
-
-                <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-chip v-bind="props" color="secondary" variant="tonal"
-                            class="filter-chip" closable
-                            @click:close.stop="setMaxPrice(null)">
-                            ≤ {{ formatCompactPrice(maxPrice) }}
-                        </v-chip>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
-                        <v-divider />
-                        <v-list-item v-for="p in priceOptions" :key="p" :active="maxPrice === p"
-                            :title="`Up to ${formatCompactPrice(p)}`" @click="setMaxPrice(p)" />
-                    </v-list>
-                </v-menu>
-
-                <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
-                    <template #activator="{ props }">
-                        <v-chip v-bind="props" color="secondary" variant="tonal"
-                            class="filter-chip" closable
-                            @click:close.stop="setMaxCommute(null)">
-                            ≤ {{ Math.round(maxCommuteSec / 60) }} min
-                        </v-chip>
-                    </template>
-                    <v-list density="compact">
-                        <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
-                        <v-divider />
-                        <v-list-item v-for="m in commuteOptions" :key="m" :active="maxCommuteSec === m * 60"
-                            :title="`Up to ${m} min`" @click="setMaxCommute(m)" />
-                    </v-list>
-                </v-menu>
-
-                <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal"
-                    class="filter-chip" closable
-                    @click:close.stop="toggleNewOnly">
-                    New today
-                </v-chip>
-                </div>
-
-                <span v-if="countLabel" class="filter-bar__count text-body-2 text-medium-emphasis">{{ countLabel }}</span>
-            </div>
-
-            <template v-if="viewMode === 'map'">
-                <div class="map-slot pa-3">
-                    <ListingsMap :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                        :new-within-days="newWithinDays" @update:count="mapCount = $event" />
-                </div>
+    <Teleport :to="filterTarget" :disabled="!teleportReady">
+        <v-menu :close-on-content-click="false" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-btn v-bind="props" rounded="pill" variant="tonal" prepend-icon="mdi-tune-variant"
+                    class="filter-btn text-none" size="small">
+                    Filters
+                    <v-badge v-if="activeFilterCount > 0" inline color="secondary" :content="activeFilterCount"
+                        class="filter-btn__badge" />
+                </v-btn>
             </template>
+            <v-card min-width="260" class="filter-menu">
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Max price</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
+                            :color="maxPrice == null ? 'secondary' : undefined" @click="setMaxPrice(null)">No
+                            max</v-chip>
+                        <v-chip v-for="p in priceOptions" :key="p" size="small"
+                            :variant="maxPrice === p ? 'flat' : 'outlined'"
+                            :color="maxPrice === p ? 'secondary' : undefined"
+                            @click="setMaxPrice(maxPrice === p ? null : p)">{{
+                            formatCompactPrice(p) }}</v-chip>
+                    </div>
+                </div>
+                <v-divider />
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Max commute</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
+                            :color="maxCommuteSec == null ? 'secondary' : undefined" @click="setMaxCommute(null)">No
+                            max</v-chip>
+                        <v-chip v-for="m in commuteOptions" :key="m" size="small"
+                            :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
+                            :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
+                            @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
+                    </div>
+                </div>
+                <v-divider />
+                <div class="filter-menu__section">
+                    <div class="filter-menu__title">Recency</div>
+                    <div class="filter-menu__chips">
+                        <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
+                            :color="newWithinDays != null ? 'secondary' : undefined" @click="toggleNewOnly">New today
+                            only</v-chip>
+                    </div>
+                </div>
+                <template v-if="activeFilterCount > 0">
+                    <v-divider />
+                    <div class="filter-menu__footer">
+                        <v-btn variant="text" size="small" class="text-none" @click="clearAllFilters">Clear all</v-btn>
+                    </div>
+                </template>
+            </v-card>
+        </v-menu>
 
-            <template v-else>
-                <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
-                    error
-                    }}</v-alert>
+        <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-chip v-bind="props" color="secondary" variant="tonal" class="filter-chip" size="small" closable
+                    @click:close.stop="setMaxPrice(null)">
+                    ≤ {{ formatCompactPrice(maxPrice) }}
+                </v-chip>
+            </template>
+            <v-list density="compact">
+                <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
+                <v-divider />
+                <v-list-item v-for="p in priceOptions" :key="p" :active="maxPrice === p"
+                    :title="`Up to ${formatCompactPrice(p)}`" @click="setMaxPrice(p)" />
+            </v-list>
+        </v-menu>
 
-                <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
-                    <v-progress-circular indeterminate />
-                </v-card-text>
+        <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
+            <template #activator="{ props }">
+                <v-chip v-bind="props" color="secondary" variant="tonal" class="filter-chip" size="small" closable
+                    @click:close.stop="setMaxCommute(null)">
+                    ≤ {{ Math.round(maxCommuteSec / 60) }} min
+                </v-chip>
+            </template>
+            <v-list density="compact">
+                <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
+                <v-divider />
+                <v-list-item v-for="m in commuteOptions" :key="m" :active="maxCommuteSec === m * 60"
+                    :title="`Up to ${m} min`" @click="setMaxCommute(m)" />
+            </v-list>
+        </v-menu>
 
-                <template v-else-if="items.length > 0">
-                    <v-table density="comfortable" class="listings-table d-none d-md-table">
-                        <thead>
-                            <tr>
-                                <th>Address</th>
-                                <th class="sortable-col text-right" @click="toggleSort('price')">
-                                    Price
-                                    <v-icon size="small" class="sort-icon">{{
-                                        sortIcon("price")
-                                        }}</v-icon>
-                                </th>
-                                <th class="sortable-col" @click="toggleSort('first_seen_at')">
-                                    First Seen
-                                    <v-icon size="small" class="sort-icon">{{
-                                        sortIcon("first_seen_at")
-                                        }}</v-icon>
-                                </th>
-                                <th class="sortable-col" @click="toggleSort('commute_time')">
-                                    Commute Time
-                                    <v-icon size="small" class="sort-icon">{{
-                                        sortIcon("commute_time")
-                                        }}</v-icon>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="item in items" :key="`${item.board}-${item.mls}`" class="listing-row">
-                                <td>
-                                    <v-tooltip v-if="item.slug && item.address" location="top" open-delay="400">
-                                        <template #activator="{ props }">
-                                            <a v-bind="props" :href="item.slug" target="_blank"
-                                                rel="noopener noreferrer" class="address-link">
-                                                <span>{{ item.address }}</span>
-                                                <v-icon size="small" class="address-link__icon">mdi-open-in-new</v-icon>
-                                            </a>
-                                        </template>
-                                        <span>View on Realtor.ca</span>
-                                    </v-tooltip>
-                                    <template v-else>{{ item.address || "—" }}</template>
-                                </td>
-                                <td class="text-right">
-                                    {{ formatPrice(item.currentPrice) }}
-                                </td>
-                                <td>
-                                    <span class="first-seen">
-                                        <span>{{ formatDate(item.firstSeenAt) }}</span>
-                                        <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary"
-                                            variant="outlined">new</v-chip>
-                                    </span>
-                                </td>
-                                <td>
-                                    <v-tooltip v-if="
-                                        item.commuteSecondsDowntown != null &&
-                                        item.address
-                                    " location="top" open-delay="400">
-                                        <template #activator="{ props }">
-                                            <a v-bind="props" :href="commuteMapUrl(item.address) ?? '#'" target="_blank"
-                                                rel="noopener noreferrer" class="commute-link">
-                                                <v-icon size="small" class="commute-link__icon">mdi-directions</v-icon>
-                                                <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
-                                            </a>
-                                        </template>
-                                        <span>Get directions to downtown</span>
-                                    </v-tooltip>
-                                    <span v-else class="text-medium-emphasis">
-                                        {{ formatCommute(item.commuteSecondsDowntown) }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </v-table>
+        <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal" class="filter-chip" size="small" closable
+            @click:close.stop="toggleNewOnly">
+            New today
+        </v-chip>
+    </Teleport>
 
-                    <div class="d-md-none listing-cards">
-                        <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
-                            class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
-                            @keydown.space.prevent="openListing(item)">
+    <Teleport to="#header-actions-slot" :disabled="!teleportReady">
+        <v-btn v-if="mdAndUp" icon variant="text" size="small" :active="drawerOpen"
+            :aria-label="drawerOpen ? 'Hide results panel' : 'Show results panel'" @click="drawerOpen = !drawerOpen">
+            <v-icon size="22">mdi-dock-right</v-icon>
+        </v-btn>
+    </Teleport>
+
+    <template v-if="mdAndUp || viewMode === 'map'">
+        <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
+            <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
+                :new-within-days="newWithinDays" @update:count="mapCount = $event" />
+            <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
+                <div id="drawer-filters-slot" class="listings-side-panel__filters" />
+                <div ref="sidePanelBodyEl" class="listings-side-panel__body">
+                    <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
+
+                    <div v-if="loading && items.length === 0" class="text-center py-8">
+                        <v-progress-circular indeterminate />
+                    </div>
+
+                    <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
+                        <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
+                            class="listing-card listing-card--interactive"
+                            :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
+                            @click="focusListingOnMap(item)" @keydown.enter.prevent="focusListingOnMap(item)"
+                            @keydown.space.prevent="focusListingOnMap(item)" @mouseenter="highlightListingOnMap(item)"
+                            @mouseleave="clearMapHighlight" @focus="highlightListingOnMap(item)"
+                            @blur="clearMapHighlight">
                             <div class="listing-card__top">
                                 <span class="listing-card__price">{{
                                     formatPrice(item.currentPrice)
-                                    }}</span>
+                                }}</span>
                                 <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="flat"
                                     class="listing-card__new">new</v-chip>
                             </div>
@@ -415,63 +439,161 @@ onMounted(load);
                                 </span>
                                 <span class="listing-card__seen">{{
                                     formatDate(item.firstSeenAt)
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
-                </template>
 
-                <v-card-text v-else class="text-medium-emphasis text-center py-8">
-                    No listings found.
-                </v-card-text>
+                    <div v-else class="text-medium-emphasis text-center py-8">
+                        No listings found.
+                    </div>
 
-                <template v-if="pageCount > 1">
-                    <v-divider />
-                    <v-card-text class="d-flex justify-center pa-3">
-                        <v-pagination :model-value="page" :length="pageCount" density="comfortable" @update:model-value="
-                            (p) => {
-                                page = p;
-                                load();
-                            }
-                        " />
-                    </v-card-text>
-                </template>
+                    <div v-if="hasMore && items.length > 0" ref="panelSentinelEl" class="listings-side-panel__sentinel">
+                        <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </template>
+
+    <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
+        <v-card>
+            <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
+                error
+            }}</v-alert>
+
+            <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
+                <v-progress-circular indeterminate />
+            </v-card-text>
+
+            <template v-else-if="items.length > 0">
+                <v-table density="comfortable" class="listings-table d-none d-md-table">
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th class="sortable-col text-right" @click="toggleSort('price')">
+                                Price
+                                <v-icon size="small" class="sort-icon">{{
+                                    sortIcon("price")
+                                }}</v-icon>
+                            </th>
+                            <th class="sortable-col" @click="toggleSort('first_seen_at')">
+                                First Seen
+                                <v-icon size="small" class="sort-icon">{{
+                                    sortIcon("first_seen_at")
+                                }}</v-icon>
+                            </th>
+                            <th class="sortable-col" @click="toggleSort('commute_time')">
+                                Commute Time
+                                <v-icon size="small" class="sort-icon">{{
+                                    sortIcon("commute_time")
+                                }}</v-icon>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in items" :key="`${item.board}-${item.mls}`" class="listing-row">
+                            <td>
+                                <v-tooltip v-if="item.slug && item.address" location="top" open-delay="400">
+                                    <template #activator="{ props }">
+                                        <a v-bind="props" :href="item.slug" target="_blank" rel="noopener noreferrer"
+                                            class="address-link">
+                                            <span>{{ item.address }}</span>
+                                            <v-icon size="small" class="address-link__icon">mdi-open-in-new</v-icon>
+                                        </a>
+                                    </template>
+                                    <span>View on Realtor.ca</span>
+                                </v-tooltip>
+                                <template v-else>{{ item.address || "—" }}</template>
+                            </td>
+                            <td class="text-right">
+                                {{ formatPrice(item.currentPrice) }}
+                            </td>
+                            <td>
+                                <span class="first-seen">
+                                    <span>{{ formatDate(item.firstSeenAt) }}</span>
+                                    <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary"
+                                        variant="outlined">new</v-chip>
+                                </span>
+                            </td>
+                            <td>
+                                <v-tooltip v-if="
+                                    item.commuteSecondsDowntown != null &&
+                                    item.address
+                                " location="top" open-delay="400">
+                                    <template #activator="{ props }">
+                                        <a v-bind="props" :href="commuteMapUrl(item.address) ?? '#'" target="_blank"
+                                            rel="noopener noreferrer" class="commute-link">
+                                            <v-icon size="small" class="commute-link__icon">mdi-directions</v-icon>
+                                            <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                                        </a>
+                                    </template>
+                                    <span>Get directions to downtown</span>
+                                </v-tooltip>
+                                <span v-else class="text-medium-emphasis">
+                                    {{ formatCommute(item.commuteSecondsDowntown) }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </v-table>
+
+                <div class="d-md-none listing-cards listing-cards--mobile">
+                    <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
+                        class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
+                        @keydown.space.prevent="openListing(item)">
+                        <div class="listing-card__top">
+                            <span class="listing-card__price">{{
+                                formatPrice(item.currentPrice)
+                            }}</span>
+                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="flat"
+                                class="listing-card__new">new</v-chip>
+                        </div>
+                        <div class="listing-card__street">
+                            {{ parseAddress(item.address).street }}
+                        </div>
+                        <div v-if="parseAddress(item.address).locality" class="listing-card__locality">
+                            {{ parseAddress(item.address).locality }}
+                        </div>
+                        <div class="listing-card__meta">
+                            <a v-if="item.commuteSecondsDowntown != null && item.address"
+                                :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
+                                class="listing-card__commute listing-card__commute--link" @click.stop>
+                                <v-icon size="small">mdi-train</v-icon>
+                                <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                                <span class="listing-card__commute-label">to downtown</span>
+                                <v-icon size="x-small" class="listing-card__commute-chevron">mdi-chevron-right</v-icon>
+                            </a>
+                            <span v-else class="listing-card__commute listing-card__commute--muted">
+                                <v-icon size="small">mdi-train</v-icon>
+                                —
+                            </span>
+                            <span class="listing-card__seen">{{
+                                formatDate(item.firstSeenAt)
+                            }}</span>
+                        </div>
+                    </div>
+
+                    <div v-if="hasMore && items.length > 0" ref="mobileSentinelEl" class="listing-cards__sentinel">
+                        <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                    </div>
+                </div>
             </template>
-        </v-card>
 
-        <v-btn class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill" size="large"
-            elevation="8" @click="toggleViewMode">
-            <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
-            {{ viewMode === "list" ? "Show map" : "Show list" }}
-        </v-btn>
+            <v-card-text v-else class="text-medium-emphasis text-center py-8">
+                No listings found.
+            </v-card-text>
+        </v-card>
     </v-container>
+
+    <v-btn v-if="!mdAndUp" class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill"
+        size="large" elevation="8" @click="toggleViewMode">
+        <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
+        {{ viewMode === "list" ? "Show map" : "Show list" }}
+    </v-btn>
 </template>
 
 <style scoped>
-.filter-bar {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    flex-wrap: nowrap;
-}
-
-.filter-bar__filters {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.filter-bar__count {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    height: 36px;
-    line-height: 36px;
-}
-
 .filter-btn {
     letter-spacing: normal;
     font-weight: 500;
@@ -524,30 +646,58 @@ onMounted(load);
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
-.listings-container--map {
+.map-fullbleed {
     height: calc(100dvh - 56px);
-    max-width: 100%;
+    width: 100%;
+    display: flex;
+}
+
+.map-fullbleed__map {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+}
+
+.listings-side-panel {
+    flex: 0 0 360px;
     display: flex;
     flex-direction: column;
-    padding-bottom: 0 !important;
+    min-height: 0;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    background-color: rgb(var(--v-theme-surface));
 }
 
-.listings-card--map {
-    flex: 1 1 auto;
+.listings-side-panel__filters {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    flex: 0 0 auto;
+}
+
+.listings-side-panel__filters:empty {
+    display: none;
+}
+
+.listings-side-panel__body {
+    flex: 1 1 auto;
+    overflow-y: auto;
     min-height: 0;
 }
 
-.listings-card--map .map-slot {
-    flex: 1 1 auto;
-    min-height: 0;
+.listings-side-panel__sentinel,
+.listing-cards__sentinel {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 0;
 }
 
-.listings-card--map .map-slot > * {
-    flex: 1 1 auto;
-    min-height: 0;
+.listing-cards--panel {
+    padding: 10px;
 }
 
 .view-switch-pill {
@@ -667,6 +817,18 @@ onMounted(load);
 .listing-card:focus-visible {
     outline: 2px solid rgb(var(--v-theme-secondary));
     outline-offset: 2px;
+}
+
+.listing-card--interactive:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    border-color: rgba(var(--v-theme-on-surface), 0.18);
+}
+
+.listing-card--selected,
+.listing-card--selected:hover {
+    background-color: rgba(var(--v-theme-secondary), 0.12);
+    border-color: rgba(var(--v-theme-secondary), 0.55);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-secondary), 0.45);
 }
 
 .listing-card__top {
