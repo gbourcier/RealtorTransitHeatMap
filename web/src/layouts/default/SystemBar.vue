@@ -8,6 +8,7 @@
       size="small"
       class="ms-2"
       aria-label="Home"
+      @click="emit('click:home')"
     >
       <v-icon size="22">mdi-home-outline</v-icon>
     </v-btn>
@@ -28,12 +29,12 @@
 
     <v-spacer />
 
-    <div id="header-count-slot" class="header-bar__count" />
+    <div id="header-actions-slot" class="header-bar__actions" />
   </v-system-bar>
 </template>
 
 <script lang="ts" setup>
-const emit = defineEmits(['click:settings'])
+const emit = defineEmits(['click:settings', 'click:home'])
 </script>
 
 <style scoped>
@@ -59,14 +60,11 @@ const emit = defineEmits(['click:settings'])
   overflow: hidden;
 }
 
-.header-bar__count {
+.header-bar__actions {
   display: flex;
   align-items: center;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.65);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  margin-right: 12px;
+  gap: 4px;
+  margin-right: 8px;
   flex: 0 0 auto;
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useDisplay } from "vuetify";
 import {
     listListings,
     type Listing,
@@ -8,17 +9,13 @@ import {
 } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 
+const { mdAndUp } = useDisplay();
 const viewMode = ref<"list" | "map">("map");
+const drawerOpen = ref(true);
 
 const items = ref<Listing[]>([]);
 const total = ref(0);
 const mapCount = ref(0);
-
-const countLabel = computed(() => {
-    const n = viewMode.value === "list" ? total.value : mapCount.value;
-    if (n <= 0) return "";
-    return `${n.toLocaleString()} result${n === 1 ? "" : "s"}`;
-});
 
 function toggleViewMode() {
     viewMode.value = viewMode.value === "list" ? "map" : "list";
@@ -170,9 +167,29 @@ function commuteMapUrl(address: string | null): string | null {
     return `https://www.google.com/maps?${params.toString()}`;
 }
 
+const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
+const selectedKey = ref<string | null>(null);
+
+function listingKey(item: Listing): string {
+    return `${item.board}-${item.mls}`;
+}
+
 function openListing(item: Listing): void {
     if (!item.slug) return;
     window.open(item.slug, "_blank", "noopener,noreferrer");
+}
+
+function focusListingOnMap(item: Listing): void {
+    selectedKey.value = listingKey(item);
+    mapRef.value?.focusListing(item.board, item.mls);
+}
+
+function highlightListingOnMap(item: Listing): void {
+    mapRef.value?.highlightListing(item.board, item.mls);
+}
+
+function clearMapHighlight(): void {
+    mapRef.value?.clearHighlight();
 }
 
 function parseAddress(raw: string | null | undefined): {
@@ -291,18 +308,82 @@ onMounted(() => {
         </v-chip>
     </Teleport>
 
-    <Teleport to="#header-count-slot" :disabled="!teleportReady">
-        <span v-if="countLabel">{{ countLabel }}</span>
+    <Teleport to="#header-actions-slot" :disabled="!teleportReady">
+        <v-btn v-if="mdAndUp" icon variant="text" size="small" :active="drawerOpen"
+            :aria-label="drawerOpen ? 'Hide results panel' : 'Show results panel'"
+            @click="drawerOpen = !drawerOpen">
+            <v-icon size="22">mdi-dock-right</v-icon>
+        </v-btn>
     </Teleport>
 
-    <template v-if="viewMode === 'map'">
-        <div class="map-fullbleed">
-            <ListingsMap :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
+    <template v-if="mdAndUp || viewMode === 'map'">
+        <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
+            <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
                 :new-within-days="newWithinDays" @update:count="mapCount = $event" />
+            <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
+                <div class="listings-side-panel__body">
+                    <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
+
+                    <div v-if="loading && items.length === 0" class="text-center py-8">
+                        <v-progress-circular indeterminate />
+                    </div>
+
+                    <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
+                        <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
+                            class="listing-card listing-card--interactive"
+                            :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
+                            @click="focusListingOnMap(item)" @keydown.enter.prevent="focusListingOnMap(item)"
+                            @keydown.space.prevent="focusListingOnMap(item)"
+                            @mouseenter="highlightListingOnMap(item)" @mouseleave="clearMapHighlight"
+                            @focus="highlightListingOnMap(item)" @blur="clearMapHighlight">
+                            <div class="listing-card__top">
+                                <span class="listing-card__price">{{
+                                    formatPrice(item.currentPrice)
+                                    }}</span>
+                                <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="flat"
+                                    class="listing-card__new">new</v-chip>
+                            </div>
+                            <div class="listing-card__street">
+                                {{ parseAddress(item.address).street }}
+                            </div>
+                            <div v-if="parseAddress(item.address).locality" class="listing-card__locality">
+                                {{ parseAddress(item.address).locality }}
+                            </div>
+                            <div class="listing-card__meta">
+                                <a v-if="item.commuteSecondsDowntown != null && item.address"
+                                    :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
+                                    class="listing-card__commute listing-card__commute--link" @click.stop>
+                                    <v-icon size="small">mdi-train</v-icon>
+                                    <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
+                                    <span class="listing-card__commute-label">to downtown</span>
+                                    <v-icon size="x-small"
+                                        class="listing-card__commute-chevron">mdi-chevron-right</v-icon>
+                                </a>
+                                <span v-else class="listing-card__commute listing-card__commute--muted">
+                                    <v-icon size="small">mdi-train</v-icon>
+                                    —
+                                </span>
+                                <span class="listing-card__seen">{{
+                                    formatDate(item.firstSeenAt)
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-medium-emphasis text-center py-8">
+                        No listings found.
+                    </div>
+                </div>
+
+                <div v-if="pageCount > 1" class="listings-side-panel__footer">
+                    <v-pagination :model-value="page" :length="pageCount" density="compact" :total-visible="5"
+                        @update:model-value="(p) => { page = p; load(); }" />
+                </div>
+            </aside>
         </div>
     </template>
 
-    <v-container v-else fluid class="pa-2 pa-sm-6 listings-container">
+    <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
         <v-card>
             <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
                 error
@@ -441,8 +522,8 @@ onMounted(() => {
         </v-card>
     </v-container>
 
-    <v-btn class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill" size="large"
-        elevation="8" @click="toggleViewMode">
+    <v-btn v-if="!mdAndUp" class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill"
+        size="large" elevation="8" @click="toggleViewMode">
         <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
         {{ viewMode === "list" ? "Show map" : "Show list" }}
     </v-btn>
@@ -507,10 +588,35 @@ onMounted(() => {
     display: flex;
 }
 
-.map-fullbleed > * {
+.map-fullbleed__map {
     flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
+}
+
+.listings-side-panel {
+    flex: 0 0 360px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    background-color: rgb(var(--v-theme-surface));
+}
+
+.listings-side-panel__body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.listings-side-panel__footer {
+    flex: 0 0 auto;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    padding: 8px 4px;
+}
+
+.listing-cards--panel {
+    padding: 10px;
 }
 
 .view-switch-pill {
@@ -630,6 +736,18 @@ onMounted(() => {
 .listing-card:focus-visible {
     outline: 2px solid rgb(var(--v-theme-secondary));
     outline-offset: 2px;
+}
+
+.listing-card--interactive:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    border-color: rgba(var(--v-theme-on-surface), 0.18);
+}
+
+.listing-card--selected,
+.listing-card--selected:hover {
+    background-color: rgba(var(--v-theme-secondary), 0.12);
+    border-color: rgba(var(--v-theme-secondary), 0.55);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-secondary), 0.45);
 }
 
 .listing-card__top {

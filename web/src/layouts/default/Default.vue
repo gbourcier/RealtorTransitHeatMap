@@ -1,6 +1,9 @@
 <template>
   <v-app>
-    <default-system-bar @click:settings="settingsDrawer = !settingsDrawer" />
+    <default-system-bar
+      @click:settings="settingsDrawer = !settingsDrawer"
+      @click:home="settingsDrawer = false"
+    />
 
     <default-drawer v-model="settingsDrawer" />
 
