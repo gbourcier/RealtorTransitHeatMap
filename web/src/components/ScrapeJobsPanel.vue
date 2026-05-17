@@ -128,6 +128,7 @@ onUnmounted(() => {
             <th>Duration</th>
             <th class="text-right">Total</th>
             <th class="text-right">New</th>
+            <th class="text-right">Stale</th>
             <th>Trigger</th>
             <th>Error</th>
           </tr>
@@ -143,6 +144,7 @@ onUnmounted(() => {
             <td>{{ durationLabel(r) }}</td>
             <td class="text-right">{{ r.totalCount ?? '—' }}</td>
             <td class="text-right">{{ r.newCount ?? '—' }}</td>
+            <td class="text-right">{{ r.staleCount ?? '—' }}</td>
             <td>
               <v-chip v-if="r.scheduleId" size="x-small" variant="outlined">scheduled</v-chip>
               <v-chip v-else size="x-small" variant="outlined" color="grey">manual</v-chip>
@@ -174,6 +176,10 @@ onUnmounted(() => {
             <span class="scrape-card__stat">
               <span class="scrape-card__stat-label">New</span>
               <span class="scrape-card__stat-value">{{ r.newCount ?? '—' }}</span>
+            </span>
+            <span class="scrape-card__stat">
+              <span class="scrape-card__stat-label">Stale</span>
+              <span class="scrape-card__stat-value">{{ r.staleCount ?? '—' }}</span>
             </span>
           </div>
           <div class="scrape-card__bottom">

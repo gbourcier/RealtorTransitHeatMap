@@ -39,7 +39,7 @@ func (r *Repository) Start(ctx context.Context, source string, scheduleID *uuid.
 }
 
 // FinishSuccess marks the run as successful and writes the observed counts.
-func (r *Repository) FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int) (time.Time, error) {
+func (r *Repository) FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int, staleCount int) (time.Time, error) {
 	completedAt := time.Now()
 	err := r.db.WithContext(ctx).
 		Model(&ScrapeRun{}).
@@ -49,13 +49,14 @@ func (r *Repository) FinishSuccess(ctx context.Context, id uuid.UUID, totalCount
 			"completed_at": completedAt,
 			"total_count":  totalCount,
 			"new_count":    newCount,
+			"stale_count":  staleCount,
 		}).Error
 	return completedAt, err
 }
 
 // FinishError marks the run as errored. totalCount/newCount may be zero when
 // the failure happened before any results were retrieved or persisted.
-func (r *Repository) FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int) (time.Time, error) {
+func (r *Repository) FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int, staleCount int) (time.Time, error) {
 	completedAt := time.Now()
 	err := r.db.WithContext(ctx).
 		Model(&ScrapeRun{}).

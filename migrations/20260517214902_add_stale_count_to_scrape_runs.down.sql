@@ -1,0 +1,1 @@
+ALTER TABLE scrape_runs DROP COLUMN stale_count;

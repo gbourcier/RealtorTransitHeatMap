@@ -203,3 +203,8 @@ func (r *Repository) GetListing(ctx context.Context, board, mls int) (*Listing, 
 	}
 	return &l, err
 }
+
+func (r *Repository) DeactivateStaleListing(ctx context.Context, threshold time.Time) (int, error) {
+	result := r.db.WithContext(ctx).Model(&Listing{}).Where("status = ? AND last_updated_at < ?", "1", threshold).Update("status", "0")
+	return int(result.RowsAffected), result.Error
+}

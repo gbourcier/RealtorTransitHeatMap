@@ -22,12 +22,13 @@ type RealtorClient interface {
 
 type ListingRepository interface {
 	UpsertListings(ctx context.Context, obs []listing.Observation) (int, error)
+	DeactivateStaleListing(ctx context.Context, treshold time.Time) (int, error)
 }
 
 type ScrapeRunRepository interface {
 	Start(ctx context.Context, source string, scheduleID *uuid.UUID) (*scraperun.ScrapeRun, error)
-	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int) (time.Time, error)
-	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int) (time.Time, error)
+	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int, staleCount int) (time.Time, error)
+	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int, staleCount int) (time.Time, error)
 	Get(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
 	List(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error)
 }
@@ -107,7 +108,7 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 
 	if fetchErr != nil {
 		kind := classifyError(fetchErr)
-		if _, updateErr := w.runs.FinishError(ctx, run.ID, kind, fetchErr.Error(), totalCount, newCount); updateErr != nil {
+		if _, updateErr := w.runs.FinishError(ctx, run.ID, kind, fetchErr.Error(), totalCount, newCount, 0); updateErr != nil {
 			slog.Error("scrape_runs finish error update failed", "err", updateErr, "run_id", run.ID)
 		}
 		return
@@ -117,15 +118,29 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 
 	if upsertErr != nil {
 		slog.Error("upsert listings failed", "err", upsertErr)
-		if _, updateErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, upsertErr.Error(), totalCount, newCount); updateErr != nil {
+		if _, updateErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, upsertErr.Error(), totalCount, newCount, 0); updateErr != nil {
 			slog.Error("scrape_runs finish error update failed", "err", updateErr, "run_id", run.ID)
 		}
 		return
 	}
 
+	staleTreshold := time.Now().Add(-24 * time.Hour)
+
+	staleCount, staleErr := w.repo.DeactivateStaleListing(ctx, staleTreshold)
+
+	if staleErr != nil {
+		slog.Error("Deactivate stale listing failed", "err", staleErr)
+		if _, staleErr := w.runs.FinishError(ctx, run.ID, scraperun.ErrorKindUnknown, staleErr.Error(), totalCount, newCount, 0); staleErr != nil {
+			slog.Error("scrape_runs finish error update failed", "err", staleErr, "run_id", run.ID)
+		}
+		return
+	}
+
+	slog.Info("marked listings as stale", slog.Int("count", staleCount))
+
 	newCount = inserted
 
-	if _, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount); updateErr != nil {
+	if _, updateErr := w.runs.FinishSuccess(ctx, run.ID, totalCount, newCount, staleCount); updateErr != nil {
 		slog.Error("scrape_runs finish success update failed", "err", updateErr, "run_id", run.ID)
 	}
 
