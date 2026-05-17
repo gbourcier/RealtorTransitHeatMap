@@ -1,0 +1,1 @@
+ALTER TABLE scrape_runs ADD COLUMN stale_count INTEGER;

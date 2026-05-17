@@ -10,6 +10,7 @@ export interface ScrapeRun {
   completedAt?: number | null
   totalCount?: number | null
   newCount?: number | null
+  staleCount?: number | null
   errorKind?: string
   errorMessage?: string
   scheduleId?: string | null

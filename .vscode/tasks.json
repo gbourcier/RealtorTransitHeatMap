@@ -5,7 +5,9 @@
       "label": "Setup Workspace",
       "type": "shell",
       "command": "./scripts/setup-workspace.sh",
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
@@ -17,7 +19,9 @@
       "label": "Setup Database",
       "type": "shell",
       "command": "./scripts/setup-db.sh",
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
@@ -29,7 +33,9 @@
       "label": "Migration Run",
       "type": "shell",
       "command": "./scripts/migrate-up.sh",
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
@@ -41,7 +47,26 @@
       "label": "Migration Revert",
       "type": "shell",
       "command": "./scripts/migrate-down.sh",
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Migration Generate",
+      "type": "shell",
+      "command": "migrate create -ext sql -dir ./migrations ${input:migrationName}",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${env:HOME}/go/bin:${env:PATH}"
+        }
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
@@ -53,7 +78,9 @@
       "label": "Run Tests",
       "type": "shell",
       "command": "go test ./...",
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "group": "test",
       "presentation": {
         "reveal": "always",
@@ -68,7 +95,9 @@
       "command": "air",
       "options": {
         "cwd": "${workspaceFolder}",
-        "env": { "PATH": "${env:HOME}/go/bin:${env:PATH}" }
+        "env": {
+          "PATH": "${env:HOME}/go/bin:${env:PATH}"
+        }
       },
       "isBackground": true,
       "presentation": {
@@ -79,7 +108,10 @@
       },
       "problemMatcher": {
         "owner": "go",
-        "fileLocation": ["relative", "${workspaceFolder}"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
         "pattern": {
           "regexp": "^(.*):(\\d+):(\\d+):\\s+(.*)$",
           "file": 1,
@@ -98,7 +130,9 @@
       "label": "vite: serve",
       "type": "shell",
       "command": "npm run dev",
-      "options": { "cwd": "${workspaceFolder}/web" },
+      "options": {
+        "cwd": "${workspaceFolder}/web"
+      },
       "isBackground": true,
       "presentation": {
         "reveal": "always",
@@ -122,6 +156,13 @@
           "endsPattern": "ready in"
         }
       }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationName",
+      "type": "promptString",
+      "description": "Migration name (e.g. add_stale_count_to_scrape_runs)"
     }
   ]
 }
