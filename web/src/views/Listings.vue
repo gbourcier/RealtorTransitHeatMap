@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import { useDisplay } from "vuetify";
 import {
     listListings,
@@ -21,9 +21,9 @@ function toggleViewMode() {
     viewMode.value = viewMode.value === "list" ? "map" : "list";
 }
 const limit = ref(50);
-const page = ref(1);
 const loading = ref(false);
 const error = ref<string | null>(null);
+let loadGen = 0;
 const sortBy = ref<SortBy>("first_seen_at");
 const sortDir = ref<SortDir>("desc");
 
@@ -51,8 +51,7 @@ function formatCompactPrice(price: number): string {
 }
 
 function applyFilters() {
-    page.value = 1;
-    load();
+    loadInitial();
 }
 
 function setMaxPrice(value: number | null) {
@@ -77,30 +76,53 @@ function clearAllFilters() {
     applyFilters();
 }
 
-const offset = computed(() => (page.value - 1) * limit.value);
-const pageCount = computed(() => Math.ceil(total.value / limit.value));
+const hasMore = computed(() =>
+    items.value.length === 0 ? true : items.value.length < total.value,
+);
 
-async function load() {
+async function loadInitial(): Promise<void> {
+    const gen = ++loadGen;
+    items.value = [];
+    total.value = 0;
+    cardRefs.clear();
+    await loadMore(gen);
+}
+
+let inFlight: Promise<void> | null = null;
+
+function loadMore(gen: number = loadGen): Promise<void> {
+    if (gen !== loadGen) return Promise.resolve();
+    if (inFlight) return inFlight.then(() => loadMore(gen));
+    if (items.value.length > 0 && items.value.length >= total.value) {
+        return Promise.resolve();
+    }
     loading.value = true;
     error.value = null;
-    try {
-        const res = await listListings({
-            limit: limit.value,
-            offset: offset.value,
-            sortBy: sortBy.value,
-            sortDir: sortDir.value,
-            ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
-            ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
-            ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
-        });
-        items.value = res.items;
-        total.value = res.total;
-    } catch (e: any) {
-        error.value =
-            e?.response?.data?.error ?? e?.message ?? "failed to load listings";
-    } finally {
-        loading.value = false;
-    }
+    inFlight = (async () => {
+        try {
+            const res = await listListings({
+                limit: limit.value,
+                offset: items.value.length,
+                sortBy: sortBy.value,
+                sortDir: sortDir.value,
+                ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
+                ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
+                ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
+            });
+            if (gen !== loadGen) return;
+            items.value = [...items.value, ...res.items];
+            total.value = res.total;
+        } catch (e: any) {
+            if (gen === loadGen) {
+                error.value =
+                    e?.response?.data?.error ?? e?.message ?? "failed to load listings";
+            }
+        } finally {
+            if (gen === loadGen) loading.value = false;
+            inFlight = null;
+        }
+    })();
+    return inFlight;
 }
 
 function toggleSort(col: SortBy) {
@@ -110,8 +132,7 @@ function toggleSort(col: SortBy) {
         sortBy.value = col;
         sortDir.value = "desc";
     }
-    page.value = 1;
-    load();
+    loadInitial();
 }
 
 function sortIcon(col: SortBy): string {
@@ -169,9 +190,35 @@ function commuteMapUrl(address: string | null): string | null {
 
 const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
 const selectedKey = ref<string | null>(null);
+const cardRefs = new Map<string, HTMLElement>();
+
+function setCardRef(el: Element | null, key: string): void {
+    const node = el as HTMLElement | null;
+    if (node) cardRefs.set(key, node);
+    else cardRefs.delete(key);
+}
 
 function listingKey(item: Listing): string {
     return `${item.board}-${item.mls}`;
+}
+
+async function onPinClick(payload: { board: number; mls: number }): Promise<void> {
+    const key = `${payload.board}-${payload.mls}`;
+    selectedKey.value = key;
+    if (!mdAndUp.value || !drawerOpen.value) return;
+    const gen = loadGen;
+    const isLoaded = () => items.value.some((it) => listingKey(it) === key);
+    while (
+        gen === loadGen &&
+        !isLoaded() &&
+        (items.value.length === 0 || items.value.length < total.value)
+    ) {
+        await loadMore(gen);
+    }
+    if (gen !== loadGen) return;
+    await nextTick();
+    const card = cardRefs.get(key);
+    if (card) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 function openListing(item: Listing): void {
@@ -207,9 +254,53 @@ function parseAddress(raw: string | null | undefined): {
 }
 
 const teleportReady = ref(false);
+const sidePanelBodyEl = ref<HTMLElement | null>(null);
+const panelSentinelEl = ref<HTMLElement | null>(null);
+const mobileSentinelEl = ref<HTMLElement | null>(null);
+let panelObserver: IntersectionObserver | null = null;
+let mobileObserver: IntersectionObserver | null = null;
+
+function makeObserver(
+    sentinel: HTMLElement | null,
+    root: HTMLElement | null,
+): IntersectionObserver | null {
+    if (!sentinel) return null;
+    const obs = new IntersectionObserver(
+        (entries) => {
+            if (entries.some((e) => e.isIntersecting)) loadMore();
+        },
+        { root, rootMargin: "200px" },
+    );
+    obs.observe(sentinel);
+    return obs;
+}
+
+watch(
+    [panelSentinelEl, sidePanelBodyEl],
+    ([sentinel, body]) => {
+        panelObserver?.disconnect();
+        panelObserver = makeObserver(sentinel, body);
+    },
+    { flush: "post" },
+);
+
+watch(
+    mobileSentinelEl,
+    (sentinel) => {
+        mobileObserver?.disconnect();
+        mobileObserver = makeObserver(sentinel, null);
+    },
+    { flush: "post" },
+);
+
 onMounted(() => {
     teleportReady.value = true;
-    load();
+    loadInitial();
+});
+
+onBeforeUnmount(() => {
+    panelObserver?.disconnect();
+    mobileObserver?.disconnect();
 });
 </script>
 
@@ -319,9 +410,9 @@ onMounted(() => {
     <template v-if="mdAndUp || viewMode === 'map'">
         <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                :new-within-days="newWithinDays" @update:count="mapCount = $event" />
+                :new-within-days="newWithinDays" @update:count="mapCount = $event" @pin-click="onPinClick" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
-                <div class="listings-side-panel__body">
+                <div ref="sidePanelBodyEl" class="listings-side-panel__body">
                     <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
 
                     <div v-if="loading && items.length === 0" class="text-center py-8">
@@ -329,7 +420,9 @@ onMounted(() => {
                     </div>
 
                     <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
-                        <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
+                        <div v-for="item in items" :key="`p-${item.board}-${item.mls}`"
+                            :ref="(el) => setCardRef(el as Element | null, listingKey(item))"
+                            role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
                             :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
                             @click="focusListingOnMap(item)" @keydown.enter.prevent="focusListingOnMap(item)"
@@ -373,11 +466,11 @@ onMounted(() => {
                     <div v-else class="text-medium-emphasis text-center py-8">
                         No listings found.
                     </div>
-                </div>
 
-                <div v-if="pageCount > 1" class="listings-side-panel__footer">
-                    <v-pagination :model-value="page" :length="pageCount" density="compact" :total-visible="5"
-                        @update:model-value="(p) => { page = p; load(); }" />
+                    <div v-if="hasMore && items.length > 0" ref="panelSentinelEl"
+                        class="listings-side-panel__sentinel">
+                        <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                    </div>
                 </div>
             </aside>
         </div>
@@ -465,7 +558,7 @@ onMounted(() => {
                         </tbody>
                     </v-table>
 
-                    <div class="d-md-none listing-cards">
+                    <div class="d-md-none listing-cards listing-cards--mobile">
                         <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
                             class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
                             @keydown.space.prevent="openListing(item)">
@@ -501,24 +594,17 @@ onMounted(() => {
                                     }}</span>
                             </div>
                         </div>
+
+                        <div v-if="hasMore && items.length > 0" ref="mobileSentinelEl"
+                            class="listing-cards__sentinel">
+                            <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                        </div>
                     </div>
                 </template>
 
                 <v-card-text v-else class="text-medium-emphasis text-center py-8">
                     No listings found.
                 </v-card-text>
-
-            <template v-if="pageCount > 1">
-                <v-divider />
-                <v-card-text class="d-flex justify-center pa-3">
-                    <v-pagination :model-value="page" :length="pageCount" density="comfortable" @update:model-value="
-                        (p) => {
-                            page = p;
-                            load();
-                        }
-                    " />
-                </v-card-text>
-            </template>
         </v-card>
     </v-container>
 
@@ -609,10 +695,13 @@ onMounted(() => {
     min-height: 0;
 }
 
-.listings-side-panel__footer {
-    flex: 0 0 auto;
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    padding: 8px 4px;
+.listings-side-panel__sentinel,
+.listing-cards__sentinel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 0;
 }
 
 .listing-cards--panel {

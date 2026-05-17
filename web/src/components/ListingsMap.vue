@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "update:count", n: number): void;
+    (e: "pin-click", payload: { board: number; mls: number }): void;
 }>();
 
 const mapEl = ref<HTMLElement | null>(null);
@@ -173,6 +174,7 @@ async function load() {
                 riseOnHover: true,
             });
             m.bindPopup(popupHtml(pin));
+            m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
             markers.push(m);
             markersByKey.set(listingKey(pin.board, pin.mls), m);
         }
