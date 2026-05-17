@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useDisplay } from "vuetify";
 import {
     listListings,
@@ -84,7 +84,6 @@ async function loadInitial(): Promise<void> {
     const gen = ++loadGen;
     items.value = [];
     total.value = 0;
-    cardRefs.clear();
     await loadMore(gen);
 }
 
@@ -190,35 +189,9 @@ function commuteMapUrl(address: string | null): string | null {
 
 const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
 const selectedKey = ref<string | null>(null);
-const cardRefs = new Map<string, HTMLElement>();
-
-function setCardRef(el: Element | null, key: string): void {
-    const node = el as HTMLElement | null;
-    if (node) cardRefs.set(key, node);
-    else cardRefs.delete(key);
-}
 
 function listingKey(item: Listing): string {
     return `${item.board}-${item.mls}`;
-}
-
-async function onPinClick(payload: { board: number; mls: number }): Promise<void> {
-    const key = `${payload.board}-${payload.mls}`;
-    selectedKey.value = key;
-    if (!mdAndUp.value || !drawerOpen.value) return;
-    const gen = loadGen;
-    const isLoaded = () => items.value.some((it) => listingKey(it) === key);
-    while (
-        gen === loadGen &&
-        !isLoaded() &&
-        (items.value.length === 0 || items.value.length < total.value)
-    ) {
-        await loadMore(gen);
-    }
-    if (gen !== loadGen) return;
-    await nextTick();
-    const card = cardRefs.get(key);
-    if (card) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 function openListing(item: Listing): void {
@@ -410,7 +383,7 @@ onBeforeUnmount(() => {
     <template v-if="mdAndUp || viewMode === 'map'">
         <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                :new-within-days="newWithinDays" @update:count="mapCount = $event" @pin-click="onPinClick" />
+                :new-within-days="newWithinDays" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
                 <div ref="sidePanelBodyEl" class="listings-side-panel__body">
                     <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
@@ -421,7 +394,6 @@ onBeforeUnmount(() => {
 
                     <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
                         <div v-for="item in items" :key="`p-${item.board}-${item.mls}`"
-                            :ref="(el) => setCardRef(el as Element | null, listingKey(item))"
                             role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
                             :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
