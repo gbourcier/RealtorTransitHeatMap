@@ -707,13 +707,13 @@ onBeforeUnmount(() => {
 }
 
 .list-toolbar__count-num {
-    font-size: 0.9375rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: -0.01em;
 }
 
 .list-toolbar__count-label {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     color: rgba(var(--v-theme-on-surface), 0.55);
     margin-top: 2px;
 }
