@@ -152,6 +152,28 @@ function sortIcon(col: SortBy): string {
     return sortDir.value === "asc" ? "mdi-arrow-up" : "mdi-arrow-down";
 }
 
+const sortOptions: { value: SortBy; label: string }[] = [
+    { value: "first_seen_at", label: "Newest" },
+    { value: "price", label: "Price" },
+    { value: "commute_time", label: "Commute" },
+];
+
+const currentSortLabel = computed(
+    () => sortOptions.find((o) => o.value === sortBy.value)?.label ?? "Sort",
+);
+
+function setSort(col: SortBy, dir: SortDir) {
+    if (sortBy.value === col && sortDir.value === dir) return;
+    sortBy.value = col;
+    sortDir.value = dir;
+    loadInitial();
+}
+
+function toggleSortDir() {
+    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+    loadInitial();
+}
+
 function formatPrice(price: number | null): string {
     if (price == null) return "—";
     return new Intl.NumberFormat("en-CA", {
@@ -389,8 +411,8 @@ onBeforeUnmount(() => {
         </v-btn>
     </Teleport>
 
-    <template v-if="mdAndUp || viewMode === 'map'">
-        <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
+    <div v-show="mdAndUp || viewMode === 'map'" class="map-fullbleed"
+        :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
                 :new-within-days="newWithinDays" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
@@ -402,7 +424,34 @@ onBeforeUnmount(() => {
                         <v-progress-circular indeterminate />
                     </div>
 
-                    <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
+                    <template v-else-if="items.length > 0">
+                    <div class="listings-sort">
+                        <span class="listings-sort__count">
+                            {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
+                        </span>
+                        <v-menu location="bottom end" offset="4">
+                            <template #activator="{ props }">
+                                <v-btn v-bind="props" variant="text" size="small" density="comfortable"
+                                    class="listings-sort__btn text-none" append-icon="mdi-menu-down">
+                                    <v-icon size="small" start>{{
+                                        sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
+                                    }}</v-icon>
+                                    {{ currentSortLabel }}
+                                </v-btn>
+                            </template>
+                            <v-list density="compact" min-width="180">
+                                <v-list-item v-for="opt in sortOptions" :key="opt.value"
+                                    :active="sortBy === opt.value" :title="opt.label"
+                                    @click="setSort(opt.value, 'desc')" />
+                                <v-divider />
+                                <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
+                                    :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
+                                    @click="toggleSortDir" />
+                            </v-list>
+                        </v-menu>
+                    </div>
+
+                    <div class="listing-cards listing-cards--panel">
                         <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
                             :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
@@ -443,6 +492,7 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                     </div>
+                    </template>
 
                     <div v-else class="text-medium-emphasis text-center py-8">
                         No listings found.
@@ -454,10 +504,9 @@ onBeforeUnmount(() => {
                 </div>
             </aside>
         </div>
-    </template>
 
     <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
-        <v-card>
+        <v-card color="transparent" flat>
             <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
                 error
             }}</v-alert>
@@ -538,6 +587,32 @@ onBeforeUnmount(() => {
                     </tbody>
                 </v-table>
 
+                <div class="listings-sort listings-sort--mobile d-md-none">
+                    <span class="listings-sort__count">
+                        {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
+                    </span>
+                    <v-menu location="bottom end" offset="4">
+                        <template #activator="{ props }">
+                            <v-btn v-bind="props" variant="text" size="small" density="comfortable"
+                                class="listings-sort__btn text-none" append-icon="mdi-menu-down">
+                                <v-icon size="small" start>{{
+                                    sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
+                                }}</v-icon>
+                                {{ currentSortLabel }}
+                            </v-btn>
+                        </template>
+                        <v-list density="compact" min-width="180">
+                            <v-list-item v-for="opt in sortOptions" :key="opt.value"
+                                :active="sortBy === opt.value" :title="opt.label"
+                                @click="setSort(opt.value, 'desc')" />
+                            <v-divider />
+                            <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
+                                :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
+                                @click="toggleSortDir" />
+                        </v-list>
+                    </v-menu>
+                </div>
+
                 <div class="d-md-none listing-cards listing-cards--mobile">
                     <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
                         class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
@@ -546,7 +621,7 @@ onBeforeUnmount(() => {
                             <span class="listing-card__price">{{
                                 formatPrice(item.currentPrice)
                             }}</span>
-                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="flat"
+                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="tonal"
                                 class="listing-card__new">new</v-chip>
                         </div>
                         <div class="listing-card__street">
@@ -586,11 +661,31 @@ onBeforeUnmount(() => {
         </v-card>
     </v-container>
 
-    <v-btn v-if="!mdAndUp" class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill"
-        size="large" elevation="8" @click="toggleViewMode">
-        <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
-        {{ viewMode === "list" ? "Show map" : "Show list" }}
-    </v-btn>
+    <div v-if="!mdAndUp" class="mobile-bottom-card"
+        :class="{ 'mobile-bottom-card--bare': viewMode === 'list' }">
+        <div v-if="viewMode === 'map'" class="mobile-bottom-card__legend" aria-label="Transit commute time legend">
+            <div class="mobile-bottom-card__legend-title">Commute to Downtown</div>
+            <div class="mobile-bottom-card__legend-rows">
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#2e7d32" />
+                    &lt; 30 min
+                </span>
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#f9a825" />
+                    30–60 min
+                </span>
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#c62828" />
+                    &gt; 60 min
+                </span>
+            </div>
+        </div>
+        <v-btn class="mobile-bottom-card__btn text-none" variant="tonal" rounded="lg" size="large" block
+            @click="toggleViewMode">
+            <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
+            {{ viewMode === "list" ? "Show map" : "Show list" }}
+        </v-btn>
+    </div>
 </template>
 
 <style scoped>
@@ -700,15 +795,93 @@ onBeforeUnmount(() => {
     padding: 10px;
 }
 
-.view-switch-pill {
+.listings-sort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px 6px 14px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.listings-sort--mobile {
+    padding: 6px 10px 6px 14px;
+    border-bottom: 0;
+}
+
+.listings-sort__count {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.75);
+}
+
+.listings-sort__btn {
+    letter-spacing: normal;
+    font-weight: 500;
+}
+
+.mobile-bottom-card {
     position: fixed;
-    left: calc(50% + (var(--v-layout-left, 0px) - var(--v-layout-right, 0px)) / 2);
-    bottom: calc(36px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
+    left: 12px;
+    right: 12px;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background-color: rgba(20, 22, 28, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.mobile-bottom-card--bare {
+    padding: 12px;
+    background-color: rgba(20, 22, 28, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.mobile-bottom-card__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.mobile-bottom-card__legend-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.mobile-bottom-card__legend-rows {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-bottom-card__legend-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mobile-bottom-card__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-bottom-card__btn {
     letter-spacing: normal;
     font-weight: 600;
-    padding-inline: 22px;
 }
 
 .sortable-col {
@@ -794,20 +967,51 @@ onBeforeUnmount(() => {
 .listing-cards {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
+    gap: 12px;
+    padding: 10px;
+}
+
+.listing-cards--mobile {
+    gap: 14px;
+    padding: 10px 12px 12px;
 }
 
 .listing-card {
+    position: relative;
     display: block;
     text-decoration: none;
     color: inherit;
     background-color: rgba(var(--v-theme-on-surface), 0.03);
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    border-radius: 10px;
+    border-radius: 14px;
     padding: 14px 14px 12px;
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.listing-cards--mobile .listing-card {
+    padding: 18px 18px 16px;
+}
+
+.listing-cards--mobile .listing-card__price {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.listing-cards--mobile .listing-card__street {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.listing-cards--mobile .listing-card__meta {
+    border-top: 0;
+    padding-top: 14px;
+    margin-top: 10px;
+}
+
+.listing-cards--mobile .listing-card__new {
+    top: 16px;
+    right: 16px;
 }
 
 .listing-card:active {
@@ -836,6 +1040,7 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
+    padding-right: 56px;
 }
 
 .listing-card__price {
@@ -845,7 +1050,10 @@ onBeforeUnmount(() => {
 }
 
 .listing-card__new {
-    margin-left: auto;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    margin-left: 0;
 }
 
 .listing-card__street {
@@ -864,7 +1072,9 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     font-size: 0.8125rem;
 }
 
@@ -912,6 +1122,8 @@ onBeforeUnmount(() => {
 }
 
 .listing-card__seen {
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    margin-left: auto;
+    color: rgba(var(--v-theme-on-surface), 0.45);
+    font-size: 0.75rem;
 }
 </style>

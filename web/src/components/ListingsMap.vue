@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { latLngToCell, cellToBoundary } from "h3-js";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
 import { listTransitStops } from "../api/transit";
 
@@ -22,7 +23,8 @@ const emit = defineEmits<{
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
 const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
-const stopsLayer = shallowRef<L.LayerGroup | null>(null);
+const hexLayer = shallowRef<L.LayerGroup | null>(null);
+const HEX_RESOLUTION = 8;
 const loading = ref(false);
 const error = ref<string | null>(null);
 let hasFitBounds = false;
@@ -34,6 +36,7 @@ function listingKey(board: number, mls: number): string {
 }
 
 const MONTREAL_CENTER: L.LatLngTuple = [45.5048, -73.5772];
+const MCGILL_STATION: L.LatLngTuple = [45.5045, -73.5746];
 
 function formatCompactPrice(price: number | null): string {
     if (price == null) return "—";
@@ -50,6 +53,34 @@ function commuteTier(seconds: number | null): "fast" | "mid" | "slow" | "unknown
     if (minutes < 30) return "fast";
     if (minutes <= 60) return "mid";
     return "slow";
+}
+
+type MarkerData = { price: number | null; commuteSec: number | null };
+
+function median(nums: number[]): number | null {
+    if (nums.length === 0) return null;
+    const sorted = [...nums].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
+}
+
+function clusterIcon(c: L.MarkerCluster): L.DivIcon {
+    const commutes: number[] = [];
+    for (const m of c.getAllChildMarkers()) {
+        const d = (m as L.Marker & { _data?: MarkerData })._data;
+        if (d?.commuteSec != null) commutes.push(d.commuteSec);
+    }
+    const medCommute = median(commutes);
+    const tier = commuteTier(medCommute);
+    const count = c.getChildCount();
+    const sizeClass = count >= 100 ? "lg" : count >= 10 ? "md" : "sm";
+    return L.divIcon({
+        className: `price-cluster price-cluster--${tier} price-cluster--${sizeClass}`,
+        html: `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span></div>`,
+        iconSize: L.point(40, 40),
+    });
 }
 
 function pricePillIcon(
@@ -172,7 +203,11 @@ async function load() {
             const m = L.marker([pin.latitude, pin.longitude], {
                 icon: pricePillIcon(pin.currentPrice, pin.commuteSecondsDowntown),
                 riseOnHover: true,
-            });
+            }) as L.Marker & { _data?: MarkerData };
+            m._data = {
+                price: pin.currentPrice,
+                commuteSec: pin.commuteSecondsDowntown,
+            };
             m.bindPopup(popupHtml(pin));
             m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
             markers.push(m);
@@ -197,50 +232,52 @@ async function load() {
     }
 }
 
-function stopColor(commuteSec: number): string {
+function gradientColor(commuteSec: number): string {
     const minutes = commuteSec / 60;
-    if (minutes < 30) return "#2e7d32";
-    if (minutes <= 60) return "#f9a825";
-    return "#c62828";
+    const t = Math.max(0, Math.min(1, minutes / 90));
+    const hue = 120 * (1 - t);
+    return `hsl(${hue.toFixed(0)}, 70%, 45%)`;
 }
 
-function radiusForZoom(zoom: number): number {
-    if (zoom <= 9) return 1.5;
-    if (zoom >= 15) return 7;
-    return 1.5 + (zoom - 9) * 0.9;
+function medianOf(nums: number[]): number {
+    const sorted = [...nums].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
 }
 
-const stopCircles: L.CircleMarker[] = [];
-
-function applyStopRadius() {
-    if (!map.value) return;
-    const r = radiusForZoom(map.value.getZoom());
-    for (const c of stopCircles) c.setRadius(r);
+function buildHexLayer(stops: { latitude: number; longitude: number; commuteSec: number }[]): L.LayerGroup {
+    const byCell = new Map<string, number[]>();
+    for (const s of stops) {
+        const cell = latLngToCell(s.latitude, s.longitude, HEX_RESOLUTION);
+        const arr = byCell.get(cell);
+        if (arr) arr.push(s.commuteSec);
+        else byCell.set(cell, [s.commuteSec]);
+    }
+    const layer = L.layerGroup();
+    for (const [cell, commutes] of byCell) {
+        const med = medianOf(commutes);
+        const boundary = cellToBoundary(cell, false) as [number, number][];
+        const poly = L.polygon(boundary, {
+            pane: "hexPane",
+            color: gradientColor(med),
+            weight: 0,
+            fillColor: gradientColor(med),
+            fillOpacity: 0.15,
+            interactive: false,
+        });
+        layer.addLayer(poly);
+    }
+    return layer;
 }
 
 async function loadStops() {
     if (!map.value) return;
     try {
         const stops = await listTransitStops();
-        const renderer = L.canvas({ padding: 0.5 });
-        const layer = L.layerGroup();
-        const r = radiusForZoom(map.value.getZoom());
-        stopCircles.length = 0;
-        for (const s of stops) {
-            const circle = L.circleMarker([s.latitude, s.longitude], {
-                renderer,
-                radius: r,
-                stroke: false,
-                fillColor: stopColor(s.commuteSec),
-                fillOpacity: 0.6,
-                interactive: false,
-            });
-            layer.addLayer(circle);
-            stopCircles.push(circle);
-        }
-        stopsLayer.value = layer;
-        layer.addTo(map.value);
-        map.value.on("zoomend", applyStopRadius);
+        hexLayer.value = buildHexLayer(stops);
+        hexLayer.value.addTo(map.value);
     } catch (e) {
         console.warn("failed to load transit stops layer", e);
     }
@@ -251,7 +288,14 @@ onMounted(() => {
     map.value = L.map(mapEl.value, {
         center: MONTREAL_CENTER,
         zoom: 11,
+        zoomControl: false,
     });
+    map.value.createPane("hexPane");
+    const hexPane = map.value.getPane("hexPane");
+    if (hexPane) {
+        hexPane.style.zIndex = "350";
+        hexPane.style.pointerEvents = "none";
+    }
     L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
@@ -266,9 +310,28 @@ onMounted(() => {
         spiderfyOnMaxZoom: true,
         maxClusterRadius: 50,
         disableClusteringAtZoom: 14,
+        iconCreateFunction: clusterIcon,
     });
     loadStops();
     map.value.addLayer(cluster.value);
+    L.marker(MCGILL_STATION, {
+        icon: L.divIcon({
+            className: "downtown-target",
+            html: `<span class="downtown-target__star" aria-hidden="true">★</span>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+        }),
+        interactive: true,
+        keyboard: false,
+        zIndexOffset: -500,
+    })
+        .bindTooltip("McGill Station", {
+            direction: "top",
+            offset: [0, -8],
+            className: "downtown-target__tooltip",
+            opacity: 1,
+        })
+        .addTo(map.value);
     load();
 
     resizeObserver = new ResizeObserver(() => {
@@ -283,12 +346,10 @@ onBeforeUnmount(() => {
         resizeObserver = null;
     }
     if (map.value) {
-        map.value.off("zoomend", applyStopRadius);
         map.value.remove();
         map.value = null;
         cluster.value = null;
-        stopsLayer.value = null;
-        stopCircles.length = 0;
+        hexLayer.value = null;
         markersByKey.clear();
     }
 });
@@ -337,6 +398,21 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
             <v-alert v-if="error" type="error" density="compact" variant="tonal" class="ma-0">{{ error }}</v-alert>
         </div>
         <div ref="mapEl" class="listings-map" />
+        <div class="listings-map-legend" aria-label="Transit commute time legend">
+            <div class="listings-map-legend__title">Commute to downtown</div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#2e7d32" />
+                &lt; 30 min
+            </div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#f9a825" />
+                30–60 min
+            </div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#c62828" />
+                &gt; 60 min
+            </div>
+        </div>
     </div>
 </template>
 
@@ -370,72 +446,166 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     backdrop-filter: blur(4px);
     pointer-events: none;
 }
+
+.listings-map-legend {
+    position: absolute;
+    bottom: 24px;
+    right: 12px;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background-color: rgba(20, 20, 24, 0.6);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-size: 11px;
+    line-height: 1.2;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.listings-map-legend__title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 2px;
+}
+
+.listings-map-legend__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.listings-map-legend__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 959.98px) {
+    .listings-map-legend {
+        display: none;
+    }
+}
 </style>
 
 <style>
 .price-pin {
     background: transparent;
     border: 0;
-    --pin-bg: rgb(var(--v-theme-secondary));
-    --pin-fg: rgb(var(--v-theme-on-secondary));
+    --pin-ring: rgba(255, 255, 255, 0.18);
+}
+
+.downtown-target {
+    background: transparent;
+    border: 0;
+    pointer-events: auto;
+}
+
+.downtown-target__star {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 18px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow:
+        0 0 4px rgba(0, 0, 0, 0.85),
+        0 0 8px rgba(0, 0, 0, 0.6),
+        0 1px 1px rgba(0, 0, 0, 0.9);
+    cursor: help;
+    transition: transform 120ms ease, color 120ms ease;
+}
+
+.downtown-target:hover .downtown-target__star {
+    color: #ffd54f;
+    transform: scale(1.15);
+}
+
+.leaflet-tooltip.downtown-target__tooltip {
+    background: rgba(20, 22, 28, 0.82);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+}
+
+.leaflet-tooltip.downtown-target__tooltip::before {
+    border-top-color: rgba(20, 22, 28, 0.82);
 }
 
 .price-pin--fast {
-    --pin-bg: #2e7d32;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(76, 175, 80, 0.9);
 }
 
 .price-pin--mid {
-    --pin-bg: #f9a825;
-    --pin-fg: #1a1a1a;
+    --pin-ring: rgba(255, 179, 0, 0.9);
 }
 
 .price-pin--slow {
-    --pin-bg: #c62828;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(239, 83, 80, 0.9);
 }
 
 .price-pin--unknown {
-    --pin-bg: #555;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(255, 255, 255, 0.22);
 }
 
 .price-pin__label {
+    position: relative;
     display: inline-block;
-    transform: translate(-50%, -100%);
-    padding: 4px 9px;
+    transform: translate(-50%, -50%);
+    padding: 4px 11px;
     border-radius: 999px;
-    background-color: var(--pin-bg);
-    color: var(--pin-fg);
+    background: linear-gradient(180deg, rgba(34, 36, 44, 0.88) 0%, rgba(18, 20, 26, 0.88) 100%);
+    color: #fff;
     font-size: 12px;
-    font-weight: 600;
-    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.15;
     white-space: nowrap;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.45),
-        0 0 0 1px rgba(0, 0, 0, 0.25);
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     cursor: pointer;
-    transition: transform 100ms ease, box-shadow 100ms ease;
+    transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.price-pin__label::after {
+.price-pin__label::before {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: -4px;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--pin-bg);
+    inset: -2px;
+    border-radius: 999px;
+    border: 1.5px solid var(--pin-ring);
+    pointer-events: none;
 }
 
 .price-pin:hover .price-pin__label {
-    transform: translate(-50%, -100%) scale(1.06);
+    transform: translate(-50%, -50%) scale(1.08);
     box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.55),
-        0 0 0 1px rgba(0, 0, 0, 0.35);
+        0 6px 14px rgba(0, 0, 0, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     z-index: 1000;
 }
 
@@ -444,18 +614,106 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-pin.price-pin--highlighted .price-pin__label {
-    transform: translate(-50%, -100%) scale(1.18);
+    transform: translate(-50%, -50%) scale(1.18);
+}
+
+.price-pin.price-pin--highlighted .price-pin__label::before {
+    border-color: rgb(var(--v-theme-secondary));
+    border-width: 2px;
+    inset: -3px;
+}
+
+.price-cluster {
+    background: transparent;
+    border: 0;
+    --cluster-ring: rgba(255, 255, 255, 0.18);
+}
+
+.price-cluster--fast {
+    --cluster-ring: rgba(76, 175, 80, 0.85);
+}
+
+.price-cluster--mid {
+    --cluster-ring: rgba(255, 179, 0, 0.85);
+}
+
+.price-cluster--slow {
+    --cluster-ring: rgba(239, 83, 80, 0.85);
+}
+
+.price-cluster--unknown {
+    --cluster-ring: rgba(255, 255, 255, 0.25);
+}
+
+.price-cluster__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: rgba(20, 22, 28, 0.82);
+    color: #fff;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 0 0 2px rgb(var(--v-theme-secondary)),
-        0 6px 14px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(0, 0, 0, 0.35);
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.price-cluster__inner::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid var(--cluster-ring);
+    pointer-events: none;
+}
+
+.price-cluster--md .price-cluster__inner {
+    width: 42px;
+    height: 42px;
+}
+
+.price-cluster--lg .price-cluster__inner {
+    width: 52px;
+    height: 52px;
+}
+
+.price-cluster:hover .price-cluster__inner {
+    transform: scale(1.06);
+    box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.price-cluster__count {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.96);
+}
+
+.price-cluster--md .price-cluster__count {
+    font-size: 13px;
+}
+
+.price-cluster--lg .price-cluster__count {
+    font-size: 15px;
 }
 
 .marker-cluster.price-pin--highlighted {
     z-index: 1001 !important;
 }
 
-.marker-cluster.price-pin--highlighted > div {
+.marker-cluster.price-pin--highlighted>div,
+.price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
         0 0 0 3px rgb(var(--v-theme-secondary)),
         0 6px 14px rgba(0, 0, 0, 0.6);
