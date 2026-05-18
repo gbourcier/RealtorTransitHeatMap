@@ -59,17 +59,17 @@ func run() error {
 	schedules := schedule.NewRepository(gormDB)
 	stops := transit.NewRepository(gormDB)
 
-	transitWorker := transit.NewWorker(stops, listings, transit.Config{
+	commuteComputer := transit.NewCommuteComputer(stops, listings, transit.Config{
 		NearestStops: cfg.Transit.NearestStops,
 		WalkSpeedMps: cfg.Transit.WalkSpeedMps,
 		WalkDetour:   cfg.Transit.WalkDetour,
 	})
-	transitWorker.Bind(ctx)
+	commuteComputer.Bind(ctx)
 
-	scrapeWorker := scrape.New(realtorClient, listings, scrapeRuns, transitWorker)
+	scrapeWorker := scrape.New(realtorClient, listings, scrapeRuns, commuteComputer)
 	scrapeWorker.Bind(ctx)
 
-	refreshWorker := refresh.NewWorker(stops, refreshRuns, transitWorker, cfg.Transit)
+	refreshWorker := refresh.NewWorker(stops, refreshRuns, commuteComputer, cfg.Transit)
 	refreshWorker.Bind(ctx)
 
 	dispatcher := dispatch.New(scrapeWorker, refreshWorker)
@@ -79,7 +79,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, scrapeWorker, refreshWorker, schedules, scheduler, listings, transitWorker, stops)
+	srv := api.NewServer(cfg.HTTP.Addr, scrapeWorker, refreshWorker, schedules, scheduler, listings, commuteComputer, stops)
 
 	serverErr := make(chan error, 1)
 	go func() {
@@ -104,6 +104,6 @@ func run() error {
 	}
 	scrapeWorker.Wait()
 	refreshWorker.Wait()
-	transitWorker.Wait()
+	commuteComputer.Wait()
 	return nil
 }

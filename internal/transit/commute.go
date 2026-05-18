@@ -13,8 +13,8 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 )
 
-var ErrBusy = errors.New("transit worker: computation already in progress")
-var ErrNoStops = errors.New("transit worker: no transit stops loaded; run gtfs-precompute first")
+var ErrBusy = errors.New("commute computer: computation already in progress")
+var ErrNoStops = errors.New("commute computer: no transit stops loaded; run gtfs-precompute first")
 
 type ListingRepo interface {
 	ListPendingCommute(ctx context.Context, refresh bool) ([]listing.PendingCommute, error)
@@ -33,7 +33,7 @@ type Config struct {
 	WalkDetour   float64
 }
 
-type Worker struct {
+type CommuteComputer struct {
 	stops    StopRepo
 	listings ListingRepo
 	cfg      Config
@@ -42,14 +42,14 @@ type Worker struct {
 	busy     atomic.Bool
 }
 
-func NewWorker(stops StopRepo, listings ListingRepo, cfg Config) *Worker {
-	return &Worker{stops: stops, listings: listings, cfg: cfg}
+func NewCommuteComputer(stops StopRepo, listings ListingRepo, cfg Config) *CommuteComputer {
+	return &CommuteComputer{stops: stops, listings: listings, cfg: cfg}
 }
 
-func (w *Worker) Bind(rootCtx context.Context) { w.rootCtx = rootCtx }
-func (w *Worker) Wait()                        { w.wg.Wait() }
+func (w *CommuteComputer) Bind(rootCtx context.Context) { w.rootCtx = rootCtx }
+func (w *CommuteComputer) Wait()                        { w.wg.Wait() }
 
-func (w *Worker) StartComputation(refresh bool) error {
+func (w *CommuteComputer) StartComputation(refresh bool) error {
 	if !w.busy.CompareAndSwap(false, true) {
 		return ErrBusy
 	}
@@ -64,7 +64,7 @@ func (w *Worker) StartComputation(refresh bool) error {
 	return nil
 }
 
-func (w *Worker) ComputeOne(ctx context.Context, board, mls int, refresh bool) error {
+func (w *CommuteComputer) ComputeOne(ctx context.Context, board, mls int, refresh bool) error {
 	l, err := w.listings.GetListing(ctx, board, mls)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (w *Worker) ComputeOne(ctx context.Context, board, mls int, refresh bool) e
 	return w.listings.UpdateCommute(ctx, board, mls, seconds, time.Now())
 }
 
-func (w *Worker) runBatch(ctx context.Context, refresh bool) error {
+func (w *CommuteComputer) runBatch(ctx context.Context, refresh bool) error {
 	t0 := time.Now()
 	stops, err := w.stops.List(ctx)
 	if err != nil {
@@ -137,7 +137,7 @@ func (w *Worker) runBatch(ctx context.Context, refresh bool) error {
 	return nil
 }
 
-func (w *Worker) computeForListing(p listing.PendingCommute, stops []Stop) (int, bool) {
+func (w *CommuteComputer) computeForListing(p listing.PendingCommute, stops []Stop) (int, bool) {
 	if p.Latitude == 0 && p.Longitude == 0 {
 		return 0, false
 	}
