@@ -122,7 +122,15 @@ function parseAddress(raw: string | null | undefined): {
     if (!raw) return { street: "—", locality: "" };
     const parts = raw.split("|").map((s) => s.trim()).filter(Boolean);
     const street = parts[0] ?? raw;
-    const locality = parts.slice(1).join(", ");
+    const rest = parts.slice(1).join(", ");
+    const parenMatch = rest.match(/\(([^)]+)\)/);
+    const locality = parenMatch
+        ? parenMatch[1].trim()
+        : rest
+            .replace(/\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\s*$/i, "")
+            .replace(/,\s*(Qu[eé]bec|QC)\b\.?/gi, "")
+            .replace(/,\s*$/, "")
+            .trim();
     return { street, locality };
 }
 

@@ -34,13 +34,20 @@ const newWithinDays = ref<number | null>(null);
 const priceOptions = [400000, 500000, 600000, 700000, 800000, 1000000, 1500000, 2000000];
 const commuteOptions = [15, 30, 45, 60, 90];
 
-const filterTarget = ref<"#drawer-filters-slot" | "#header-filters-slot">(
-    "#header-filters-slot",
-);
+type FilterTarget =
+    | "#drawer-filters-slot"
+    | "#mobile-filters-slot"
+    | "#header-filters-slot";
+const filterTarget = ref<FilterTarget>("#header-filters-slot");
 watch(
-    [mdAndUp, drawerOpen],
-    async ([md, open]) => {
-        const desired = md && open ? "#drawer-filters-slot" : "#header-filters-slot";
+    [mdAndUp, drawerOpen, viewMode],
+    async ([md, open, mode]) => {
+        let desired: FilterTarget;
+        if (md) {
+            desired = open ? "#drawer-filters-slot" : "#header-filters-slot";
+        } else {
+            desired = mode === "list" ? "#mobile-filters-slot" : "#header-filters-slot";
+        }
         await nextTick();
         filterTarget.value = desired;
     },
@@ -137,21 +144,6 @@ function loadMore(gen: number = loadGen): Promise<void> {
     return inFlight;
 }
 
-function toggleSort(col: SortBy) {
-    if (sortBy.value === col) {
-        sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
-    } else {
-        sortBy.value = col;
-        sortDir.value = "desc";
-    }
-    loadInitial();
-}
-
-function sortIcon(col: SortBy): string {
-    if (sortBy.value !== col) return "mdi-unfold-more-horizontal";
-    return sortDir.value === "asc" ? "mdi-arrow-up" : "mdi-arrow-down";
-}
-
 const sortOptions: { value: SortBy; label: string }[] = [
     { value: "first_seen_at", label: "Newest" },
     { value: "price", label: "Price" },
@@ -211,6 +203,14 @@ function formatCommute(seconds: number | null): string {
     return `${Math.round(seconds / 60)} min`;
 }
 
+function commuteColor(seconds: number | null): string {
+    if (seconds == null) return "rgba(255,255,255,0.35)";
+    const minutes = seconds / 60;
+    if (minutes < 30) return "#2e7d32";
+    if (minutes <= 60) return "#f9a825";
+    return "#c62828";
+}
+
 function commuteMapUrl(address: string | null): string | null {
     if (!address) return null;
     const params = new URLSearchParams({
@@ -255,9 +255,14 @@ function parseAddress(raw: string | null | undefined): {
     const parts = raw.split("|").map((s) => s.trim()).filter(Boolean);
     const street = parts[0] ?? raw;
     const rest = parts.slice(1).join(", ");
-    const locality = rest
-        .replace(/\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\s*$/i, "")
-        .trim();
+    const parenMatch = rest.match(/\(([^)]+)\)/);
+    const locality = parenMatch
+        ? parenMatch[1].trim()
+        : rest
+            .replace(/\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\s*$/i, "")
+            .replace(/,\s*(Qu[eé]bec|QC)\b\.?/gi, "")
+            .replace(/,\s*$/, "")
+            .trim();
     return { street, locality };
 }
 
@@ -368,40 +373,6 @@ onBeforeUnmount(() => {
             </v-card>
         </v-menu>
 
-        <v-menu v-if="maxPrice != null" location="bottom start" offset="6">
-            <template #activator="{ props }">
-                <v-chip v-bind="props" color="secondary" variant="tonal" class="filter-chip" size="small" closable
-                    @click:close.stop="setMaxPrice(null)">
-                    ≤ {{ formatCompactPrice(maxPrice) }}
-                </v-chip>
-            </template>
-            <v-list density="compact">
-                <v-list-item :active="maxPrice == null" title="No max" @click="setMaxPrice(null)" />
-                <v-divider />
-                <v-list-item v-for="p in priceOptions" :key="p" :active="maxPrice === p"
-                    :title="`Up to ${formatCompactPrice(p)}`" @click="setMaxPrice(p)" />
-            </v-list>
-        </v-menu>
-
-        <v-menu v-if="maxCommuteSec != null" location="bottom start" offset="6">
-            <template #activator="{ props }">
-                <v-chip v-bind="props" color="secondary" variant="tonal" class="filter-chip" size="small" closable
-                    @click:close.stop="setMaxCommute(null)">
-                    ≤ {{ Math.round(maxCommuteSec / 60) }} min
-                </v-chip>
-            </template>
-            <v-list density="compact">
-                <v-list-item :active="maxCommuteSec == null" title="No max" @click="setMaxCommute(null)" />
-                <v-divider />
-                <v-list-item v-for="m in commuteOptions" :key="m" :active="maxCommuteSec === m * 60"
-                    :title="`Up to ${m} min`" @click="setMaxCommute(m)" />
-            </v-list>
-        </v-menu>
-
-        <v-chip v-if="newWithinDays != null" color="secondary" variant="tonal" class="filter-chip" size="small" closable
-            @click:close.stop="toggleNewOnly">
-            New today
-        </v-chip>
     </Teleport>
 
     <Teleport to="#header-actions-slot" :disabled="!teleportReady">
@@ -416,26 +387,18 @@ onBeforeUnmount(() => {
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
                 :new-within-days="newWithinDays" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
-                <div id="drawer-filters-slot" class="listings-side-panel__filters" />
-                <div ref="sidePanelBodyEl" class="listings-side-panel__body">
-                    <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
-
-                    <div v-if="loading && items.length === 0" class="text-center py-8">
-                        <v-progress-circular indeterminate />
+                <div class="list-toolbar">
+                    <div class="list-toolbar__count">
+                        <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
+                        <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
                     </div>
-
-                    <template v-else-if="items.length > 0">
-                    <div class="listings-sort">
-                        <span class="listings-sort__count">
-                            {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
-                        </span>
-                        <v-menu location="bottom end" offset="4">
+                    <div class="list-toolbar__actions">
+                        <div id="drawer-filters-slot" class="list-toolbar__filters" />
+                        <v-menu location="bottom end" offset="6">
                             <template #activator="{ props }">
-                                <v-btn v-bind="props" variant="text" size="small" density="comfortable"
-                                    class="listings-sort__btn text-none" append-icon="mdi-menu-down">
-                                    <v-icon size="small" start>{{
-                                        sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
-                                    }}</v-icon>
+                                <v-btn v-bind="props" rounded="pill" variant="outlined"
+                                    class="list-toolbar__sort text-none" size="small"
+                                    append-icon="mdi-menu-down">
                                     {{ currentSortLabel }}
                                 </v-btn>
                             </template>
@@ -450,7 +413,15 @@ onBeforeUnmount(() => {
                             </v-list>
                         </v-menu>
                     </div>
+                </div>
+                <div ref="sidePanelBodyEl" class="listings-side-panel__body">
+                    <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
 
+                    <div v-if="loading && items.length === 0" class="text-center py-8">
+                        <v-progress-circular indeterminate />
+                    </div>
+
+                    <template v-else-if="items.length > 0">
                     <div class="listing-cards listing-cards--panel">
                         <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
@@ -476,14 +447,13 @@ onBeforeUnmount(() => {
                                 <a v-if="item.commuteSecondsDowntown != null && item.address"
                                     :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
                                     class="listing-card__commute listing-card__commute--link" @click.stop>
-                                    <v-icon size="small">mdi-train</v-icon>
-                                    <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
-                                    <span class="listing-card__commute-label">to downtown</span>
-                                    <v-icon size="x-small"
-                                        class="listing-card__commute-chevron">mdi-chevron-right</v-icon>
+                                    <span class="listing-card__commute-dot"
+                                        :style="{ background: commuteColor(item.commuteSecondsDowntown) }" />
+                                    <span>{{ formatCommute(item.commuteSecondsDowntown) }} downtown</span>
                                 </a>
                                 <span v-else class="listing-card__commute listing-card__commute--muted">
-                                    <v-icon size="small">mdi-train</v-icon>
+                                    <span class="listing-card__commute-dot"
+                                        :style="{ background: commuteColor(null) }" />
                                     —
                                 </span>
                                 <span class="listing-card__seen">{{
@@ -505,161 +475,90 @@ onBeforeUnmount(() => {
             </aside>
         </div>
 
-    <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
-        <v-card color="transparent" flat>
-            <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
-                error
-            }}</v-alert>
+    <div v-if="!mdAndUp && viewMode === 'list'" class="listings-mobile">
+        <div class="list-toolbar list-toolbar--mobile">
+            <div class="list-toolbar__count">
+                <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
+                <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+            </div>
+            <div class="list-toolbar__actions">
+                <div id="mobile-filters-slot" class="list-toolbar__filters" />
+                <v-menu location="bottom end" offset="6">
+                    <template #activator="{ props }">
+                        <v-btn v-bind="props" rounded="pill" variant="outlined"
+                            class="list-toolbar__sort text-none" size="small"
+                            append-icon="mdi-menu-down">
+                            {{ currentSortLabel }}
+                        </v-btn>
+                    </template>
+                    <v-list density="compact" min-width="180">
+                        <v-list-item v-for="opt in sortOptions" :key="opt.value"
+                            :active="sortBy === opt.value" :title="opt.label"
+                            @click="setSort(opt.value, 'desc')" />
+                        <v-divider />
+                        <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
+                            :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
+                            @click="toggleSortDir" />
+                    </v-list>
+                </v-menu>
+            </div>
+        </div>
 
-            <v-card-text v-if="loading && items.length === 0" class="text-center py-8">
-                <v-progress-circular indeterminate />
-            </v-card-text>
+        <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
+            error
+        }}</v-alert>
 
-            <template v-else-if="items.length > 0">
-                <v-table density="comfortable" class="listings-table d-none d-md-table">
-                    <thead>
-                        <tr>
-                            <th>Address</th>
-                            <th class="sortable-col text-right" @click="toggleSort('price')">
-                                Price
-                                <v-icon size="small" class="sort-icon">{{
-                                    sortIcon("price")
-                                }}</v-icon>
-                            </th>
-                            <th class="sortable-col" @click="toggleSort('first_seen_at')">
-                                First Seen
-                                <v-icon size="small" class="sort-icon">{{
-                                    sortIcon("first_seen_at")
-                                }}</v-icon>
-                            </th>
-                            <th class="sortable-col" @click="toggleSort('commute_time')">
-                                Commute Time
-                                <v-icon size="small" class="sort-icon">{{
-                                    sortIcon("commute_time")
-                                }}</v-icon>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="item in items" :key="`${item.board}-${item.mls}`" class="listing-row">
-                            <td>
-                                <v-tooltip v-if="item.slug && item.address" location="top" open-delay="400">
-                                    <template #activator="{ props }">
-                                        <a v-bind="props" :href="item.slug" target="_blank" rel="noopener noreferrer"
-                                            class="address-link">
-                                            <span>{{ item.address }}</span>
-                                            <v-icon size="small" class="address-link__icon">mdi-open-in-new</v-icon>
-                                        </a>
-                                    </template>
-                                    <span>View on Realtor.ca</span>
-                                </v-tooltip>
-                                <template v-else>{{ item.address || "—" }}</template>
-                            </td>
-                            <td class="text-right">
-                                {{ formatPrice(item.currentPrice) }}
-                            </td>
-                            <td>
-                                <span class="first-seen">
-                                    <span>{{ formatDate(item.firstSeenAt) }}</span>
-                                    <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary"
-                                        variant="outlined">new</v-chip>
-                                </span>
-                            </td>
-                            <td>
-                                <v-tooltip v-if="
-                                    item.commuteSecondsDowntown != null &&
-                                    item.address
-                                " location="top" open-delay="400">
-                                    <template #activator="{ props }">
-                                        <a v-bind="props" :href="commuteMapUrl(item.address) ?? '#'" target="_blank"
-                                            rel="noopener noreferrer" class="commute-link">
-                                            <v-icon size="small" class="commute-link__icon">mdi-directions</v-icon>
-                                            <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
-                                        </a>
-                                    </template>
-                                    <span>Get directions to downtown</span>
-                                </v-tooltip>
-                                <span v-else class="text-medium-emphasis">
-                                    {{ formatCommute(item.commuteSecondsDowntown) }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </v-table>
+        <div v-if="loading && items.length === 0" class="text-center py-8">
+            <v-progress-circular indeterminate />
+        </div>
 
-                <div class="listings-sort listings-sort--mobile d-md-none">
-                    <span class="listings-sort__count">
-                        {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
-                    </span>
-                    <v-menu location="bottom end" offset="4">
-                        <template #activator="{ props }">
-                            <v-btn v-bind="props" variant="text" size="small" density="comfortable"
-                                class="listings-sort__btn text-none" append-icon="mdi-menu-down">
-                                <v-icon size="small" start>{{
-                                    sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
-                                }}</v-icon>
-                                {{ currentSortLabel }}
-                            </v-btn>
-                        </template>
-                        <v-list density="compact" min-width="180">
-                            <v-list-item v-for="opt in sortOptions" :key="opt.value"
-                                :active="sortBy === opt.value" :title="opt.label"
-                                @click="setSort(opt.value, 'desc')" />
-                            <v-divider />
-                            <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
-                                :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
-                                @click="toggleSortDir" />
-                        </v-list>
-                    </v-menu>
-                </div>
-
-                <div class="d-md-none listing-cards listing-cards--mobile">
-                    <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
-                        class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
-                        @keydown.space.prevent="openListing(item)">
-                        <div class="listing-card__top">
-                            <span class="listing-card__price">{{
-                                formatPrice(item.currentPrice)
-                            }}</span>
-                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="tonal"
-                                class="listing-card__new">new</v-chip>
-                        </div>
-                        <div class="listing-card__street">
-                            {{ parseAddress(item.address).street }}
-                        </div>
-                        <div v-if="parseAddress(item.address).locality" class="listing-card__locality">
-                            {{ parseAddress(item.address).locality }}
-                        </div>
-                        <div class="listing-card__meta">
-                            <a v-if="item.commuteSecondsDowntown != null && item.address"
-                                :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
-                                class="listing-card__commute listing-card__commute--link" @click.stop>
-                                <v-icon size="small">mdi-train</v-icon>
-                                <span>{{ formatCommute(item.commuteSecondsDowntown) }}</span>
-                                <span class="listing-card__commute-label">to downtown</span>
-                                <v-icon size="x-small" class="listing-card__commute-chevron">mdi-chevron-right</v-icon>
-                            </a>
-                            <span v-else class="listing-card__commute listing-card__commute--muted">
-                                <v-icon size="small">mdi-train</v-icon>
-                                —
-                            </span>
-                            <span class="listing-card__seen">{{
-                                formatDate(item.firstSeenAt)
-                            }}</span>
-                        </div>
+        <template v-else-if="items.length > 0">
+            <div class="listing-cards listing-cards--mobile">
+                <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
+                    class="listing-card" @click="openListing(item)" @keydown.enter.prevent="openListing(item)"
+                    @keydown.space.prevent="openListing(item)">
+                    <div class="listing-card__top">
+                        <span class="listing-card__price">{{
+                            formatPrice(item.currentPrice)
+                        }}</span>
+                        <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="tonal"
+                            class="listing-card__new">new</v-chip>
                     </div>
-
-                    <div v-if="hasMore && items.length > 0" ref="mobileSentinelEl" class="listing-cards__sentinel">
-                        <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                    <div class="listing-card__street">
+                        {{ parseAddress(item.address).street }}
+                    </div>
+                    <div v-if="parseAddress(item.address).locality" class="listing-card__locality">
+                        {{ parseAddress(item.address).locality }}
+                    </div>
+                    <div class="listing-card__meta">
+                        <a v-if="item.commuteSecondsDowntown != null && item.address"
+                            :href="commuteMapUrl(item.address) ?? '#'" target="_blank" rel="noopener noreferrer"
+                            class="listing-card__commute listing-card__commute--link" @click.stop>
+                            <span class="listing-card__commute-dot"
+                                :style="{ background: commuteColor(item.commuteSecondsDowntown) }" />
+                            <span>{{ formatCommute(item.commuteSecondsDowntown) }} downtown</span>
+                        </a>
+                        <span v-else class="listing-card__commute listing-card__commute--muted">
+                            <span class="listing-card__commute-dot"
+                                :style="{ background: commuteColor(null) }" />
+                            —
+                        </span>
+                        <span class="listing-card__seen">{{
+                            formatDate(item.firstSeenAt)
+                        }}</span>
                     </div>
                 </div>
-            </template>
 
-            <v-card-text v-else class="text-medium-emphasis text-center py-8">
-                No listings found.
-            </v-card-text>
-        </v-card>
-    </v-container>
+                <div v-if="hasMore && items.length > 0" ref="mobileSentinelEl" class="listing-cards__sentinel">
+                    <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                </div>
+            </div>
+        </template>
+
+        <div v-else class="text-medium-emphasis text-center py-8">
+            No listings found.
+        </div>
+    </div>
 
     <div v-if="!mdAndUp" class="mobile-bottom-card"
         :class="{ 'mobile-bottom-card--bare': viewMode === 'list' }">
@@ -698,16 +597,6 @@ onBeforeUnmount(() => {
     margin-inline-start: 8px;
 }
 
-.filter-chip {
-    font-weight: 500;
-}
-
-@media (max-width: 959.98px) {
-    .filter-chip {
-        display: none;
-    }
-}
-
 .filter-menu {
     padding: 4px 0;
 }
@@ -737,8 +626,8 @@ onBeforeUnmount(() => {
     padding: 6px 8px;
 }
 
-.listings-container {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+.listings-mobile {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 .map-fullbleed {
@@ -762,20 +651,6 @@ onBeforeUnmount(() => {
     background-color: rgb(var(--v-theme-surface));
 }
 
-.listings-side-panel__filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    flex: 0 0 auto;
-}
-
-.listings-side-panel__filters:empty {
-    display: none;
-}
-
 .listings-side-panel__body {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -795,27 +670,50 @@ onBeforeUnmount(() => {
     padding: 10px;
 }
 
-.listings-sort {
+.list-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 6px 10px 6px 14px;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    flex: 0 0 auto;
+}
+
+.list-toolbar--mobile {
+    padding: 12px 14px 10px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.listings-sort--mobile {
-    padding: 6px 10px 6px 14px;
-    border-bottom: 0;
+.list-toolbar__count {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
 }
 
-.listings-sort__count {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.75);
+.list-toolbar__count-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
-.listings-sort__btn {
+.list-toolbar__count-label {
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    margin-top: 4px;
+}
+
+.list-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.list-toolbar__filters:empty {
+    display: none;
+}
+
+.list-toolbar__sort {
     letter-spacing: normal;
     font-weight: 500;
 }
@@ -882,86 +780,6 @@ onBeforeUnmount(() => {
 .mobile-bottom-card__btn {
     letter-spacing: normal;
     font-weight: 600;
-}
-
-.sortable-col {
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-}
-
-.sortable-col:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-}
-
-.sort-icon {
-    opacity: 0.5;
-    vertical-align: middle;
-}
-
-.listings-table :deep(tbody tr.listing-row) {
-    transition: background-color 120ms ease;
-}
-
-.listings-table :deep(tbody tr.listing-row:hover) {
-    background-color: rgba(var(--v-theme-on-surface), 0.035);
-}
-
-.address-link {
-    color: inherit;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.address-link__icon {
-    opacity: 0;
-    transform: translateX(-4px);
-    transition: opacity 120ms ease, transform 120ms ease;
-    color: rgb(var(--v-theme-secondary));
-}
-
-.listing-row:hover .address-link__icon {
-    opacity: 0.75;
-    transform: translateX(0);
-}
-
-.address-link:hover {
-    color: rgb(var(--v-theme-secondary));
-    text-decoration: underline;
-}
-
-.address-link:hover .address-link__icon {
-    opacity: 1;
-}
-
-.first-seen {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.commute-link {
-    color: rgb(var(--v-theme-secondary));
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-.commute-link__icon {
-    opacity: 0.7;
-    transition: opacity 120ms ease;
-}
-
-.commute-link:hover {
-    text-decoration: underline;
-}
-
-.commute-link:hover .commute-link__icon {
-    opacity: 1;
 }
 
 .listing-cards {
@@ -1081,23 +899,29 @@ onBeforeUnmount(() => {
 .listing-card__commute {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    color: rgb(var(--v-theme-secondary));
+    gap: 8px;
+    color: rgba(var(--v-theme-on-surface), 0.85);
     font-weight: 500;
+    font-size: 0.8125rem;
 }
 
 .listing-card__commute--link {
     text-decoration: none;
-    padding: 6px 10px 6px 8px;
-    margin: -6px 0 -6px -8px;
+    padding: 6px 12px;
+    margin: -6px 0 -6px -4px;
     border-radius: 999px;
-    background-color: rgba(var(--v-theme-secondary), 0.1);
-    border: 1px solid rgba(var(--v-theme-secondary), 0.25);
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     transition: background-color 120ms ease, border-color 120ms ease;
 }
 
+.listing-card__commute--link:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.1);
+    border-color: rgba(var(--v-theme-on-surface), 0.14);
+}
+
 .listing-card__commute--link:active {
-    background-color: rgba(var(--v-theme-secondary), 0.2);
+    background-color: rgba(var(--v-theme-on-surface), 0.14);
 }
 
 .listing-card__commute--link:focus-visible {
@@ -1105,20 +929,18 @@ onBeforeUnmount(() => {
     outline-offset: 2px;
 }
 
-.listing-card__commute-chevron {
-    opacity: 0.6;
-    margin-left: 2px;
-}
-
 .listing-card__commute--muted {
     color: rgba(var(--v-theme-on-surface), 0.5);
     font-weight: 400;
 }
 
-.listing-card__commute-label {
-    color: rgba(var(--v-theme-on-surface), 0.55);
-    font-weight: 400;
-    margin-left: 2px;
+.listing-card__commute-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .listing-card__seen {

@@ -13,6 +13,16 @@
       <v-icon size="22">mdi-home-outline</v-icon>
     </v-btn>
 
+    <v-btn
+      icon
+      variant="text"
+      size="small"
+      aria-label="Settings"
+      @click="emit('click:settings')"
+    >
+      <v-icon size="22">mdi-cog-outline</v-icon>
+    </v-btn>
+
     <v-spacer />
 
     <div id="header-filters-slot" class="header-bar__filters" />
@@ -20,17 +30,6 @@
     <v-spacer />
 
     <div id="header-actions-slot" class="header-bar__actions" />
-
-    <v-btn
-      icon
-      variant="text"
-      size="small"
-      class="me-2"
-      aria-label="Settings"
-      @click="emit('click:settings')"
-    >
-      <v-icon size="22">mdi-cog-outline</v-icon>
-    </v-btn>
   </v-system-bar>
 </template>
 
