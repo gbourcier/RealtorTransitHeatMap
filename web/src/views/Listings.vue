@@ -411,8 +411,8 @@ onBeforeUnmount(() => {
         </v-btn>
     </Teleport>
 
-    <template v-if="mdAndUp || viewMode === 'map'">
-        <div class="map-fullbleed" :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
+    <div v-show="mdAndUp || viewMode === 'map'" class="map-fullbleed"
+        :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
                 :new-within-days="newWithinDays" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
@@ -504,7 +504,6 @@ onBeforeUnmount(() => {
                 </div>
             </aside>
         </div>
-    </template>
 
     <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
         <v-card>
@@ -622,7 +621,7 @@ onBeforeUnmount(() => {
                             <span class="listing-card__price">{{
                                 formatPrice(item.currentPrice)
                             }}</span>
-                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="flat"
+                            <v-chip v-if="isNew(item.firstSeenAt)" size="x-small" color="secondary" variant="tonal"
                                 class="listing-card__new">new</v-chip>
                         </div>
                         <div class="listing-card__street">
@@ -662,7 +661,8 @@ onBeforeUnmount(() => {
         </v-card>
     </v-container>
 
-    <div v-if="!mdAndUp" class="mobile-bottom-card">
+    <div v-if="!mdAndUp" class="mobile-bottom-card"
+        :class="{ 'mobile-bottom-card--bare': viewMode === 'list' }">
         <div v-if="viewMode === 'map'" class="mobile-bottom-card__legend" aria-label="Transit commute time legend">
             <div class="mobile-bottom-card__legend-title">Commute to Downtown</div>
             <div class="mobile-bottom-card__legend-rows">
@@ -838,6 +838,12 @@ onBeforeUnmount(() => {
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
+.mobile-bottom-card--bare {
+    padding: 6px;
+    background-color: rgba(20, 22, 28, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
 .mobile-bottom-card__legend {
     display: flex;
     flex-direction: column;
@@ -965,6 +971,11 @@ onBeforeUnmount(() => {
     padding: 10px;
 }
 
+.listing-cards--mobile {
+    gap: 14px;
+    padding: 10px 12px 12px;
+}
+
 .listing-card {
     position: relative;
     display: block;
@@ -972,10 +983,35 @@ onBeforeUnmount(() => {
     color: inherit;
     background-color: rgba(var(--v-theme-on-surface), 0.03);
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    border-radius: 10px;
+    border-radius: 14px;
     padding: 14px 14px 12px;
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.listing-cards--mobile .listing-card {
+    padding: 18px 18px 16px;
+}
+
+.listing-cards--mobile .listing-card__price {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.listing-cards--mobile .listing-card__street {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.listing-cards--mobile .listing-card__meta {
+    border-top: 0;
+    padding-top: 14px;
+    margin-top: 10px;
+}
+
+.listing-cards--mobile .listing-card__new {
+    top: 16px;
+    right: 16px;
 }
 
 .listing-card:active {
