@@ -298,6 +298,7 @@ onMounted(() => {
         zoom: 11,
         zoomControl: false,
         attributionControl: false,
+        preferCanvas: true,
     });
     L.control
         .attribution({ prefix: false, position: "topright" })
@@ -316,6 +317,9 @@ onMounted(() => {
         {
             subdomains: "abcd",
             maxZoom: 19,
+            updateWhenZooming: false,
+            updateWhenIdle: false,
+            keepBuffer: 4,
         },
     ).addTo(map.value);
     cluster.value = L.markerClusterGroup({
