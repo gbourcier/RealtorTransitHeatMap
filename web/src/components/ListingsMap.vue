@@ -148,6 +148,16 @@ function commuteMapUrl(address: string | null): string | null {
     return `https://www.google.com/maps?${params.toString()}`;
 }
 
+function formatArea(area: number): string {
+    if (!area || area <= 0) return "—";
+    return new Intl.NumberFormat("en-CA", { maximumFractionDigits: 0 }).format(area);
+}
+
+function formatBath(count: number): string {
+    if (!count || count <= 0) return "—";
+    return Number.isInteger(count) ? `${count}` : count.toFixed(1);
+}
+
 function popupHtml(pin: ListingMapPin): string {
     const { street, locality } = parseAddress(pin.address);
     const streetEsc = escapeHtml(street);
@@ -162,29 +172,43 @@ function popupHtml(pin: ListingMapPin): string {
     const directionsHref = commuteMapUrl(pin.address);
     const directionsBtn = directionsHref
         ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--secondary">
-                <i class="mdi mdi-directions" aria-hidden="true"></i><span>Directions</span>
+                <i class="mdi mdi-navigation-variant-outline" aria-hidden="true"></i><span>Directions</span>
             </a>`
         : "";
     const localityLine = localityEsc
         ? `<div class="map-popup__locality">${localityEsc}</div>`
         : "";
+    const bd = pin.bedroomCount > 0 ? `${pin.bedroomCount}` : "—";
+    const ba = formatBath(pin.bathroomCount);
+    const area = formatArea(pin.interiorAreaSqft);
     return `
         <div class="map-popup">
-            <div class="map-popup__chip map-popup__chip--${tier}">${price}</div>
+            <div class="map-popup__price">${price}</div>
             <div class="map-popup__address">
                 <div class="map-popup__street">${streetEsc}</div>
                 ${localityLine}
             </div>
-            <div class="map-popup__commute map-popup__commute--${tier}">
-                <i class="mdi mdi-subway-variant map-popup__commute-icon" aria-hidden="true"></i>
-                <div class="map-popup__commute-text">
-                    <div class="map-popup__commute-value">${commuteMin}<span class="map-popup__commute-unit"> min</span></div>
-                    <div class="map-popup__commute-dest">to McGill Station</div>
+            <div class="map-popup__stats">
+                <div class="map-popup__stat">
+                    <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
+                    <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit"> bd</span></div>
                 </div>
+                <div class="map-popup__stat">
+                    <i class="mdi mdi-bathtub-outline map-popup__stat-icon" aria-hidden="true"></i>
+                    <div class="map-popup__stat-value">${ba}<span class="map-popup__stat-unit"> ba</span></div>
+                </div>
+                <div class="map-popup__stat">
+                    <i class="mdi mdi-ruler map-popup__stat-icon" aria-hidden="true"></i>
+                    <div class="map-popup__stat-value">${area}<span class="map-popup__stat-unit"> ft²</span></div>
+                </div>
+            </div>
+            <div class="map-popup__commute map-popup__commute--${tier}">
+                <span class="map-popup__commute-dot" aria-hidden="true"></span>
+                <div class="map-popup__commute-text">${commuteMin} min to McGill Station</div>
             </div>
             <div class="map-popup__actions">
                 <a href="${slug}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--primary">
-                    <i class="mdi mdi-open-in-new" aria-hidden="true"></i><span>Listing</span>
+                    <span>Listing</span>
                 </a>
                 ${directionsBtn}
             </div>
@@ -774,15 +798,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .leaflet-popup-content-wrapper {
     background-color: rgb(var(--v-theme-surface));
     color: rgb(var(--v-theme-on-surface));
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow:
-        0 10px 28px rgba(0, 0, 0, 0.45),
-        0 0 0 1px rgba(255, 255, 255, 0.06);
-    padding: 2px;
+        0 12px 32px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
+    padding: 4px;
 }
 
 .leaflet-popup-content {
-    margin: 14px 16px;
+    margin: 18px 20px;
 }
 
 .leaflet-popup-tip {
@@ -790,124 +814,137 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-    color: rgba(var(--v-theme-on-surface), 0.65);
-    padding: 6px 8px 0 0;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    padding: 10px 10px 0 0;
+    font-size: 22px;
 }
 
 .map-popup {
-    min-width: 260px;
-    max-width: 300px;
+    min-width: 240px;
+    max-width: 280px;
     font-size: 0.875rem;
 }
 
-.map-popup__chip {
-    display: inline-block;
-    padding: 4px 11px;
-    border-radius: 999px;
-    font-size: 0.95rem;
+.map-popup__price {
+    font-size: 1.5rem;
     font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 12px;
-    background-color: var(--chip-bg);
-    color: var(--chip-fg);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.map-popup__chip--fast {
-    --chip-bg: #2e7d32;
-    --chip-fg: #ffffff;
-}
-
-.map-popup__chip--mid {
-    --chip-bg: #f9a825;
-    --chip-fg: #1a1a1a;
-}
-
-.map-popup__chip--slow {
-    --chip-bg: #c62828;
-    --chip-fg: #ffffff;
-}
-
-.map-popup__chip--unknown {
-    --chip-bg: #555555;
-    --chip-fg: #ffffff;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: rgba(var(--v-theme-on-surface), 0.98);
+    margin-bottom: 10px;
 }
 
 .map-popup__address {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .map-popup__street {
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.35;
-    color: rgba(var(--v-theme-on-surface), 0.95);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: rgba(var(--v-theme-on-surface), 0.98);
 }
 
 .map-popup__locality {
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     line-height: 1.3;
-    color: rgba(var(--v-theme-on-surface), 0.6);
-    margin-top: 2px;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    margin-top: 4px;
+}
+
+.map-popup__stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    padding: 12px 8px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    background-color: rgba(var(--v-theme-on-surface), 0.04);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.map-popup__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    position: relative;
+    text-align: center;
+}
+
+.map-popup__stat + .map-popup__stat::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background-color: rgba(var(--v-theme-on-surface), 0.12);
+}
+
+.map-popup__stat-icon {
+    font-size: 22px;
+    color: rgba(var(--v-theme-on-surface), 0.85);
+    line-height: 1;
+}
+
+.map-popup__stat-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(var(--v-theme-on-surface), 0.95);
+    line-height: 1;
+}
+
+.map-popup__stat-unit {
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.65);
 }
 
 .map-popup__commute {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 10px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    background-color: rgba(var(--v-theme-on-surface), 0.05);
-    --commute-accent: rgba(var(--v-theme-on-surface), 0.7);
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background-color: rgba(var(--v-theme-on-surface), 0.04);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+    --commute-accent: var(--v-theme-on-surface);
 }
 
 .map-popup__commute--fast {
-    --commute-accent: #4caf50;
+    --commute-accent: var(--v-theme-success);
 }
 
 .map-popup__commute--mid {
-    --commute-accent: #ffb300;
+    --commute-accent: var(--v-theme-warning);
 }
 
 .map-popup__commute--slow {
-    --commute-accent: #ef5350;
+    --commute-accent: var(--v-theme-error);
 }
 
-.map-popup__commute-icon {
-    font-size: 22px;
-    color: var(--commute-accent);
+.map-popup__commute-dot {
     flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgb(var(--commute-accent));
+    box-shadow: 0 0 10px rgba(var(--commute-accent), 0.6);
 }
 
 .map-popup__commute-text {
-    min-width: 0;
-}
-
-.map-popup__commute-value {
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.1;
-    color: rgba(var(--v-theme-on-surface), 0.95);
-}
-
-.map-popup__commute-unit {
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.7);
-}
-
-.map-popup__commute-dest {
-    margin-top: 2px;
-    font-size: 0.66rem;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+    line-height: 1.2;
 }
 
 .map-popup__actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
 }
 
 .map-popup__btn {
@@ -915,10 +952,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-size: 0.8rem;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.95rem;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -929,7 +966,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .map-popup__btn .mdi {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .map-popup__btn--primary {
@@ -943,12 +980,16 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 .map-popup__btn--secondary {
     background-color: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.9);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.22);
+    color: rgb(var(--v-theme-secondary));
+    box-shadow: inset 0 0 0 1.5px rgb(var(--v-theme-secondary));
+}
+
+.map-popup__btn--secondary .mdi {
+    color: rgb(var(--v-theme-secondary));
 }
 
 .map-popup__btn--secondary:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    background-color: rgba(var(--v-theme-secondary), 0.08);
 }
 
 .map-popup__btn:active {
