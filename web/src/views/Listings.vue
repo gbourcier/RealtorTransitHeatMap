@@ -824,7 +824,7 @@ onBeforeUnmount(() => {
     position: fixed;
     left: 12px;
     right: 12px;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -839,7 +839,7 @@ onBeforeUnmount(() => {
 }
 
 .mobile-bottom-card--bare {
-    padding: 6px;
+    padding: 12px;
     background-color: rgba(20, 22, 28, 0.6);
     border-color: rgba(255, 255, 255, 0.06);
 }
