@@ -1,5 +1,5 @@
 <template>
-  <v-system-bar color="#262626" height="56" class="header-bar">
+  <v-system-bar color="header-bar" height="56" class="header-bar">
     <v-btn
       :to="'/listings'"
       :active="false"

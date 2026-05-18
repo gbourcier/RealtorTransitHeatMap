@@ -457,15 +457,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
         <div class="listings-map-legend" aria-label="Transit commute time legend">
             <div class="listings-map-legend__title">Commute to downtown</div>
             <div class="listings-map-legend__row">
-                <span class="listings-map-legend__swatch" style="background:#2e7d32" />
+                <span class="listings-map-legend__swatch listings-map-legend__swatch--fast" />
                 &lt; 30 min
             </div>
             <div class="listings-map-legend__row">
-                <span class="listings-map-legend__swatch" style="background:#f9a825" />
+                <span class="listings-map-legend__swatch listings-map-legend__swatch--mid" />
                 30–60 min
             </div>
             <div class="listings-map-legend__row">
-                <span class="listings-map-legend__swatch" style="background:#c62828" />
+                <span class="listings-map-legend__swatch listings-map-legend__swatch--slow" />
                 &gt; 60 min
             </div>
         </div>
@@ -521,7 +521,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     font-size: 11px;
     line-height: 1.2;
     pointer-events: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 6px rgba(var(--v-theme-shadow), 0.25);
 }
 
 .listings-map-legend__title {
@@ -543,7 +543,19 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 1px rgba(var(--v-theme-shadow), 0.3);
+}
+
+.listings-map-legend__swatch--fast {
+    background-color: rgb(var(--v-theme-success));
+}
+
+.listings-map-legend__swatch--mid {
+    background-color: rgb(var(--v-theme-warning));
+}
+
+.listings-map-legend__swatch--slow {
+    background-color: rgb(var(--v-theme-error));
 }
 
 @media (max-width: 959.98px) {
@@ -555,13 +567,13 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 <style>
 .leaflet-container {
-    background: #131516;
+    background: rgb(var(--v-theme-map-bg));
 }
 
 .price-pin {
     background: transparent;
     border: 0;
-    --pin-ring: rgba(255, 255, 255, 0.18);
+    --pin-ring: rgba(var(--v-theme-on-surface), 0.18);
 }
 
 .downtown-target {
@@ -578,24 +590,24 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     height: 22px;
     font-size: 18px;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(var(--v-theme-on-surface), 0.85);
     text-shadow:
-        0 0 4px rgba(0, 0, 0, 0.85),
-        0 0 8px rgba(0, 0, 0, 0.6),
-        0 1px 1px rgba(0, 0, 0, 0.9);
+        0 0 4px rgba(var(--v-theme-shadow), 0.85),
+        0 0 8px rgba(var(--v-theme-shadow), 0.6),
+        0 1px 1px rgba(var(--v-theme-shadow), 0.9);
     cursor: help;
     transition: transform 120ms ease, color 120ms ease;
 }
 
 .downtown-target:hover .downtown-target__star {
-    color: #ffd54f;
+    color: rgb(var(--v-theme-warning));
     transform: scale(1.15);
 }
 
 .leaflet-tooltip.downtown-target__tooltip {
-    background: rgba(20, 22, 28, 0.82);
-    color: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(var(--v-theme-popup-overlay), 0.82);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 11px;
@@ -603,28 +615,28 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     letter-spacing: 0.02em;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 6px rgba(var(--v-theme-shadow), 0.35);
     white-space: nowrap;
 }
 
 .leaflet-tooltip.downtown-target__tooltip::before {
-    border-top-color: rgba(20, 22, 28, 0.82);
+    border-top-color: rgba(var(--v-theme-popup-overlay), 0.82);
 }
 
 .price-pin--fast {
-    --pin-ring: rgba(76, 175, 80, 0.9);
+    --pin-ring: rgba(var(--v-theme-success), 0.9);
 }
 
 .price-pin--mid {
-    --pin-ring: rgba(255, 179, 0, 0.9);
+    --pin-ring: rgba(var(--v-theme-warning), 0.9);
 }
 
 .price-pin--slow {
-    --pin-ring: rgba(239, 83, 80, 0.9);
+    --pin-ring: rgba(var(--v-theme-error), 0.9);
 }
 
 .price-pin--unknown {
-    --pin-ring: rgba(255, 255, 255, 0.22);
+    --pin-ring: rgba(var(--v-theme-on-surface), 0.22);
 }
 
 .price-pin__label {
@@ -633,8 +645,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     transform: translate(-50%, -50%);
     padding: 4px 11px;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(34, 36, 44, 0.88) 0%, rgba(18, 20, 26, 0.88) 100%);
-    color: #fff;
+    background: rgba(var(--v-theme-popup-overlay), 0.88);
+    color: rgb(var(--v-theme-on-surface));
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.01em;
@@ -643,10 +655,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.45),
-        0 1px 2px rgba(0, 0, 0, 0.35),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        0 4px 10px rgba(var(--v-theme-shadow), 0.45),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35),
+        inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.06),
+        inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.08);
     cursor: pointer;
     transition: transform 120ms ease, box-shadow 120ms ease;
 }
@@ -663,9 +675,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .price-pin:hover .price-pin__label {
     transform: translate(-50%, -50%) scale(1.08);
     box-shadow:
-        0 6px 14px rgba(0, 0, 0, 0.55),
-        0 1px 2px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.4),
+        inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.1);
     z-index: 1000;
 }
 
@@ -686,23 +698,23 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .price-cluster {
     background: transparent;
     border: 0;
-    --cluster-ring: rgba(255, 255, 255, 0.18);
+    --cluster-ring: rgba(var(--v-theme-on-surface), 0.18);
 }
 
 .price-cluster--fast {
-    --cluster-ring: rgba(76, 175, 80, 0.85);
+    --cluster-ring: rgba(var(--v-theme-success), 0.85);
 }
 
 .price-cluster--mid {
-    --cluster-ring: rgba(255, 179, 0, 0.85);
+    --cluster-ring: rgba(var(--v-theme-warning), 0.85);
 }
 
 .price-cluster--slow {
-    --cluster-ring: rgba(239, 83, 80, 0.85);
+    --cluster-ring: rgba(var(--v-theme-error), 0.85);
 }
 
 .price-cluster--unknown {
-    --cluster-ring: rgba(255, 255, 255, 0.25);
+    --cluster-ring: rgba(var(--v-theme-on-surface), 0.25);
 }
 
 .price-cluster__inner {
@@ -713,14 +725,14 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background-color: rgba(20, 22, 28, 0.82);
-    color: #fff;
+    background-color: rgba(var(--v-theme-popup-overlay), 0.82);
+    color: rgb(var(--v-theme-on-surface));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.45),
-        0 1px 2px rgba(0, 0, 0, 0.35),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        0 4px 10px rgba(var(--v-theme-shadow), 0.45),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35),
+        inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
     cursor: pointer;
     transition: transform 120ms ease, box-shadow 120ms ease;
 }
@@ -747,9 +759,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .price-cluster:hover .price-cluster__inner {
     transform: scale(1.06);
     box-shadow:
-        0 6px 14px rgba(0, 0, 0, 0.55),
-        0 1px 2px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.4),
+        inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.1);
 }
 
 .price-cluster__count {
@@ -757,7 +769,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     font-weight: 600;
     letter-spacing: 0.01em;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.96);
+    color: rgba(var(--v-theme-on-surface), 0.96);
 }
 
 .price-cluster--md .price-cluster__count {
@@ -776,14 +788,14 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
         0 0 0 3px rgb(var(--v-theme-secondary)),
-        0 6px 14px rgba(0, 0, 0, 0.6);
+        0 6px 14px rgba(var(--v-theme-shadow), 0.6);
     transform: scale(1.12);
     transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .leaflet-control-attribution {
-    background: rgba(20, 22, 28, 0.45) !important;
-    color: rgba(255, 255, 255, 0.45) !important;
+    background: rgba(var(--v-theme-popup-overlay), 0.45) !important;
+    color: rgba(var(--v-theme-on-surface), 0.45) !important;
     font-size: 9px !important;
     padding: 1px 6px !important;
     backdrop-filter: blur(4px);
@@ -792,7 +804,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .leaflet-control-attribution a {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: rgba(var(--v-theme-on-surface), 0.6) !important;
 }
 
 .leaflet-popup-content-wrapper {
@@ -800,7 +812,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     color: rgb(var(--v-theme-on-surface));
     border-radius: 16px;
     box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.55),
+        0 12px 32px rgba(var(--v-theme-shadow), 0.55),
         0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
     padding: 4px;
 }
