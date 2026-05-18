@@ -144,25 +144,37 @@ function loadMore(gen: number = loadGen): Promise<void> {
     return inFlight;
 }
 
-const sortOptions: { value: SortBy; label: string }[] = [
-    { value: "first_seen_at", label: "Newest" },
-    { value: "price", label: "Price" },
-    { value: "commute_time", label: "Commute" },
-];
-
-const currentSortLabel = computed(
-    () => sortOptions.find((o) => o.value === sortBy.value)?.label ?? "Sort",
-);
-
-function setSort(col: SortBy, dir: SortDir) {
-    if (sortBy.value === col && sortDir.value === dir) return;
-    sortBy.value = col;
-    sortDir.value = dir;
-    loadInitial();
+interface SortOption {
+    value: SortBy;
+    label: string;
+    defaultDir: SortDir;
 }
 
-function toggleSortDir() {
-    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+const sortOptions: SortOption[] = [
+    {
+        value: "first_seen_at",
+        label: "Newest",
+        defaultDir: "desc",
+    },
+    {
+        value: "price",
+        label: "Price",
+        defaultDir: "asc",
+    },
+    {
+        value: "commute_time",
+        label: "Commute",
+        defaultDir: "asc",
+    },
+];
+
+function selectSort(opt: SortOption) {
+    if (sortBy.value === opt.value) {
+        sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+    } else {
+        sortBy.value = opt.value;
+        sortDir.value = opt.defaultDir;
+    }
     loadInitial();
 }
 
@@ -306,14 +318,23 @@ watch(
     { flush: "post" },
 );
 
+let prevHtmlOverflow = "";
+let prevBodyOverflow = "";
+
 onMounted(() => {
     teleportReady.value = true;
+    prevHtmlOverflow = document.documentElement.style.overflow;
+    prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     loadInitial();
 });
 
 onBeforeUnmount(() => {
     panelObserver?.disconnect();
     mobileObserver?.disconnect();
+    document.documentElement.style.overflow = prevHtmlOverflow;
+    document.body.style.overflow = prevBodyOverflow;
 });
 </script>
 
@@ -390,30 +411,26 @@ onBeforeUnmount(() => {
                 :new-within-days="newWithinDays" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
                 <div class="list-toolbar">
-                    <div class="list-toolbar__count">
-                        <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
-                        <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+                    <div class="list-toolbar__row">
+                        <div class="list-toolbar__count">
+                            <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
+                            <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+                        </div>
+                        <div class="list-toolbar__actions">
+                            <div id="drawer-filters-slot" class="list-toolbar__filters" />
+                        </div>
                     </div>
-                    <div class="list-toolbar__actions">
-                        <div id="drawer-filters-slot" class="list-toolbar__filters" />
-                        <v-menu location="bottom end" offset="6">
-                            <template #activator="{ props }">
-                                <v-btn v-bind="props" rounded="pill" variant="outlined"
-                                    class="list-toolbar__sort text-none" size="small"
-                                    append-icon="mdi-menu-down">
-                                    {{ currentSortLabel }}
-                                </v-btn>
-                            </template>
-                            <v-list density="compact" min-width="180">
-                                <v-list-item v-for="opt in sortOptions" :key="opt.value"
-                                    :active="sortBy === opt.value" :title="opt.label"
-                                    @click="setSort(opt.value, 'desc')" />
-                                <v-divider />
-                                <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
-                                    :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
-                                    @click="toggleSortDir" />
-                            </v-list>
-                        </v-menu>
+                    <div class="sort-tabs" role="tablist" aria-label="Sort listings">
+                        <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
+                            class="sort-tabs__tab"
+                            :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
+                            :aria-selected="sortBy === opt.value"
+                            @click="selectSort(opt)">
+                            <span class="sort-tabs__label">{{ opt.label }}</span>
+                            <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
+                                {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                            </v-icon>
+                        </button>
                     </div>
                 </div>
                 <div ref="sidePanelBodyEl" class="listings-side-panel__body">
@@ -479,30 +496,27 @@ onBeforeUnmount(() => {
 
     <div v-if="!mdAndUp && viewMode === 'list'" class="listings-mobile">
         <div class="list-toolbar list-toolbar--mobile">
-            <div class="list-toolbar__count">
-                <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
-                <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+            <div class="list-toolbar__row">
+                <div class="list-toolbar__count">
+                    <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
+                    <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+                </div>
+                <div class="list-toolbar__actions">
+                    <div id="mobile-filters-slot" class="list-toolbar__filters" />
+                </div>
             </div>
-            <div class="list-toolbar__actions">
-                <div id="mobile-filters-slot" class="list-toolbar__filters" />
-                <v-menu location="bottom end" offset="6">
-                    <template #activator="{ props }">
-                        <v-btn v-bind="props" rounded="pill" variant="outlined"
-                            class="list-toolbar__sort text-none" size="small"
-                            append-icon="mdi-menu-down">
-                            {{ currentSortLabel }}
-                        </v-btn>
-                    </template>
-                    <v-list density="compact" min-width="180">
-                        <v-list-item v-for="opt in sortOptions" :key="opt.value"
-                            :active="sortBy === opt.value" :title="opt.label"
-                            @click="setSort(opt.value, 'desc')" />
-                        <v-divider />
-                        <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
-                            :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
-                            @click="toggleSortDir" />
-                    </v-list>
-                </v-menu>
+            <div class="sort-tabs" role="tablist" aria-label="Sort listings">
+                <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
+                    class="sort-tabs__tab"
+                    :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
+                    :aria-selected="sortBy === opt.value"
+                    @click="selectSort(opt)">
+                    <v-icon size="16" class="sort-tabs__icon">{{ opt.icon }}</v-icon>
+                    <span class="sort-tabs__label">{{ opt.label }}</span>
+                    <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
+                        {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                    </v-icon>
+                </button>
             </div>
         </div>
 
@@ -687,9 +701,8 @@ onBeforeUnmount(() => {
 
 .list-toolbar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    gap: 10px;
     padding: 12px 14px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     flex: 0 0 auto;
@@ -698,6 +711,13 @@ onBeforeUnmount(() => {
 .list-toolbar--mobile {
     padding: 12px 14px 10px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.list-toolbar__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .list-toolbar__count {
@@ -728,19 +748,66 @@ onBeforeUnmount(() => {
     display: none;
 }
 
-.list-toolbar__sort {
-    letter-spacing: normal;
-    font-weight: 500;
-    font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.85);
-    border-color: rgba(var(--v-theme-on-surface), 0.18);
-    padding-inline: 12px;
-    height: 30px;
+.sort-tabs {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: transparent;
 }
 
-.list-toolbar__sort :deep(.v-btn__append) {
-    margin-inline-start: 4px;
-    opacity: 0.7;
+.sort-tabs__tab {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px;
+    background: transparent;
+    border: 0;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.14);
+    border-radius: 0;
+    cursor: pointer;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.sort-tabs__tab:first-child {
+    border-left: 0;
+}
+
+.sort-tabs__tab:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+}
+
+.sort-tabs__tab:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: -2px;
+}
+
+.sort-tabs__tab--active {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.98);
+    font-weight: 600;
+}
+
+.sort-tabs__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sort-tabs__dir {
+    flex-shrink: 0;
+    opacity: 0.9;
 }
 
 .mobile-bottom-card {
