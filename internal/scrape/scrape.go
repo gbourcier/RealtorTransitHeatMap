@@ -22,7 +22,7 @@ type RealtorClient interface {
 
 type ListingRepository interface {
 	UpsertListings(ctx context.Context, obs []listing.Observation) (int, error)
-	DeactivateStaleListing(ctx context.Context, treshold time.Time) (int, error)
+	InvalidateIfStale(ctx context.Context, treshold time.Time) (int, error)
 }
 
 type ScrapeRunRepository interface {
@@ -126,7 +126,7 @@ func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
 
 	staleTreshold := time.Now().Add(-24 * time.Hour)
 
-	staleCount, staleErr := w.repo.DeactivateStaleListing(ctx, staleTreshold)
+	staleCount, staleErr := w.repo.InvalidateIfStale(ctx, staleTreshold)
 
 	if staleErr != nil {
 		slog.Error("Deactivate stale listing failed", "err", staleErr)

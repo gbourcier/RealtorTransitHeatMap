@@ -1,0 +1,7 @@
+ALTER TABLE listings ADD COLUMN is_available BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE listings SET is_available = CASE WHEN status = '1' THEN TRUE ELSE FALSE END;
+
+ALTER TABLE listings ALTER COLUMN is_available DROP DEFAULT;
+
+ALTER TABLE listings DROP COLUMN status;
