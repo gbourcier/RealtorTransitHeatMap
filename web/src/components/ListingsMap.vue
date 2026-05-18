@@ -251,6 +251,7 @@ onMounted(() => {
     map.value = L.map(mapEl.value, {
         center: MONTREAL_CENTER,
         zoom: 11,
+        zoomControl: false,
     });
     L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
@@ -337,6 +338,21 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
             <v-alert v-if="error" type="error" density="compact" variant="tonal" class="ma-0">{{ error }}</v-alert>
         </div>
         <div ref="mapEl" class="listings-map" />
+        <div class="listings-map-legend" aria-label="Transit commute time legend">
+            <div class="listings-map-legend__title">Commute to downtown</div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#2e7d32" />
+                &lt; 30 min
+            </div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#f9a825" />
+                30–60 min
+            </div>
+            <div class="listings-map-legend__row">
+                <span class="listings-map-legend__swatch" style="background:#c62828" />
+                &gt; 60 min
+            </div>
+        </div>
     </div>
 </template>
 
@@ -369,6 +385,49 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     border-radius: 999px;
     backdrop-filter: blur(4px);
     pointer-events: none;
+}
+
+.listings-map-legend {
+    position: absolute;
+    bottom: 24px;
+    left: 12px;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background-color: rgba(20, 20, 24, 0.6);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-size: 11px;
+    line-height: 1.2;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.listings-map-legend__title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 2px;
+}
+
+.listings-map-legend__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.listings-map-legend__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 </style>
 
@@ -455,7 +514,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     z-index: 1001 !important;
 }
 
-.marker-cluster.price-pin--highlighted > div {
+.marker-cluster.price-pin--highlighted>div {
     box-shadow:
         0 0 0 3px rgb(var(--v-theme-secondary)),
         0 6px 14px rgba(0, 0, 0, 0.6);
