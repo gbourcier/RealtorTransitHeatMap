@@ -874,7 +874,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     text-align: center;
 }
 
-.map-popup__stat + .map-popup__stat::before {
+.map-popup__stat+.map-popup__stat::before {
     content: "";
     position: absolute;
     left: 0;
@@ -971,7 +971,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 .map-popup__btn--primary {
     background-color: rgb(var(--v-theme-secondary));
-    color: rgb(var(--v-theme-on-secondary));
 }
 
 .map-popup__btn--primary:hover {

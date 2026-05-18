@@ -27,20 +27,71 @@ const sortDir = ref<SortDir>("desc");
 const maxPrice = ref<number | null>(null);
 const maxCommuteSec = ref<number | null>(null);
 const newWithinDays = ref<number | null>(null);
-const minBedrooms = ref<number | null>(null);
-const minBathrooms = ref<number | null>(null);
+const minBedrooms = ref<number | null>(1);
+const minBathrooms = ref<number | null>(1);
 const minInteriorAreaSqft = ref<number | null>(null);
 
-const priceOptions = [500000, 700000, 1000000, 1500000];
-const commuteOptions = [30, 45, 60, 90];
 const bedroomOptions = [1, 2, 3, 4];
 const bathroomOptions = [1, 2, 3];
-const interiorAreaOptions = [500, 750, 1000, 1250, 1500, 1750, 2000];
 const recencyOptions: { label: string; days: number | null }[] = [
     { label: "All time", days: null },
     { label: "Today", days: 1 },
     { label: "This week", days: 7 },
 ];
+
+const PRICE_MIN = 300_000;
+const PRICE_MAX = 2_000_000;
+const PRICE_STEP = 25_000;
+const PRICE_NO_MAX = PRICE_MAX + PRICE_STEP;
+const priceTicks: Record<number, string> = {
+    [PRICE_MIN]: "300k",
+    1_000_000: "1M",
+    [PRICE_NO_MAX]: "Any",
+};
+
+const COMMUTE_MIN = 0;
+const COMMUTE_MAX = 60;
+const COMMUTE_STEP = 5;
+const COMMUTE_NO_MAX = COMMUTE_MAX + COMMUTE_STEP;
+const commuteTicks: Record<number, string> = {
+    [COMMUTE_MIN]: "0m",
+    30: "30m",
+    [COMMUTE_NO_MAX]: "Any",
+};
+
+const SQFT_MIN = 0;
+const SQFT_MAX = 2500;
+const SQFT_STEP = 100;
+const sqftTicks: Record<number, string> = {
+    [SQFT_MIN]: "Any",
+    1000: "1k",
+    [SQFT_MAX]: "2.5k",
+};
+
+const priceSlider = computed({
+    get: () => maxPrice.value ?? PRICE_NO_MAX,
+    set: (v: number) => {
+        maxPrice.value = v >= PRICE_NO_MAX ? null : v;
+        applyFilters();
+    },
+});
+
+const commuteSliderMin = computed({
+    get: () =>
+        maxCommuteSec.value == null ? COMMUTE_NO_MAX : Math.round(maxCommuteSec.value / 60),
+    set: (v: number) => {
+        maxCommuteSec.value = v >= COMMUTE_NO_MAX ? null : v * 60;
+        applyFilters();
+    },
+});
+
+const sqftSlider = computed({
+    get: () => minInteriorAreaSqft.value ?? SQFT_MIN,
+    set: (v: number) => {
+        minInteriorAreaSqft.value = v <= SQFT_MIN ? null : v;
+        applyFilters();
+    },
+});
 
 const filterMenuOpen = ref(false);
 
@@ -49,8 +100,8 @@ const activeFilterCount = computed(() => {
     if (maxPrice.value != null) n++;
     if (maxCommuteSec.value != null) n++;
     if (newWithinDays.value != null) n++;
-    if (minBedrooms.value != null) n++;
-    if (minBathrooms.value != null) n++;
+    if (minBedrooms.value != null && minBedrooms.value > 1) n++;
+    if (minBathrooms.value != null && minBathrooms.value > 1) n++;
     if (minInteriorAreaSqft.value != null) n++;
     return n;
 });
@@ -101,8 +152,8 @@ function clearAllFilters() {
     maxPrice.value = null;
     maxCommuteSec.value = null;
     newWithinDays.value = null;
-    minBedrooms.value = null;
-    minBathrooms.value = null;
+    minBedrooms.value = 1;
+    minBathrooms.value = 1;
     minInteriorAreaSqft.value = null;
     applyFilters();
 }
@@ -138,8 +189,8 @@ function loadMore(gen: number = loadGen): Promise<void> {
                 ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
                 ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
                 ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
-                ...(minBedrooms.value != null && { minBedrooms: minBedrooms.value }),
-                ...(minBathrooms.value != null && { minBathrooms: minBathrooms.value }),
+                ...(minBedrooms.value != null && minBedrooms.value > 1 && { minBedrooms: minBedrooms.value }),
+                ...(minBathrooms.value != null && minBathrooms.value > 1 && { minBathrooms: minBathrooms.value }),
                 ...(minInteriorAreaSqft.value != null && { minInteriorAreaSqft: minInteriorAreaSqft.value }),
             });
             if (gen !== loadGen) return;
@@ -354,8 +405,8 @@ onBeforeUnmount(() => {
 
 <template>
     <Teleport to="#header-filters-slot" :disabled="!teleportReady">
-        <v-menu v-model="filterMenuOpen" :close-on-content-click="false" location="bottom end" offset="10"
-            transition="scale-transition" :min-width="280" :max-width="340">
+        <v-menu v-model="filterMenuOpen" :close-on-content-click="false" location="bottom end" offset="18"
+            transition="scale-transition">
             <template #activator="{ props }">
                 <button v-bind="props" type="button" class="filter-pill"
                     :class="{ 'filter-pill--active': activeFilterCount > 0 }">
@@ -385,36 +436,66 @@ onBeforeUnmount(() => {
                     <div class="filter-modal__section-head">
                         <span class="filter-modal__section-title">Max price</span>
                         <span class="filter-modal__section-value">
-                            — {{ maxPrice == null ? "no max" : formatCompactPrice(maxPrice) }}
+                            {{ maxPrice == null ? "Any" : formatCompactPrice(maxPrice) }}
                         </span>
+                        <button v-if="maxPrice != null" type="button" class="filter-modal__section-clear"
+                            @click="setMaxPrice(null)">Clear</button>
                     </div>
-                    <div class="filter-modal__chips">
-                        <button type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': maxPrice == null }"
-                            @click="setMaxPrice(null)">No max</button>
-                        <button v-for="p in priceOptions" :key="p" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': maxPrice === p }"
-                            @click="setMaxPrice(maxPrice === p ? null : p)">
-                            {{ formatCompactPrice(p) }}
-                        </button>
-                    </div>
+                    <v-slider v-model="priceSlider" :min="PRICE_MIN" :max="PRICE_NO_MAX" :step="PRICE_STEP"
+                        :ticks="priceTicks" show-ticks="always" tick-size="3" color="secondary"
+                        track-color="rgba(255,255,255,0.16)" hide-details density="compact" class="filter-slider" />
                 </section>
 
                 <section class="filter-modal__section">
                     <div class="filter-modal__section-head">
                         <span class="filter-modal__section-title">Max commute</span>
                         <span class="filter-modal__section-value">
-                            — {{ maxCommuteSec == null ? "no max" : `${Math.round(maxCommuteSec / 60)} min` }}
+                            {{ maxCommuteSec == null ? "Any" : `${Math.round(maxCommuteSec / 60)} min` }}
                         </span>
+                        <button v-if="maxCommuteSec != null" type="button" class="filter-modal__section-clear"
+                            @click="setMaxCommute(null)">Clear</button>
                     </div>
-                    <div class="filter-modal__chips">
-                        <button type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': maxCommuteSec == null }"
-                            @click="setMaxCommute(null)">No max</button>
-                        <button v-for="m in commuteOptions" :key="m" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': maxCommuteSec === m * 60 }"
-                            @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">
-                            {{ m }} min
+                    <v-slider v-model="commuteSliderMin" :min="COMMUTE_MIN" :max="COMMUTE_NO_MAX" :step="COMMUTE_STEP"
+                        :ticks="commuteTicks" show-ticks="always" tick-size="3" color="secondary"
+                        track-color="rgba(255,255,255,0.16)" hide-details density="compact" class="filter-slider" />
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Min interior space</span>
+                        <span class="filter-modal__section-value">
+                            {{ minInteriorAreaSqft == null ? "Any" : `${minInteriorAreaSqft.toLocaleString()} sqft` }}
+                        </span>
+                        <button v-if="minInteriorAreaSqft != null" type="button" class="filter-modal__section-clear"
+                            @click="setMinInteriorAreaSqft(null)">Clear</button>
+                    </div>
+                    <v-slider v-model="sqftSlider" :min="SQFT_MIN" :max="SQFT_MAX" :step="SQFT_STEP" :ticks="sqftTicks"
+                        show-ticks="always" tick-size="3" color="secondary" track-color="rgba(255,255,255,0.16)"
+                        hide-details density="compact" class="filter-slider" />
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Bedrooms</span>
+                    </div>
+                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bedrooms">
+                        <button v-for="b in bedroomOptions" :key="b" type="button" class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': minBedrooms === b }" role="radio"
+                            :aria-checked="minBedrooms === b" @click="setMinBedrooms(b)">
+                            {{ b }}+
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Bathrooms</span>
+                    </div>
+                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bathrooms">
+                        <button v-for="b in bathroomOptions" :key="b" type="button" class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': minBathrooms === b }" role="radio"
+                            :aria-checked="minBathrooms === b" @click="setMinBathrooms(b)">
+                            {{ b }}+
                         </button>
                     </div>
                 </section>
@@ -423,68 +504,12 @@ onBeforeUnmount(() => {
                     <div class="filter-modal__section-head">
                         <span class="filter-modal__section-title">Recency</span>
                     </div>
-                    <div class="filter-modal__chips">
-                        <button v-for="opt in recencyOptions" :key="opt.label" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': newWithinDays === opt.days }"
-                            @click="setRecency(opt.days)">
+                    <div class="filter-segmented" role="radiogroup" aria-label="Listing recency">
+                        <button v-for="opt in recencyOptions" :key="opt.label" type="button"
+                            class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': newWithinDays === opt.days }" role="radio"
+                            :aria-checked="newWithinDays === opt.days" @click="setRecency(opt.days)">
                             {{ opt.label }}
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Min bedrooms</span>
-                        <span class="filter-modal__section-value">
-                            — {{ minBedrooms == null ? "no min" : `${minBedrooms}+` }}
-                        </span>
-                    </div>
-                    <div class="filter-modal__chips">
-                        <button type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minBedrooms == null }"
-                            @click="setMinBedrooms(null)">No min</button>
-                        <button v-for="b in bedroomOptions" :key="b" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minBedrooms === b }"
-                            @click="setMinBedrooms(minBedrooms === b ? null : b)">
-                            {{ b }}+
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Min bathrooms</span>
-                        <span class="filter-modal__section-value">
-                            — {{ minBathrooms == null ? "no min" : `${minBathrooms}+` }}
-                        </span>
-                    </div>
-                    <div class="filter-modal__chips">
-                        <button type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minBathrooms == null }"
-                            @click="setMinBathrooms(null)">No min</button>
-                        <button v-for="b in bathroomOptions" :key="b" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minBathrooms === b }"
-                            @click="setMinBathrooms(minBathrooms === b ? null : b)">
-                            {{ b }}+
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Min interior space</span>
-                        <span class="filter-modal__section-value">
-                            — {{ minInteriorAreaSqft == null ? "no min" : `${minInteriorAreaSqft.toLocaleString()} sqft` }}
-                        </span>
-                    </div>
-                    <div class="filter-modal__chips">
-                        <button type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minInteriorAreaSqft == null }"
-                            @click="setMinInteriorAreaSqft(null)">No min</button>
-                        <button v-for="a in interiorAreaOptions" :key="a" type="button" class="filter-chip"
-                            :class="{ 'filter-chip--active': minInteriorAreaSqft === a }"
-                            @click="setMinInteriorAreaSqft(minInteriorAreaSqft === a ? null : a)">
-                            {{ a.toLocaleString() }}
                         </button>
                     </div>
                 </section>
@@ -510,38 +535,36 @@ onBeforeUnmount(() => {
 
     <div v-show="mdAndUp || viewMode === 'map'" class="map-fullbleed"
         :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
-            <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                :new-within-days="newWithinDays" :min-bedrooms="minBedrooms" :min-bathrooms="minBathrooms"
-                :min-interior-area-sqft="minInteriorAreaSqft" @update:count="mapCount = $event" />
-            <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
-                <div class="list-toolbar">
-                    <div class="list-toolbar__row">
-                        <div class="list-toolbar__count">
-                            <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
-                            <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
-                        </div>
-                        <div class="sort-tabs" role="tablist" aria-label="Sort listings">
-                            <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
-                                class="sort-tabs__tab"
-                                :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
-                                :aria-selected="sortBy === opt.value"
-                                @click="selectSort(opt)">
-                                <span class="sort-tabs__label">{{ opt.label }}</span>
-                                <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
-                                    {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-                                </v-icon>
-                            </button>
-                        </div>
+        <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
+            :new-within-days="newWithinDays" :min-bedrooms="minBedrooms" :min-bathrooms="minBathrooms"
+            :min-interior-area-sqft="minInteriorAreaSqft" @update:count="mapCount = $event" />
+        <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
+            <div class="list-toolbar">
+                <div class="list-toolbar__row">
+                    <div class="list-toolbar__count">
+                        <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
+                        <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
+                    </div>
+                    <div class="sort-tabs" role="tablist" aria-label="Sort listings">
+                        <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
+                            class="sort-tabs__tab" :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
+                            :aria-selected="sortBy === opt.value" @click="selectSort(opt)">
+                            <span class="sort-tabs__label">{{ opt.label }}</span>
+                            <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
+                                {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                            </v-icon>
+                        </button>
                     </div>
                 </div>
-                <div ref="sidePanelBodyEl" class="listings-side-panel__body">
-                    <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
+            </div>
+            <div ref="sidePanelBodyEl" class="listings-side-panel__body">
+                <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
 
-                    <div v-if="loading && items.length === 0" class="text-center py-8">
-                        <v-progress-circular indeterminate />
-                    </div>
+                <div v-if="loading && items.length === 0" class="text-center py-8">
+                    <v-progress-circular indeterminate />
+                </div>
 
-                    <template v-else-if="items.length > 0">
+                <template v-else-if="items.length > 0">
                     <div class="listing-cards listing-cards--panel">
                         <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
@@ -582,18 +605,18 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                     </div>
-                    </template>
+                </template>
 
-                    <div v-else class="text-medium-emphasis text-center py-8">
-                        No listings found.
-                    </div>
-
-                    <div v-if="hasMore && items.length > 0" ref="panelSentinelEl" class="listings-side-panel__sentinel">
-                        <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
-                    </div>
+                <div v-else class="text-medium-emphasis text-center py-8">
+                    No listings found.
                 </div>
-            </aside>
-        </div>
+
+                <div v-if="hasMore && items.length > 0" ref="panelSentinelEl" class="listings-side-panel__sentinel">
+                    <v-progress-circular v-if="loading" indeterminate size="20" width="2" />
+                </div>
+            </div>
+        </aside>
+    </div>
 
     <div v-if="!mdAndUp && viewMode === 'list'" class="listings-mobile">
         <div class="list-toolbar list-toolbar--mobile">
@@ -603,11 +626,9 @@ onBeforeUnmount(() => {
                     <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
                 </div>
                 <div class="sort-tabs" role="tablist" aria-label="Sort listings">
-                    <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
-                        class="sort-tabs__tab"
+                    <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab" class="sort-tabs__tab"
                         :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
-                        :aria-selected="sortBy === opt.value"
-                        @click="selectSort(opt)">
+                        :aria-selected="sortBy === opt.value" @click="selectSort(opt)">
                         <span class="sort-tabs__label">{{ opt.label }}</span>
                         <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
                             {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
@@ -652,8 +673,7 @@ onBeforeUnmount(() => {
                             <span>{{ formatCommute(item.commuteSecondsDowntown) }} downtown</span>
                         </a>
                         <span v-else class="listing-card__commute listing-card__commute--muted">
-                            <span class="listing-card__commute-dot"
-                                :style="{ background: commuteColor(null) }" />
+                            <span class="listing-card__commute-dot" :style="{ background: commuteColor(null) }" />
                             —
                         </span>
                         <span class="listing-card__seen">{{
@@ -690,15 +710,13 @@ onBeforeUnmount(() => {
 
     <div v-if="!mdAndUp" class="mobile-view-toggle" role="tablist" aria-label="View mode">
         <button type="button" class="mobile-view-toggle__btn"
-            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'map' }"
-            role="tab" :aria-selected="viewMode === 'map'" aria-label="Map view"
-            @click="viewMode = 'map'">
+            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'map' }" role="tab"
+            :aria-selected="viewMode === 'map'" aria-label="Map view" @click="viewMode = 'map'">
             <v-icon size="20">mdi-map-outline</v-icon>
         </button>
         <button type="button" class="mobile-view-toggle__btn"
-            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'list' }"
-            role="tab" :aria-selected="viewMode === 'list'" aria-label="List view"
-            @click="viewMode = 'list'">
+            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'list' }" role="tab"
+            :aria-selected="viewMode === 'list'" aria-label="List view" @click="viewMode = 'list'">
             <v-icon size="20">mdi-format-list-bulleted</v-icon>
         </button>
     </div>
@@ -756,7 +774,7 @@ onBeforeUnmount(() => {
 }
 
 .filter-modal {
-    width: 100%;
+    width: min(95vw, 420px);
     border-radius: 16px;
     background-color: rgb(var(--v-theme-surface));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
@@ -823,14 +841,14 @@ onBeforeUnmount(() => {
     padding: 12px 16px;
 }
 
-.filter-modal__section + .filter-modal__section {
+.filter-modal__section+.filter-modal__section {
     border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .filter-modal__section-head {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 10px;
 }
 
@@ -840,52 +858,103 @@ onBeforeUnmount(() => {
 }
 
 .filter-modal__section-value {
+    margin-left: auto;
     font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.5);
+    color: rgba(var(--v-theme-on-surface), 0.65);
+    font-variant-numeric: tabular-nums;
 }
 
-.filter-modal__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.filter-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 56px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 999px;
+.filter-modal__section-clear {
     background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
-    color: rgba(var(--v-theme-on-surface), 0.85);
-    font-size: 0.8125rem;
+    border: 0;
+    padding: 2px 4px;
+    color: rgb(var(--v-theme-secondary));
+    font-size: 0.75rem;
     font-weight: 500;
-    letter-spacing: normal;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    border-radius: 4px;
 }
 
-.filter-chip:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-    border-color: rgba(var(--v-theme-on-surface), 0.28);
+.filter-modal__section-clear:hover {
+    text-decoration: underline;
 }
 
-.filter-chip:focus-visible {
+.filter-modal__section-clear:focus-visible {
     outline: 2px solid rgb(var(--v-theme-secondary));
     outline-offset: 2px;
 }
 
-.filter-chip--active {
-    background-color: rgba(var(--v-theme-secondary), 0.14);
-    border-color: rgba(var(--v-theme-secondary), 0.7);
-    color: rgb(var(--v-theme-secondary));
+.filter-slider {
+    margin-top: 2px;
+    padding-inline: 4px;
 }
 
-.filter-chip--active:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.2);
+.filter-slider :deep(.v-slider-thumb__label) {
+    background-color: rgb(var(--v-theme-secondary));
+}
+
+.filter-slider :deep(.v-slider__tick-label) {
+    font-size: 0.6875rem;
+    color: rgba(var(--v-theme-on-surface), 0.5);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.filter-slider :deep(.v-slider__tick:first-child .v-slider__tick-label) {
+    transform: translateX(0);
+    text-align: left;
+}
+
+.filter-slider :deep(.v-slider__tick:last-child .v-slider__tick-label) {
+    transform: translateX(-100%);
+    text-align: right;
+}
+
+.filter-segmented {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.filter-segmented__btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px;
+    background: transparent;
+    border: 0;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    color: rgba(var(--v-theme-on-surface), 0.82);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.filter-segmented__btn:first-child {
+    border-left: 0;
+}
+
+.filter-segmented__btn:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.filter-segmented__btn:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: -2px;
+}
+
+.filter-segmented__btn--active,
+.filter-segmented__btn--active:hover {
+    background-color: rgba(var(--v-theme-secondary), 0.18);
+    color: rgb(var(--v-theme-secondary));
+    font-weight: 600;
 }
 
 .filter-modal__footer {
@@ -926,8 +995,8 @@ onBeforeUnmount(() => {
     padding: 0 16px;
     border-radius: 999px;
     background-color: rgb(var(--v-theme-secondary));
+    color: rgba(0, 0, 0, 0.87);
     border: 0;
-    color: rgb(var(--v-theme-on-secondary));
     font-size: 0.9375rem;
     font-weight: 600;
     cursor: pointer;
