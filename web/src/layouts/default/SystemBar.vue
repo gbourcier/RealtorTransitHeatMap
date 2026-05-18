@@ -26,9 +26,6 @@
     <v-spacer />
 
     <div id="header-filters-slot" class="header-bar__filters" />
-
-    <v-spacer />
-
     <div id="header-actions-slot" class="header-bar__actions" />
   </v-system-bar>
 </template>
@@ -46,11 +43,9 @@ const emit = defineEmits(['click:settings', 'click:home'])
 .header-bar__filters {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
   min-width: 0;
-  flex: 0 1 auto;
-  overflow: hidden;
+  flex: 0 0 auto;
 }
 
 .header-bar__actions {
@@ -59,5 +54,9 @@ const emit = defineEmits(['click:settings', 'click:home'])
   gap: 4px;
   margin-right: 8px;
   flex: 0 0 auto;
+}
+
+.header-bar__actions:not(:empty) {
+  margin-left: 6px;
 }
 </style>

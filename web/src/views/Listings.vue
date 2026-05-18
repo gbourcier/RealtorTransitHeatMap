@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useDisplay } from "vuetify";
 import {
     listListings,
@@ -40,26 +40,6 @@ const recencyOptions: { label: string; days: number | null }[] = [
 ];
 
 const filterMenuOpen = ref(false);
-
-type FilterTarget =
-    | "#drawer-filters-slot"
-    | "#mobile-filters-slot"
-    | "#header-filters-slot";
-const filterTarget = ref<FilterTarget>("#header-filters-slot");
-watch(
-    [mdAndUp, drawerOpen, viewMode],
-    async ([md, open, mode]) => {
-        let desired: FilterTarget;
-        if (md) {
-            desired = open ? "#drawer-filters-slot" : "#header-filters-slot";
-        } else {
-            desired = mode === "list" ? "#mobile-filters-slot" : "#header-filters-slot";
-        }
-        await nextTick();
-        filterTarget.value = desired;
-    },
-    { immediate: true },
-);
 
 const activeFilterCount = computed(() => {
     let n = 0;
@@ -346,7 +326,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Teleport :to="filterTarget" :disabled="!teleportReady">
+    <Teleport to="#header-filters-slot" :disabled="!teleportReady">
         <v-menu v-model="filterMenuOpen" :close-on-content-click="false" location="bottom end" offset="10"
             transition="scale-transition" :min-width="280" :max-width="340">
             <template #activator="{ props }">
@@ -455,21 +435,18 @@ onBeforeUnmount(() => {
                             <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
                             <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
                         </div>
-                        <div class="list-toolbar__actions">
-                            <div id="drawer-filters-slot" class="list-toolbar__filters" />
+                        <div class="sort-tabs" role="tablist" aria-label="Sort listings">
+                            <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
+                                class="sort-tabs__tab"
+                                :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
+                                :aria-selected="sortBy === opt.value"
+                                @click="selectSort(opt)">
+                                <span class="sort-tabs__label">{{ opt.label }}</span>
+                                <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
+                                    {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                                </v-icon>
+                            </button>
                         </div>
-                    </div>
-                    <div class="sort-tabs" role="tablist" aria-label="Sort listings">
-                        <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
-                            class="sort-tabs__tab"
-                            :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
-                            :aria-selected="sortBy === opt.value"
-                            @click="selectSort(opt)">
-                            <span class="sort-tabs__label">{{ opt.label }}</span>
-                            <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
-                                {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-                            </v-icon>
-                        </button>
                     </div>
                 </div>
                 <div ref="sidePanelBodyEl" class="listings-side-panel__body">
@@ -540,22 +517,18 @@ onBeforeUnmount(() => {
                     <span class="list-toolbar__count-num">{{ total.toLocaleString() }}</span>
                     <span class="list-toolbar__count-label">listing{{ total === 1 ? "" : "s" }}</span>
                 </div>
-                <div class="list-toolbar__actions">
-                    <div id="mobile-filters-slot" class="list-toolbar__filters" />
+                <div class="sort-tabs" role="tablist" aria-label="Sort listings">
+                    <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
+                        class="sort-tabs__tab"
+                        :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
+                        :aria-selected="sortBy === opt.value"
+                        @click="selectSort(opt)">
+                        <span class="sort-tabs__label">{{ opt.label }}</span>
+                        <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
+                            {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+                        </v-icon>
+                    </button>
                 </div>
-            </div>
-            <div class="sort-tabs" role="tablist" aria-label="Sort listings">
-                <button v-for="opt in sortOptions" :key="opt.value" type="button" role="tab"
-                    class="sort-tabs__tab"
-                    :class="{ 'sort-tabs__tab--active': sortBy === opt.value }"
-                    :aria-selected="sortBy === opt.value"
-                    @click="selectSort(opt)">
-                    <v-icon size="16" class="sort-tabs__icon">{{ opt.icon }}</v-icon>
-                    <span class="sort-tabs__label">{{ opt.label }}</span>
-                    <v-icon v-if="sortBy === opt.value" size="14" class="sort-tabs__dir">
-                        {{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-                    </v-icon>
-                </button>
             </div>
         </div>
 
@@ -928,14 +901,13 @@ onBeforeUnmount(() => {
 .list-toolbar {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px 14px;
+    padding: 10px 14px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     flex: 0 0 auto;
 }
 
 .list-toolbar--mobile {
-    padding: 12px 14px 10px;
+    padding: 10px 14px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
@@ -944,6 +916,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    min-width: 0;
 }
 
 .list-toolbar__count {
@@ -964,20 +937,11 @@ onBeforeUnmount(() => {
     margin-top: 2px;
 }
 
-.list-toolbar__actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.list-toolbar__filters:empty {
-    display: none;
-}
-
 .sort-tabs {
     display: flex;
     align-items: stretch;
-    width: 100%;
+    flex: 0 1 auto;
+    min-width: 0;
     border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
     border-radius: 999px;
     overflow: hidden;
@@ -985,14 +949,14 @@ onBeforeUnmount(() => {
 }
 
 .sort-tabs__tab {
-    flex: 1 1 0;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
-    height: 34px;
-    padding: 0 10px;
+    height: 30px;
+    padding: 0 12px;
     background: transparent;
     border: 0;
     border-left: 1px solid rgba(var(--v-theme-on-surface), 0.14);
