@@ -297,7 +297,14 @@ onMounted(() => {
         center: MONTREAL_CENTER,
         zoom: 11,
         zoomControl: false,
+        attributionControl: false,
     });
+    L.control
+        .attribution({ prefix: false, position: "topright" })
+        .addAttribution(
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        )
+        .addTo(map.value);
     map.value.createPane("hexPane");
     const hexPane = map.value.getPane("hexPane");
     if (hexPane) {
@@ -307,8 +314,6 @@ onMounted(() => {
     L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
-            attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: "abcd",
             maxZoom: 19,
         },
@@ -464,9 +469,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     flex-direction: column;
     gap: 4px;
     padding: 8px 10px;
-    background-color: rgba(20, 20, 24, 0.6);
-    color: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(var(--v-theme-surface), 0.6);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     border-radius: 6px;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -480,7 +485,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(var(--v-theme-on-surface), 0.65);
     margin-bottom: 2px;
 }
 
@@ -727,6 +732,20 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
         0 6px 14px rgba(0, 0, 0, 0.6);
     transform: scale(1.12);
     transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.leaflet-control-attribution {
+    background: rgba(20, 22, 28, 0.45) !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 9px !important;
+    padding: 1px 6px !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 0 0 0 4px;
+}
+
+.leaflet-control-attribution a {
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .leaflet-popup-content-wrapper {

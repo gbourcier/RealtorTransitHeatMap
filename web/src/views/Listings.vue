@@ -17,9 +17,6 @@ const items = ref<Listing[]>([]);
 const total = ref(0);
 const mapCount = ref(0);
 
-function toggleViewMode() {
-    viewMode.value = viewMode.value === "list" ? "map" : "list";
-}
 const limit = ref(50);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -588,30 +585,34 @@ onBeforeUnmount(() => {
         </div>
     </div>
 
-    <div v-if="!mdAndUp" class="mobile-bottom-card"
-        :class="{ 'mobile-bottom-card--bare': viewMode === 'list' }">
-        <div v-if="viewMode === 'map'" class="mobile-bottom-card__legend" aria-label="Transit commute time legend">
-            <div class="mobile-bottom-card__legend-title">Commute to Downtown</div>
-            <div class="mobile-bottom-card__legend-rows">
-                <span class="mobile-bottom-card__legend-row">
-                    <span class="mobile-bottom-card__swatch" style="background:#2e7d32" />
-                    &lt; 30 min
-                </span>
-                <span class="mobile-bottom-card__legend-row">
-                    <span class="mobile-bottom-card__swatch" style="background:#f9a825" />
-                    30–60 min
-                </span>
-                <span class="mobile-bottom-card__legend-row">
-                    <span class="mobile-bottom-card__swatch" style="background:#c62828" />
-                    &gt; 60 min
-                </span>
-            </div>
-        </div>
-        <v-btn class="mobile-bottom-card__btn text-none" variant="tonal" rounded="lg" size="large" block
-            @click="toggleViewMode">
-            <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
-            {{ viewMode === "list" ? "Show map" : "Show list" }}
-        </v-btn>
+    <div v-if="!mdAndUp && viewMode === 'map'" class="mobile-legend" aria-label="Transit commute time legend">
+        <span class="mobile-legend__item">
+            <span class="mobile-legend__dot" style="background:#2e7d32" />
+            &lt; 30
+        </span>
+        <span class="mobile-legend__item">
+            <span class="mobile-legend__dot" style="background:#f9a825" />
+            30–60
+        </span>
+        <span class="mobile-legend__item">
+            <span class="mobile-legend__dot" style="background:#c62828" />
+            &gt; 60 min
+        </span>
+    </div>
+
+    <div v-if="!mdAndUp" class="mobile-view-toggle" role="tablist" aria-label="View mode">
+        <button type="button" class="mobile-view-toggle__btn"
+            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'map' }"
+            role="tab" :aria-selected="viewMode === 'map'" aria-label="Map view"
+            @click="viewMode = 'map'">
+            <v-icon size="20">mdi-map-outline</v-icon>
+        </button>
+        <button type="button" class="mobile-view-toggle__btn"
+            :class="{ 'mobile-view-toggle__btn--active': viewMode === 'list' }"
+            role="tab" :aria-selected="viewMode === 'list'" aria-label="List view"
+            @click="viewMode = 'list'">
+            <v-icon size="20">mdi-format-list-bulleted</v-icon>
+        </button>
     </div>
 </template>
 
@@ -857,7 +858,7 @@ onBeforeUnmount(() => {
 .listings-mobile {
     height: calc(100dvh - 56px);
     overflow-y: auto;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 .map-fullbleed {
@@ -1002,58 +1003,34 @@ onBeforeUnmount(() => {
     opacity: 0.9;
 }
 
-.mobile-bottom-card {
+.mobile-legend {
     position: fixed;
     left: 12px;
-    right: 12px;
-    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 14px;
-    background-color: rgba(20, 22, 28, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background-color: rgba(var(--v-theme-surface), 0.78);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-}
-
-.mobile-bottom-card--bare {
-    padding: 12px;
-    background-color: rgba(20, 22, 28, 0.6);
-    border-color: rgba(255, 255, 255, 0.06);
-}
-
-.mobile-bottom-card__legend {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    color: rgba(255, 255, 255, 0.92);
-}
-
-.mobile-bottom-card__legend-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.mobile-bottom-card__legend-rows {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    color: rgba(var(--v-theme-on-surface), 0.92);
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
 }
 
-.mobile-bottom-card__legend-row {
+.mobile-legend__item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
-.mobile-bottom-card__swatch {
+.mobile-legend__dot {
     display: inline-block;
     width: 10px;
     height: 10px;
@@ -1061,9 +1038,50 @@ onBeforeUnmount(() => {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
-.mobile-bottom-card__btn {
-    letter-spacing: normal;
-    font-weight: 600;
+.mobile-view-toggle {
+    position: fixed;
+    right: 12px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 4px;
+    border-radius: 999px;
+    background-color: rgba(var(--v-theme-surface), 0.78);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.mobile-view-toggle__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.mobile-view-toggle__btn:hover {
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.mobile-view-toggle__btn:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
+}
+
+.mobile-view-toggle__btn--active {
+    background-color: rgba(var(--v-theme-on-surface), 0.14);
+    color: rgb(var(--v-theme-on-surface));
 }
 
 .listing-cards {
