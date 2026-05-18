@@ -31,8 +31,15 @@ const maxPrice = ref<number | null>(null);
 const maxCommuteSec = ref<number | null>(null);
 const newWithinDays = ref<number | null>(null);
 
-const priceOptions = [400000, 500000, 600000, 700000, 800000, 1000000, 1500000, 2000000];
-const commuteOptions = [15, 30, 45, 60, 90];
+const priceOptions = [500000, 700000, 1000000, 1500000];
+const commuteOptions = [30, 45, 60, 90];
+const recencyOptions: { label: string; days: number | null }[] = [
+    { label: "All time", days: null },
+    { label: "Today", days: 1 },
+    { label: "This week", days: 7 },
+];
+
+const filterMenuOpen = ref(false);
 
 type FilterTarget =
     | "#drawer-filters-slot"
@@ -84,8 +91,8 @@ function setMaxCommute(minutes: number | null) {
     applyFilters();
 }
 
-function toggleNewOnly() {
-    newWithinDays.value = newWithinDays.value == null ? 1 : null;
+function setRecency(days: number | null) {
+    newWithinDays.value = days;
     applyFilters();
 }
 
@@ -340,60 +347,92 @@ onBeforeUnmount(() => {
 
 <template>
     <Teleport :to="filterTarget" :disabled="!teleportReady">
-        <v-menu :close-on-content-click="false" location="bottom start" offset="6">
+        <v-menu v-model="filterMenuOpen" :close-on-content-click="false" location="bottom end" offset="10"
+            transition="scale-transition" :min-width="280" :max-width="340">
             <template #activator="{ props }">
-                <v-btn v-bind="props" rounded="pill" variant="outlined"
-                    :color="activeFilterCount > 0 ? 'secondary' : undefined"
-                    prepend-icon="mdi-filter-variant" class="filter-btn text-none"
-                    :class="{ 'filter-btn--active': activeFilterCount > 0 }" size="small">
-                    Filters
-                    <v-badge v-if="activeFilterCount > 0" inline color="secondary" :content="activeFilterCount"
-                        class="filter-btn__badge" />
-                </v-btn>
+                <button v-bind="props" type="button" class="filter-pill"
+                    :class="{ 'filter-pill--active': activeFilterCount > 0 }">
+                    <v-icon size="16" class="filter-pill__icon">mdi-tune-variant</v-icon>
+                    <span class="filter-pill__label">Filters</span>
+                    <template v-if="activeFilterCount > 0">
+                        <span class="filter-pill__dot" aria-hidden="true">•</span>
+                        <span class="filter-pill__count">{{ activeFilterCount }}</span>
+                    </template>
+                </button>
             </template>
-            <v-card min-width="260" class="filter-menu">
-                <div class="filter-menu__section">
-                    <div class="filter-menu__title">Max price</div>
-                    <div class="filter-menu__chips">
-                        <v-chip size="small" :variant="maxPrice == null ? 'flat' : 'outlined'"
-                            :color="maxPrice == null ? 'secondary' : undefined" @click="setMaxPrice(null)">No
-                            max</v-chip>
-                        <v-chip v-for="p in priceOptions" :key="p" size="small"
-                            :variant="maxPrice === p ? 'flat' : 'outlined'"
-                            :color="maxPrice === p ? 'secondary' : undefined"
-                            @click="setMaxPrice(maxPrice === p ? null : p)">{{
-                            formatCompactPrice(p) }}</v-chip>
+            <div class="filter-modal" role="dialog" aria-label="Filters">
+                <header class="filter-modal__header">
+                    <div class="filter-modal__title-row">
+                        <span class="filter-modal__title">Filters</span>
+                        <span v-if="activeFilterCount > 0" class="filter-modal__active-badge">
+                            {{ activeFilterCount }} active
+                        </span>
                     </div>
-                </div>
-                <v-divider />
-                <div class="filter-menu__section">
-                    <div class="filter-menu__title">Max commute</div>
-                    <div class="filter-menu__chips">
-                        <v-chip size="small" :variant="maxCommuteSec == null ? 'flat' : 'outlined'"
-                            :color="maxCommuteSec == null ? 'secondary' : undefined" @click="setMaxCommute(null)">No
-                            max</v-chip>
-                        <v-chip v-for="m in commuteOptions" :key="m" size="small"
-                            :variant="maxCommuteSec === m * 60 ? 'flat' : 'outlined'"
-                            :color="maxCommuteSec === m * 60 ? 'secondary' : undefined"
-                            @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">{{ m }} min</v-chip>
+                    <button type="button" class="filter-modal__close" aria-label="Close filters"
+                        @click="filterMenuOpen = false">
+                        <v-icon size="20">mdi-close</v-icon>
+                    </button>
+                </header>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Max price</span>
+                        <span class="filter-modal__section-value">
+                            — {{ maxPrice == null ? "no max" : formatCompactPrice(maxPrice) }}
+                        </span>
                     </div>
-                </div>
-                <v-divider />
-                <div class="filter-menu__section">
-                    <div class="filter-menu__title">Recency</div>
-                    <div class="filter-menu__chips">
-                        <v-chip size="small" :variant="newWithinDays != null ? 'flat' : 'outlined'"
-                            :color="newWithinDays != null ? 'secondary' : undefined" @click="toggleNewOnly">New today
-                            only</v-chip>
+                    <div class="filter-modal__chips">
+                        <button type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': maxPrice == null }"
+                            @click="setMaxPrice(null)">No max</button>
+                        <button v-for="p in priceOptions" :key="p" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': maxPrice === p }"
+                            @click="setMaxPrice(maxPrice === p ? null : p)">
+                            {{ formatCompactPrice(p) }}
+                        </button>
                     </div>
-                </div>
-                <template v-if="activeFilterCount > 0">
-                    <v-divider />
-                    <div class="filter-menu__footer">
-                        <v-btn variant="text" size="small" class="text-none" @click="clearAllFilters">Clear all</v-btn>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Max commute</span>
+                        <span class="filter-modal__section-value">
+                            — {{ maxCommuteSec == null ? "no max" : `${Math.round(maxCommuteSec / 60)} min` }}
+                        </span>
                     </div>
-                </template>
-            </v-card>
+                    <div class="filter-modal__chips">
+                        <button type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': maxCommuteSec == null }"
+                            @click="setMaxCommute(null)">No max</button>
+                        <button v-for="m in commuteOptions" :key="m" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': maxCommuteSec === m * 60 }"
+                            @click="setMaxCommute(maxCommuteSec === m * 60 ? null : m)">
+                            {{ m }} min
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Recency</span>
+                    </div>
+                    <div class="filter-modal__chips">
+                        <button v-for="opt in recencyOptions" :key="opt.label" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': newWithinDays === opt.days }"
+                            @click="setRecency(opt.days)">
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </section>
+
+                <footer class="filter-modal__footer">
+                    <button type="button" class="filter-modal__reset" :disabled="activeFilterCount === 0"
+                        @click="clearAllFilters">Reset</button>
+                    <button type="button" class="filter-modal__apply" @click="filterMenuOpen = false">
+                        Show {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
+                    </button>
+                </footer>
+            </div>
         </v-menu>
 
     </Teleport>
@@ -604,55 +643,242 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.filter-btn {
-    letter-spacing: normal;
-    font-weight: 500;
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.88);
     font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.85);
-    border-color: rgba(var(--v-theme-on-surface), 0.18);
-    padding-inline: 12px;
-    height: 30px;
+    font-weight: 500;
+    letter-spacing: normal;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
-.filter-btn--active {
-    border-color: rgba(var(--v-theme-secondary), 0.55);
+.filter-pill:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    border-color: rgba(var(--v-theme-on-surface), 0.32);
 }
 
-.filter-btn :deep(.v-btn__prepend) {
-    margin-inline-end: 6px;
+.filter-pill:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
 }
 
-.filter-btn__badge {
-    margin-inline-start: 8px;
+.filter-pill--active {
+    border-color: rgba(var(--v-theme-secondary), 0.7);
+    color: rgb(var(--v-theme-secondary));
 }
 
-.filter-menu {
-    padding: 4px 0;
+.filter-pill--active:hover {
+    background-color: rgba(var(--v-theme-secondary), 0.08);
+    border-color: rgb(var(--v-theme-secondary));
 }
 
-.filter-menu__section {
-    padding: 12px 14px;
+.filter-pill__icon {
+    opacity: 0.9;
 }
 
-.filter-menu__title {
-    font-size: 0.75rem;
+.filter-pill__dot {
+    opacity: 0.7;
+    margin-left: 2px;
+}
+
+.filter-pill__count {
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: rgba(var(--v-theme-on-surface), 0.6);
-    margin-bottom: 8px;
 }
 
-.filter-menu__chips {
+.filter-modal {
+    width: 100%;
+    border-radius: 16px;
+    background-color: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+    overflow: hidden;
+}
+
+.filter-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 6px;
+}
+
+.filter-modal__title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-modal__title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+
+.filter-modal__active-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--v-theme-secondary), 0.55);
+    color: rgb(var(--v-theme-secondary));
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.filter-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    border: 0;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.filter-modal__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.filter-modal__close:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
+}
+
+.filter-modal__section {
+    padding: 12px 16px;
+}
+
+.filter-modal__section + .filter-modal__section {
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.filter-modal__section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.filter-modal__section-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.filter-modal__section-value {
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+.filter-modal__chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-.filter-menu__footer {
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+    color: rgba(var(--v-theme-on-surface), 0.85);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.filter-chip:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.04);
+    border-color: rgba(var(--v-theme-on-surface), 0.28);
+}
+
+.filter-chip:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
+}
+
+.filter-chip--active {
+    background-color: rgba(var(--v-theme-secondary), 0.14);
+    border-color: rgba(var(--v-theme-secondary), 0.7);
+    color: rgb(var(--v-theme-secondary));
+}
+
+.filter-chip--active:hover {
+    background-color: rgba(var(--v-theme-secondary), 0.2);
+}
+
+.filter-modal__footer {
     display: flex;
-    justify-content: flex-end;
-    padding: 6px 8px;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px 14px;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.filter-modal__reset {
+    flex: 0 0 auto;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+
+.filter-modal__reset:hover:not(:disabled) {
+    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    border-color: rgba(var(--v-theme-on-surface), 0.32);
+}
+
+.filter-modal__reset:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.filter-modal__apply {
+    flex: 1 1 auto;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background-color: rgb(var(--v-theme-secondary));
+    border: 0;
+    color: rgb(var(--v-theme-on-secondary));
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 120ms ease;
+}
+
+.filter-modal__apply:hover {
+    filter: brightness(1.06);
+}
+
+.filter-modal__apply:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline-offset: 2px;
 }
 
 .listings-mobile {
