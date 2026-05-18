@@ -14,6 +14,13 @@ export const vuetify = createVuetify({
         colors: {
           primary: '#472AB2',
           secondary: '#4AEAD8',
+          success: '#2e7d32',
+          warning: '#f9a825',
+          error: '#c62828',
+          'header-bar': '#262626',
+          'map-bg': '#131516',
+          'popup-overlay': '#14161C',
+          shadow: '#000000',
         },
       },
     },

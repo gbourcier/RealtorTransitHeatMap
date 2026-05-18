@@ -281,11 +281,11 @@ function formatCommute(seconds: number | null): string {
 }
 
 function commuteColor(seconds: number | null): string {
-    if (seconds == null) return "rgba(255,255,255,0.35)";
+    if (seconds == null) return "rgba(var(--v-theme-on-surface), 0.35)";
     const minutes = seconds / 60;
-    if (minutes < 30) return "#2e7d32";
-    if (minutes <= 60) return "#f9a825";
-    return "#c62828";
+    if (minutes < 30) return "rgb(var(--v-theme-success))";
+    if (minutes <= 60) return "rgb(var(--v-theme-warning))";
+    return "rgb(var(--v-theme-error))";
 }
 
 function commuteMapUrl(address: string | null): string | null {
@@ -443,7 +443,7 @@ onBeforeUnmount(() => {
                     </div>
                     <v-slider v-model="priceSlider" :min="PRICE_MIN" :max="PRICE_NO_MAX" :step="PRICE_STEP"
                         :ticks="priceTicks" show-ticks="always" tick-size="3" color="secondary"
-                        track-color="rgba(255,255,255,0.16)" hide-details density="compact" class="filter-slider" />
+                        track-color="rgba(var(--v-theme-on-surface), 0.16)" hide-details density="compact" class="filter-slider" />
                 </section>
 
                 <section class="filter-modal__section">
@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
                     </div>
                     <v-slider v-model="commuteSliderMin" :min="COMMUTE_MIN" :max="COMMUTE_NO_MAX" :step="COMMUTE_STEP"
                         :ticks="commuteTicks" show-ticks="always" tick-size="3" color="secondary"
-                        track-color="rgba(255,255,255,0.16)" hide-details density="compact" class="filter-slider" />
+                        track-color="rgba(var(--v-theme-on-surface), 0.16)" hide-details density="compact" class="filter-slider" />
                 </section>
 
                 <section class="filter-modal__section">
@@ -470,7 +470,7 @@ onBeforeUnmount(() => {
                             @click="setMinInteriorAreaSqft(null)">Clear</button>
                     </div>
                     <v-slider v-model="sqftSlider" :min="SQFT_MIN" :max="SQFT_MAX" :step="SQFT_STEP" :ticks="sqftTicks"
-                        show-ticks="always" tick-size="3" color="secondary" track-color="rgba(255,255,255,0.16)"
+                        show-ticks="always" tick-size="3" color="secondary" track-color="rgba(var(--v-theme-on-surface), 0.16)"
                         hide-details density="compact" class="filter-slider" />
                 </section>
 
@@ -695,15 +695,15 @@ onBeforeUnmount(() => {
 
     <div v-if="!mdAndUp && viewMode === 'map'" class="mobile-legend" aria-label="Transit commute time legend">
         <span class="mobile-legend__item">
-            <span class="mobile-legend__dot" style="background:#2e7d32" />
+            <span class="mobile-legend__dot mobile-legend__dot--fast" />
             &lt; 30
         </span>
         <span class="mobile-legend__item">
-            <span class="mobile-legend__dot" style="background:#f9a825" />
+            <span class="mobile-legend__dot mobile-legend__dot--mid" />
             30–60
         </span>
         <span class="mobile-legend__item">
-            <span class="mobile-legend__dot" style="background:#c62828" />
+            <span class="mobile-legend__dot mobile-legend__dot--slow" />
             &gt; 60 min
         </span>
     </div>
@@ -778,7 +778,7 @@ onBeforeUnmount(() => {
     border-radius: 16px;
     background-color: rgb(var(--v-theme-surface));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 16px 40px rgba(var(--v-theme-shadow), 0.5);
     color: rgba(var(--v-theme-on-surface), 0.92);
     overflow: hidden;
 }
@@ -995,7 +995,7 @@ onBeforeUnmount(() => {
     padding: 0 16px;
     border-radius: 999px;
     background-color: rgb(var(--v-theme-secondary));
-    color: rgba(0, 0, 0, 0.87);
+    color: rgba(var(--v-theme-on-secondary), 0.87);
     border: 0;
     font-size: 0.9375rem;
     font-weight: 600;
@@ -1175,7 +1175,7 @@ onBeforeUnmount(() => {
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 6px 18px rgba(var(--v-theme-shadow), 0.45);
     color: rgba(var(--v-theme-on-surface), 0.92);
     font-size: 0.75rem;
     white-space: nowrap;
@@ -1192,7 +1192,19 @@ onBeforeUnmount(() => {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 1px rgba(var(--v-theme-shadow), 0.3);
+}
+
+.mobile-legend__dot--fast {
+    background-color: rgb(var(--v-theme-success));
+}
+
+.mobile-legend__dot--mid {
+    background-color: rgb(var(--v-theme-warning));
+}
+
+.mobile-legend__dot--slow {
+    background-color: rgb(var(--v-theme-error));
 }
 
 .mobile-view-toggle {
@@ -1209,7 +1221,7 @@ onBeforeUnmount(() => {
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 6px 18px rgba(var(--v-theme-shadow), 0.45);
 }
 
 .mobile-view-toggle__btn {
@@ -1399,7 +1411,7 @@ onBeforeUnmount(() => {
     height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 1px rgba(var(--v-theme-shadow), 0.3);
 }
 
 .listing-card__seen {
