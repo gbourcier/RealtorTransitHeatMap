@@ -10,6 +10,9 @@ type Listing struct {
 	Address                string
 	IsAvailable            bool           `gorm:"column:is_available"`
 	Slug                   string         `gorm:"column:slug"`
+	BedroomCount           int            `gorm:"column:bedroom_count"`
+	BathroomCount          int            `gorm:"column:bathroom_count"`
+	InteriorAreaSqft       float64        `gorm:"column:interior_area_sqft"`
 	CommuteSecondsDowntown *int           `gorm:"column:commute_seconds_downtown"`
 	CommuteComputedAt      *time.Time     `gorm:"column:commute_computed_at"`
 	FirstSeenAt            time.Time      `gorm:"column:first_seen_at"`
@@ -43,10 +46,13 @@ type Sort struct {
 }
 
 type Where struct {
-	ShowUnavailable bool
-	MaxPrice        *float64
-	MaxCommuteSec   *int
-	NewSince        *time.Time
+	ShowUnavailable    bool
+	MaxPrice           *float64
+	MaxCommuteSec      *int
+	NewSince           *time.Time
+	MinBedrooms        *int
+	MinBathrooms       *int
+	MinInteriorAreaSqft *float64
 }
 
 type ListingRow struct {
@@ -61,6 +67,9 @@ type MapPinRow struct {
 	Longitude              float64   `gorm:"column:longitude"`
 	Address                string    `gorm:"column:address"`
 	Slug                   string    `gorm:"column:slug"`
+	BedroomCount           int       `gorm:"column:bedroom_count"`
+	BathroomCount          int       `gorm:"column:bathroom_count"`
+	InteriorAreaSqft       float64   `gorm:"column:interior_area_sqft"`
 	CommuteSecondsDowntown *int      `gorm:"column:commute_seconds_downtown"`
 	FirstSeenAt            time.Time `gorm:"column:first_seen_at"`
 	CurrentPrice           *float64  `gorm:"column:current_price"`

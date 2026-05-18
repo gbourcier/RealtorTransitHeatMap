@@ -63,6 +63,11 @@ func TestDecodeObservations(t *testing.T) {
 						Longitude:   "-73.5",
 					},
 				},
+				Building: building{
+					BathroomTotal: "2",
+					Bedrooms:      "3",
+					SizeInterior:  "1115.14 sqft",
+				},
 				Individual: []individual{{Organization: organization{OrganizationId: 7}}},
 			}},
 			want: 1,
@@ -87,5 +92,47 @@ func TestDecodeObservations(t *testing.T) {
 				t.Fatalf("len = %d, want %d", len(got), tt.want)
 			}
 		})
+	}
+}
+
+func TestParseSqft(t *testing.T) {
+	cases := map[string]float64{
+		"":              0,
+		"1115.14 sqft":  1115.14,
+		"827 sqft":      827,
+		"  500 sqft  ":  500,
+		"not-a-number":  0,
+	}
+	for in, want := range cases {
+		got := parseSqft(in)
+		if got != want {
+			t.Errorf("parseSqft(%q) = %v, want %v", in, got, want)
+		}
+	}
+}
+
+func TestDecodeObservationsBuildingFields(t *testing.T) {
+	results := []listingResult{{
+		MlsNumber: 1,
+		Individual: []individual{{Organization: organization{OrganizationId: 1}}},
+		Building: building{
+			BathroomTotal: "2",
+			Bedrooms:      "3",
+			SizeInterior:  "1115.14 sqft",
+		},
+	}}
+	got := decodeObservations(results)
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+	l := got[0].Listing
+	if l.BedroomCount != 3 {
+		t.Errorf("BedroomCount = %d, want 3", l.BedroomCount)
+	}
+	if l.BathroomCount != 2 {
+		t.Errorf("BathroomCount = %d, want 2", l.BathroomCount)
+	}
+	if l.InteriorAreaSqft != 1115.14 {
+		t.Errorf("InteriorAreaSqft = %v, want 1115.14", l.InteriorAreaSqft)
 	}
 }
