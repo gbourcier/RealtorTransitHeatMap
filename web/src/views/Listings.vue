@@ -506,7 +506,7 @@ onBeforeUnmount(() => {
         </div>
 
     <v-container v-if="!mdAndUp && viewMode === 'list'" fluid class="pa-2 pa-sm-6 listings-container">
-        <v-card>
+        <v-card color="transparent" flat>
             <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{
                 error
             }}</v-alert>
