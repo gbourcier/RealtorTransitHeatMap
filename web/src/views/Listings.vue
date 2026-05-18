@@ -662,11 +662,30 @@ onBeforeUnmount(() => {
         </v-card>
     </v-container>
 
-    <v-btn v-if="!mdAndUp" class="view-switch-pill text-none" color="secondary" variant="flat" rounded="pill"
-        size="large" elevation="8" @click="toggleViewMode">
-        <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
-        {{ viewMode === "list" ? "Show map" : "Show list" }}
-    </v-btn>
+    <div v-if="!mdAndUp" class="mobile-bottom-card">
+        <div v-if="viewMode === 'map'" class="mobile-bottom-card__legend" aria-label="Transit commute time legend">
+            <div class="mobile-bottom-card__legend-title">Commute to Downtown</div>
+            <div class="mobile-bottom-card__legend-rows">
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#2e7d32" />
+                    &lt; 30 min
+                </span>
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#f9a825" />
+                    30–60 min
+                </span>
+                <span class="mobile-bottom-card__legend-row">
+                    <span class="mobile-bottom-card__swatch" style="background:#c62828" />
+                    &gt; 60 min
+                </span>
+            </div>
+        </div>
+        <v-btn class="mobile-bottom-card__btn text-none" variant="tonal" rounded="lg" size="large" block
+            @click="toggleViewMode">
+            <v-icon start>{{ viewMode === "list" ? "mdi-map" : "mdi-format-list-bulleted" }}</v-icon>
+            {{ viewMode === "list" ? "Show map" : "Show list" }}
+        </v-btn>
+    </div>
 </template>
 
 <style scoped>
@@ -801,15 +820,62 @@ onBeforeUnmount(() => {
     font-weight: 500;
 }
 
-.view-switch-pill {
+.mobile-bottom-card {
     position: fixed;
-    left: calc(50% + (var(--v-layout-left, 0px) - var(--v-layout-right, 0px)) / 2);
-    bottom: calc(36px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
+    left: 12px;
+    right: 12px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background-color: rgba(20, 22, 28, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.mobile-bottom-card__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.mobile-bottom-card__legend-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.mobile-bottom-card__legend-rows {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-bottom-card__legend-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mobile-bottom-card__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-bottom-card__btn {
     letter-spacing: normal;
     font-weight: 600;
-    padding-inline: 22px;
 }
 
 .sortable-col {

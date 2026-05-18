@@ -489,6 +489,12 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     border-radius: 50%;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
+
+@media (max-width: 959.98px) {
+    .listings-map-legend {
+        display: none;
+    }
+}
 </style>
 
 <style>
