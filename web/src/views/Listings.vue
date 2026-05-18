@@ -152,6 +152,28 @@ function sortIcon(col: SortBy): string {
     return sortDir.value === "asc" ? "mdi-arrow-up" : "mdi-arrow-down";
 }
 
+const sortOptions: { value: SortBy; label: string }[] = [
+    { value: "first_seen_at", label: "Newest" },
+    { value: "price", label: "Price" },
+    { value: "commute_time", label: "Commute" },
+];
+
+const currentSortLabel = computed(
+    () => sortOptions.find((o) => o.value === sortBy.value)?.label ?? "Sort",
+);
+
+function setSort(col: SortBy, dir: SortDir) {
+    if (sortBy.value === col && sortDir.value === dir) return;
+    sortBy.value = col;
+    sortDir.value = dir;
+    loadInitial();
+}
+
+function toggleSortDir() {
+    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+    loadInitial();
+}
+
 function formatPrice(price: number | null): string {
     if (price == null) return "—";
     return new Intl.NumberFormat("en-CA", {
@@ -402,7 +424,34 @@ onBeforeUnmount(() => {
                         <v-progress-circular indeterminate />
                     </div>
 
-                    <div v-else-if="items.length > 0" class="listing-cards listing-cards--panel">
+                    <template v-else-if="items.length > 0">
+                    <div class="listings-sort">
+                        <span class="listings-sort__count">
+                            {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
+                        </span>
+                        <v-menu location="bottom end" offset="4">
+                            <template #activator="{ props }">
+                                <v-btn v-bind="props" variant="text" size="small" density="comfortable"
+                                    class="listings-sort__btn text-none" append-icon="mdi-menu-down">
+                                    <v-icon size="small" start>{{
+                                        sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
+                                    }}</v-icon>
+                                    {{ currentSortLabel }}
+                                </v-btn>
+                            </template>
+                            <v-list density="compact" min-width="180">
+                                <v-list-item v-for="opt in sortOptions" :key="opt.value"
+                                    :active="sortBy === opt.value" :title="opt.label"
+                                    @click="setSort(opt.value, 'desc')" />
+                                <v-divider />
+                                <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
+                                    :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
+                                    @click="toggleSortDir" />
+                            </v-list>
+                        </v-menu>
+                    </div>
+
+                    <div class="listing-cards listing-cards--panel">
                         <div v-for="item in items" :key="`p-${item.board}-${item.mls}`" role="button" tabindex="0"
                             class="listing-card listing-card--interactive"
                             :class="{ 'listing-card--selected': selectedKey === listingKey(item) }"
@@ -443,6 +492,7 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                     </div>
+                    </template>
 
                     <div v-else class="text-medium-emphasis text-center py-8">
                         No listings found.
@@ -537,6 +587,32 @@ onBeforeUnmount(() => {
                         </tr>
                     </tbody>
                 </v-table>
+
+                <div class="listings-sort listings-sort--mobile d-md-none">
+                    <span class="listings-sort__count">
+                        {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
+                    </span>
+                    <v-menu location="bottom end" offset="4">
+                        <template #activator="{ props }">
+                            <v-btn v-bind="props" variant="text" size="small" density="comfortable"
+                                class="listings-sort__btn text-none" append-icon="mdi-menu-down">
+                                <v-icon size="small" start>{{
+                                    sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down"
+                                }}</v-icon>
+                                {{ currentSortLabel }}
+                            </v-btn>
+                        </template>
+                        <v-list density="compact" min-width="180">
+                            <v-list-item v-for="opt in sortOptions" :key="opt.value"
+                                :active="sortBy === opt.value" :title="opt.label"
+                                @click="setSort(opt.value, 'desc')" />
+                            <v-divider />
+                            <v-list-item :title="sortDir === 'asc' ? 'Descending' : 'Ascending'"
+                                :prepend-icon="sortDir === 'asc' ? 'mdi-arrow-down' : 'mdi-arrow-up'"
+                                @click="toggleSortDir" />
+                        </v-list>
+                    </v-menu>
+                </div>
 
                 <div class="d-md-none listing-cards listing-cards--mobile">
                     <div v-for="item in items" :key="`m-${item.board}-${item.mls}`" role="link" tabindex="0"
@@ -700,6 +776,31 @@ onBeforeUnmount(() => {
     padding: 10px;
 }
 
+.listings-sort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px 6px 14px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.listings-sort--mobile {
+    padding: 6px 10px 6px 14px;
+    border-bottom: 0;
+}
+
+.listings-sort__count {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.75);
+}
+
+.listings-sort__btn {
+    letter-spacing: normal;
+    font-weight: 500;
+}
+
 .view-switch-pill {
     position: fixed;
     left: calc(50% + (var(--v-layout-left, 0px) - var(--v-layout-right, 0px)) / 2);
@@ -794,11 +895,12 @@ onBeforeUnmount(() => {
 .listing-cards {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
+    gap: 12px;
+    padding: 10px;
 }
 
 .listing-card {
+    position: relative;
     display: block;
     text-decoration: none;
     color: inherit;
@@ -836,6 +938,7 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
+    padding-right: 56px;
 }
 
 .listing-card__price {
@@ -845,7 +948,10 @@ onBeforeUnmount(() => {
 }
 
 .listing-card__new {
-    margin-left: auto;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    margin-left: 0;
 }
 
 .listing-card__street {
@@ -864,7 +970,9 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
     font-size: 0.8125rem;
 }
 
@@ -912,6 +1020,8 @@ onBeforeUnmount(() => {
 }
 
 .listing-card__seen {
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    margin-left: auto;
+    color: rgba(var(--v-theme-on-surface), 0.45);
+    font-size: 0.75rem;
 }
 </style>
