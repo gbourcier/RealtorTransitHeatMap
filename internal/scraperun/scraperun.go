@@ -28,7 +28,7 @@ type ScrapeRun struct {
 	CompletedAt  *time.Time `gorm:"column:completed_at"`
 	TotalCount   *int       `gorm:"column:total_count"`
 	NewCount     *int       `gorm:"column:new_count"`
-	staleCount   *int       `gorm:"column:stale_count"`
+	StaleCount   *int       `gorm:"column:stale_count"`
 	ErrorKind    *string    `gorm:"column:error_kind"`
 	ErrorMessage *string    `gorm:"column:error_message"`
 	// ScheduleID is nil for manual triggers
