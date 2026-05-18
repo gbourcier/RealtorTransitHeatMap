@@ -23,6 +23,7 @@ type ScrapeRunResponse struct {
 	CompletedAt  *int64  `json:"completedAt,omitempty"`
 	TotalCount   *int    `json:"totalCount,omitempty"`
 	NewCount     *int    `json:"newCount,omitempty"`
+	StaleCount   *int    `json:"staleCount,omitempty"`
 	ErrorKind    string  `json:"errorKind,omitempty"`
 	ErrorMessage string  `json:"errorMessage,omitempty"`
 	ScheduleID   *string `json:"scheduleId,omitempty"`
@@ -130,6 +131,7 @@ func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 		StartedAt:  r.StartedAt.Unix(),
 		TotalCount: r.TotalCount,
 		NewCount:   r.NewCount,
+		StaleCount: r.StaleCount,
 	}
 	if r.CompletedAt != nil {
 		t := r.CompletedAt.Unix()
