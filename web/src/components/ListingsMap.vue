@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { latLngToCell, cellToBoundary } from "h3-js";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
 import { listTransitStops } from "../api/transit";
 
@@ -22,7 +23,8 @@ const emit = defineEmits<{
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
 const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
-const stopsLayer = shallowRef<L.LayerGroup | null>(null);
+const hexLayer = shallowRef<L.LayerGroup | null>(null);
+const HEX_RESOLUTION = 8;
 const loading = ref(false);
 const error = ref<string | null>(null);
 let hasFitBounds = false;
@@ -34,6 +36,7 @@ function listingKey(board: number, mls: number): string {
 }
 
 const MONTREAL_CENTER: L.LatLngTuple = [45.5048, -73.5772];
+const MCGILL_STATION: L.LatLngTuple = [45.5045, -73.5746];
 
 function formatCompactPrice(price: number | null): string {
     if (price == null) return "—";
@@ -229,50 +232,52 @@ async function load() {
     }
 }
 
-function stopColor(commuteSec: number): string {
+function gradientColor(commuteSec: number): string {
     const minutes = commuteSec / 60;
-    if (minutes < 30) return "#2e7d32";
-    if (minutes <= 60) return "#f9a825";
-    return "#c62828";
+    const t = Math.max(0, Math.min(1, minutes / 90));
+    const hue = 120 * (1 - t);
+    return `hsl(${hue.toFixed(0)}, 70%, 45%)`;
 }
 
-function radiusForZoom(zoom: number): number {
-    if (zoom <= 9) return 1.5;
-    if (zoom >= 15) return 7;
-    return 1.5 + (zoom - 9) * 0.9;
+function medianOf(nums: number[]): number {
+    const sorted = [...nums].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
 }
 
-const stopCircles: L.CircleMarker[] = [];
-
-function applyStopRadius() {
-    if (!map.value) return;
-    const r = radiusForZoom(map.value.getZoom());
-    for (const c of stopCircles) c.setRadius(r);
+function buildHexLayer(stops: { latitude: number; longitude: number; commuteSec: number }[]): L.LayerGroup {
+    const byCell = new Map<string, number[]>();
+    for (const s of stops) {
+        const cell = latLngToCell(s.latitude, s.longitude, HEX_RESOLUTION);
+        const arr = byCell.get(cell);
+        if (arr) arr.push(s.commuteSec);
+        else byCell.set(cell, [s.commuteSec]);
+    }
+    const layer = L.layerGroup();
+    for (const [cell, commutes] of byCell) {
+        const med = medianOf(commutes);
+        const boundary = cellToBoundary(cell, false) as [number, number][];
+        const poly = L.polygon(boundary, {
+            pane: "hexPane",
+            color: gradientColor(med),
+            weight: 0,
+            fillColor: gradientColor(med),
+            fillOpacity: 0.15,
+            interactive: false,
+        });
+        layer.addLayer(poly);
+    }
+    return layer;
 }
 
 async function loadStops() {
     if (!map.value) return;
     try {
         const stops = await listTransitStops();
-        const renderer = L.canvas({ padding: 0.5 });
-        const layer = L.layerGroup();
-        const r = radiusForZoom(map.value.getZoom());
-        stopCircles.length = 0;
-        for (const s of stops) {
-            const circle = L.circleMarker([s.latitude, s.longitude], {
-                renderer,
-                radius: r,
-                stroke: false,
-                fillColor: stopColor(s.commuteSec),
-                fillOpacity: 0.6,
-                interactive: false,
-            });
-            layer.addLayer(circle);
-            stopCircles.push(circle);
-        }
-        stopsLayer.value = layer;
-        layer.addTo(map.value);
-        map.value.on("zoomend", applyStopRadius);
+        hexLayer.value = buildHexLayer(stops);
+        hexLayer.value.addTo(map.value);
     } catch (e) {
         console.warn("failed to load transit stops layer", e);
     }
@@ -285,6 +290,12 @@ onMounted(() => {
         zoom: 11,
         zoomControl: false,
     });
+    map.value.createPane("hexPane");
+    const hexPane = map.value.getPane("hexPane");
+    if (hexPane) {
+        hexPane.style.zIndex = "350";
+        hexPane.style.pointerEvents = "none";
+    }
     L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
@@ -303,6 +314,24 @@ onMounted(() => {
     });
     loadStops();
     map.value.addLayer(cluster.value);
+    L.marker(MCGILL_STATION, {
+        icon: L.divIcon({
+            className: "downtown-target",
+            html: `<span class="downtown-target__star" aria-hidden="true">★</span>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+        }),
+        interactive: true,
+        keyboard: false,
+        zIndexOffset: -500,
+    })
+        .bindTooltip("McGill Station", {
+            direction: "top",
+            offset: [0, -8],
+            className: "downtown-target__tooltip",
+            opacity: 1,
+        })
+        .addTo(map.value);
     load();
 
     resizeObserver = new ResizeObserver(() => {
@@ -317,12 +346,10 @@ onBeforeUnmount(() => {
         resizeObserver = null;
     }
     if (map.value) {
-        map.value.off("zoomend", applyStopRadius);
         map.value.remove();
         map.value = null;
         cluster.value = null;
-        stopsLayer.value = null;
-        stopCircles.length = 0;
+        hexLayer.value = null;
         markersByKey.clear();
     }
 });
@@ -469,6 +496,53 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     background: transparent;
     border: 0;
     --pin-ring: rgba(255, 255, 255, 0.18);
+}
+
+.downtown-target {
+    background: transparent;
+    border: 0;
+    pointer-events: auto;
+}
+
+.downtown-target__star {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 18px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow:
+        0 0 4px rgba(0, 0, 0, 0.85),
+        0 0 8px rgba(0, 0, 0, 0.6),
+        0 1px 1px rgba(0, 0, 0, 0.9);
+    cursor: help;
+    transition: transform 120ms ease, color 120ms ease;
+}
+
+.downtown-target:hover .downtown-target__star {
+    color: #ffd54f;
+    transform: scale(1.15);
+}
+
+.leaflet-tooltip.downtown-target__tooltip {
+    background: rgba(20, 22, 28, 0.82);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+}
+
+.leaflet-tooltip.downtown-target__tooltip::before {
+    border-top-color: rgba(20, 22, 28, 0.82);
 }
 
 .price-pin--fast {
