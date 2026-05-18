@@ -511,6 +511,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 </style>
 
 <style>
+.leaflet-container {
+    background: #131516;
+}
+
 .price-pin {
     background: transparent;
     border: 0;
