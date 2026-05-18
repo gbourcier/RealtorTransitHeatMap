@@ -54,7 +54,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 			Omit(clause.Associations, "FirstSeenAt").
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
-				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "status", "slug"}),
+				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "is_available", "slug"}),
 			}).
 			CreateInBatches(listings, 200).Error; err != nil {
 			return err
@@ -69,8 +69,6 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 	return inserted, nil
 }
 
-const statusAvailable = "1"
-
 func (r *Repository) ListListings(ctx context.Context, where Where, page Page, sort Sort) ([]ListingRow, int64, error) {
 	latestPrice := r.db.Model(&PriceHistory{}).
 		Select("DISTINCT ON (board, mls) board, mls, price").
@@ -84,7 +82,7 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice)
 
 	if !where.ShowUnavailable {
-		q = q.Where("listings.status = ?", statusAvailable)
+		q = q.Where("listings.is_available = ?", true)
 	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
@@ -125,7 +123,7 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 		Where("listings.latitude <> 0 AND listings.longitude <> 0")
 
 	if !where.ShowUnavailable {
-		q = q.Where("listings.status = ?", statusAvailable)
+		q = q.Where("listings.is_available = ?", true)
 	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
@@ -147,7 +145,7 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 func (r *Repository) ListPendingCommute(ctx context.Context, refresh bool) ([]PendingCommute, error) {
 	q := r.db.WithContext(ctx).Model(&Listing{}).
 		Select("board, mls, latitude, longitude").
-		Where("status = ?", statusAvailable)
+		Where("is_available = ?", true)
 	if !refresh {
 		q = q.Where("commute_seconds_downtown IS NULL")
 	}
@@ -204,7 +202,7 @@ func (r *Repository) GetListing(ctx context.Context, board, mls int) (*Listing, 
 	return &l, err
 }
 
-func (r *Repository) DeactivateStaleListing(ctx context.Context, threshold time.Time) (int, error) {
-	result := r.db.WithContext(ctx).Model(&Listing{}).Where("status = ? AND last_updated_at < ?", "1", threshold).Update("status", "0")
+func (r *Repository) InvalidateIfStale(ctx context.Context, threshold time.Time) (int, error) {
+	result := r.db.WithContext(ctx).Model(&Listing{}).Where("is_available = ? AND last_updated_at < ?", true, threshold).Update("is_available", false)
 	return int(result.RowsAffected), result.Error
 }

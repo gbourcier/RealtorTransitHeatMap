@@ -195,8 +195,8 @@ type ListingDetailResponse struct {
 	PriceHistories []PriceHistoryResponse `json:"priceHistories"`
 }
 
-func mapStatus(raw string) string {
-	if raw == "1" {
+func mapStatus(active bool) string {
+	if active {
 		return "available"
 	}
 	return "unavailable"
@@ -238,7 +238,7 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 			FirstSeenAt:            l.FirstSeenAt.Unix(),
 			Slug:                   "https://www.realtor.ca" + l.Slug,
 		},
-		Status:         mapStatus(l.Status),
+		Status:         mapStatus(l.IsAvailable),
 		PriceHistories: histories,
 	}
 }
