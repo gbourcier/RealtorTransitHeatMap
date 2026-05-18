@@ -211,7 +211,7 @@ func decodeObservations(results []listingResult) []listing.Observation {
 				Latitude:  lat,
 				Longitude: lon,
 				Address:   r.Property.Address.AddressText,
-				Status:    r.StatusId,
+				IsAvailable: r.StatusId == "1",
 				Slug:      r.RelativeDetailsURL,
 			},
 			Price: price,

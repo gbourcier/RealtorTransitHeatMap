@@ -8,7 +8,7 @@ type Listing struct {
 	Latitude               float64
 	Longitude              float64
 	Address                string
-	Status                 string
+	IsAvailable            bool           `gorm:"column:is_available"`
 	Slug                   string         `gorm:"column:slug"`
 	CommuteSecondsDowntown *int           `gorm:"column:commute_seconds_downtown"`
 	CommuteComputedAt      *time.Time     `gorm:"column:commute_computed_at"`
