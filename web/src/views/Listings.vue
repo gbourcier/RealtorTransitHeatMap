@@ -321,8 +321,10 @@ onBeforeUnmount(() => {
     <Teleport :to="filterTarget" :disabled="!teleportReady">
         <v-menu :close-on-content-click="false" location="bottom start" offset="6">
             <template #activator="{ props }">
-                <v-btn v-bind="props" rounded="pill" variant="tonal" prepend-icon="mdi-tune-variant"
-                    class="filter-btn text-none" size="small">
+                <v-btn v-bind="props" rounded="pill" variant="outlined"
+                    :color="activeFilterCount > 0 ? 'secondary' : undefined"
+                    prepend-icon="mdi-filter-variant" class="filter-btn text-none"
+                    :class="{ 'filter-btn--active': activeFilterCount > 0 }" size="small">
                     Filters
                     <v-badge v-if="activeFilterCount > 0" inline color="secondary" :content="activeFilterCount"
                         class="filter-btn__badge" />
@@ -591,6 +593,19 @@ onBeforeUnmount(() => {
 .filter-btn {
     letter-spacing: normal;
     font-weight: 500;
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.85);
+    border-color: rgba(var(--v-theme-on-surface), 0.18);
+    padding-inline: 12px;
+    height: 30px;
+}
+
+.filter-btn--active {
+    border-color: rgba(var(--v-theme-secondary), 0.55);
+}
+
+.filter-btn :deep(.v-btn__prepend) {
+    margin-inline-end: 6px;
 }
 
 .filter-btn__badge {
@@ -692,21 +707,21 @@ onBeforeUnmount(() => {
 }
 
 .list-toolbar__count-num {
-    font-size: 1.5rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     letter-spacing: -0.01em;
 }
 
 .list-toolbar__count-label {
-    font-size: 0.75rem;
+    font-size: 0.625rem;
     color: rgba(var(--v-theme-on-surface), 0.55);
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .list-toolbar__actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .list-toolbar__filters:empty {
@@ -716,6 +731,16 @@ onBeforeUnmount(() => {
 .list-toolbar__sort {
     letter-spacing: normal;
     font-weight: 500;
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.85);
+    border-color: rgba(var(--v-theme-on-surface), 0.18);
+    padding-inline: 12px;
+    height: 30px;
+}
+
+.list-toolbar__sort :deep(.v-btn__append) {
+    margin-inline-start: 4px;
+    opacity: 0.7;
 }
 
 .mobile-bottom-card {
