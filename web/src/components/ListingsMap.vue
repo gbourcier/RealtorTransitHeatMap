@@ -52,6 +52,34 @@ function commuteTier(seconds: number | null): "fast" | "mid" | "slow" | "unknown
     return "slow";
 }
 
+type MarkerData = { price: number | null; commuteSec: number | null };
+
+function median(nums: number[]): number | null {
+    if (nums.length === 0) return null;
+    const sorted = [...nums].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
+}
+
+function clusterIcon(c: L.MarkerCluster): L.DivIcon {
+    const commutes: number[] = [];
+    for (const m of c.getAllChildMarkers()) {
+        const d = (m as L.Marker & { _data?: MarkerData })._data;
+        if (d?.commuteSec != null) commutes.push(d.commuteSec);
+    }
+    const medCommute = median(commutes);
+    const tier = commuteTier(medCommute);
+    const count = c.getChildCount();
+    const sizeClass = count >= 100 ? "lg" : count >= 10 ? "md" : "sm";
+    return L.divIcon({
+        className: `price-cluster price-cluster--${tier} price-cluster--${sizeClass}`,
+        html: `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span></div>`,
+        iconSize: L.point(40, 40),
+    });
+}
+
 function pricePillIcon(
     price: number | null,
     commuteSec: number | null,
@@ -172,7 +200,11 @@ async function load() {
             const m = L.marker([pin.latitude, pin.longitude], {
                 icon: pricePillIcon(pin.currentPrice, pin.commuteSecondsDowntown),
                 riseOnHover: true,
-            });
+            }) as L.Marker & { _data?: MarkerData };
+            m._data = {
+                price: pin.currentPrice,
+                commuteSec: pin.commuteSecondsDowntown,
+            };
             m.bindPopup(popupHtml(pin));
             m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
             markers.push(m);
@@ -267,6 +299,7 @@ onMounted(() => {
         spiderfyOnMaxZoom: true,
         maxClusterRadius: 50,
         disableClusteringAtZoom: 14,
+        iconCreateFunction: clusterIcon,
     });
     loadStops();
     map.value.addLayer(cluster.value);
@@ -390,7 +423,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .listings-map-legend {
     position: absolute;
     bottom: 24px;
-    left: 12px;
+    right: 12px;
     z-index: 500;
     display: flex;
     flex-direction: column;
@@ -435,66 +468,64 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .price-pin {
     background: transparent;
     border: 0;
-    --pin-bg: rgb(var(--v-theme-secondary));
-    --pin-fg: rgb(var(--v-theme-on-secondary));
+    --pin-ring: rgba(255, 255, 255, 0.18);
 }
 
 .price-pin--fast {
-    --pin-bg: #2e7d32;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(76, 175, 80, 0.9);
 }
 
 .price-pin--mid {
-    --pin-bg: #f9a825;
-    --pin-fg: #1a1a1a;
+    --pin-ring: rgba(255, 179, 0, 0.9);
 }
 
 .price-pin--slow {
-    --pin-bg: #c62828;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(239, 83, 80, 0.9);
 }
 
 .price-pin--unknown {
-    --pin-bg: #555;
-    --pin-fg: #ffffff;
+    --pin-ring: rgba(255, 255, 255, 0.22);
 }
 
 .price-pin__label {
+    position: relative;
     display: inline-block;
-    transform: translate(-50%, -100%);
-    padding: 4px 9px;
+    transform: translate(-50%, -50%);
+    padding: 4px 11px;
     border-radius: 999px;
-    background-color: var(--pin-bg);
-    color: var(--pin-fg);
+    background: linear-gradient(180deg, rgba(34, 36, 44, 0.88) 0%, rgba(18, 20, 26, 0.88) 100%);
+    color: #fff;
     font-size: 12px;
-    font-weight: 600;
-    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.15;
     white-space: nowrap;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.45),
-        0 0 0 1px rgba(0, 0, 0, 0.25);
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     cursor: pointer;
-    transition: transform 100ms ease, box-shadow 100ms ease;
+    transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.price-pin__label::after {
+.price-pin__label::before {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: -4px;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--pin-bg);
+    inset: -2px;
+    border-radius: 999px;
+    border: 1.5px solid var(--pin-ring);
+    pointer-events: none;
 }
 
 .price-pin:hover .price-pin__label {
-    transform: translate(-50%, -100%) scale(1.06);
+    transform: translate(-50%, -50%) scale(1.08);
     box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.55),
-        0 0 0 1px rgba(0, 0, 0, 0.35);
+        0 6px 14px rgba(0, 0, 0, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     z-index: 1000;
 }
 
@@ -503,18 +534,106 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-pin.price-pin--highlighted .price-pin__label {
-    transform: translate(-50%, -100%) scale(1.18);
+    transform: translate(-50%, -50%) scale(1.18);
+}
+
+.price-pin.price-pin--highlighted .price-pin__label::before {
+    border-color: rgb(var(--v-theme-secondary));
+    border-width: 2px;
+    inset: -3px;
+}
+
+.price-cluster {
+    background: transparent;
+    border: 0;
+    --cluster-ring: rgba(255, 255, 255, 0.18);
+}
+
+.price-cluster--fast {
+    --cluster-ring: rgba(76, 175, 80, 0.85);
+}
+
+.price-cluster--mid {
+    --cluster-ring: rgba(255, 179, 0, 0.85);
+}
+
+.price-cluster--slow {
+    --cluster-ring: rgba(239, 83, 80, 0.85);
+}
+
+.price-cluster--unknown {
+    --cluster-ring: rgba(255, 255, 255, 0.25);
+}
+
+.price-cluster__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: rgba(20, 22, 28, 0.82);
+    color: #fff;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-shadow:
-        0 0 0 2px rgb(var(--v-theme-secondary)),
-        0 6px 14px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(0, 0, 0, 0.35);
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.price-cluster__inner::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid var(--cluster-ring);
+    pointer-events: none;
+}
+
+.price-cluster--md .price-cluster__inner {
+    width: 42px;
+    height: 42px;
+}
+
+.price-cluster--lg .price-cluster__inner {
+    width: 52px;
+    height: 52px;
+}
+
+.price-cluster:hover .price-cluster__inner {
+    transform: scale(1.06);
+    box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.price-cluster__count {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.96);
+}
+
+.price-cluster--md .price-cluster__count {
+    font-size: 13px;
+}
+
+.price-cluster--lg .price-cluster__count {
+    font-size: 15px;
 }
 
 .marker-cluster.price-pin--highlighted {
     z-index: 1001 !important;
 }
 
-.marker-cluster.price-pin--highlighted>div {
+.marker-cluster.price-pin--highlighted>div,
+.price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
         0 0 0 3px rgb(var(--v-theme-secondary)),
         0 6px 14px rgba(0, 0, 0, 0.6);
