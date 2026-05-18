@@ -855,6 +855,8 @@ onBeforeUnmount(() => {
 }
 
 .listings-mobile {
+    height: calc(100dvh - 56px);
+    overflow-y: auto;
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
