@@ -8,6 +8,9 @@ export interface Listing {
   commuteSecondsDowntown: number | null;
   firstSeenAt: number;
   slug: string;
+  bedroomCount: number;
+  bathroomCount: number;
+  interiorAreaSqft: number;
 }
 
 export interface PriceHistory {
@@ -31,6 +34,9 @@ export interface ListListingsParams {
   maxPrice?: number;
   maxCommuteSec?: number;
   newWithinDays?: number;
+  minBedrooms?: number;
+  minBathrooms?: number;
+  minInteriorAreaSqft?: number;
 }
 
 export interface ListingMapPin {
@@ -43,12 +49,18 @@ export interface ListingMapPin {
   commuteSecondsDowntown: number | null;
   firstSeenAt: number;
   slug: string;
+  bedroomCount: number;
+  bathroomCount: number;
+  interiorAreaSqft: number;
 }
 
 export interface MapFilterParams {
   maxPrice?: number;
   maxCommuteSec?: number;
   newWithinDays?: number;
+  minBedrooms?: number;
+  minBathrooms?: number;
+  minInteriorAreaSqft?: number;
 }
 
 export async function listListings(

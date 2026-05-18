@@ -204,18 +204,33 @@ func decodeObservations(results []listingResult) []listing.Observation {
 		lat, _ := strconv.ParseFloat(r.Property.Address.Latitude, 64)
 		lon, _ := strconv.ParseFloat(r.Property.Address.Longitude, 64)
 		price, _ := strconv.ParseFloat(r.Property.PriceUnformattedValue, 64)
+		bedrooms, _ := strconv.Atoi(strings.TrimSpace(r.Building.Bedrooms))
+		bathrooms, _ := strconv.Atoi(strings.TrimSpace(r.Building.BathroomTotal))
 		out = append(out, listing.Observation{
 			Listing: listing.Listing{
-				Board:     r.Individual[0].Organization.OrganizationId,
-				MLS:       r.MlsNumber,
-				Latitude:  lat,
-				Longitude: lon,
-				Address:   r.Property.Address.AddressText,
-				IsAvailable: r.StatusId == "1",
-				Slug:      r.RelativeDetailsURL,
+				Board:            r.Individual[0].Organization.OrganizationId,
+				MLS:              r.MlsNumber,
+				Latitude:         lat,
+				Longitude:        lon,
+				Address:          r.Property.Address.AddressText,
+				IsAvailable:      r.StatusId == "1",
+				Slug:             r.RelativeDetailsURL,
+				BedroomCount:     bedrooms,
+				BathroomCount:    bathrooms,
+				InteriorAreaSqft: parseSqft(r.Building.SizeInterior),
 			},
 			Price: price,
 		})
 	}
 	return out
+}
+
+func parseSqft(raw string) float64 {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return 0
+	}
+	s = strings.TrimSuffix(s, " sqft")
+	v, _ := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	return v
 }

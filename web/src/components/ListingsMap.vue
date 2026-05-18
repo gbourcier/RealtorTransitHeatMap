@@ -13,6 +13,9 @@ const props = defineProps<{
     maxPrice: number | null;
     maxCommuteSec: number | null;
     newWithinDays: number | null;
+    minBedrooms: number | null;
+    minBathrooms: number | null;
+    minInteriorAreaSqft: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -202,6 +205,11 @@ async function load() {
             ...(props.newWithinDays != null && {
                 newWithinDays: props.newWithinDays,
             }),
+            ...(props.minBedrooms != null && { minBedrooms: props.minBedrooms }),
+            ...(props.minBathrooms != null && { minBathrooms: props.minBathrooms }),
+            ...(props.minInteriorAreaSqft != null && {
+                minInteriorAreaSqft: props.minInteriorAreaSqft,
+            }),
         });
         clearHighlight();
         cluster.value.clearLayers();
@@ -372,7 +380,14 @@ onBeforeUnmount(() => {
 });
 
 watch(
-    () => [props.maxPrice, props.maxCommuteSec, props.newWithinDays],
+    () => [
+        props.maxPrice,
+        props.maxCommuteSec,
+        props.newWithinDays,
+        props.minBedrooms,
+        props.minBathrooms,
+        props.minInteriorAreaSqft,
+    ],
     () => load(),
 );
 
@@ -466,7 +481,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 .listings-map-legend {
     position: absolute;
-    bottom: 24px;
+    bottom: 12px;
     right: 12px;
     z-index: 500;
     display: flex;

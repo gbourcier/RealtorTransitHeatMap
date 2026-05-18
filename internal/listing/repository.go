@@ -54,7 +54,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 			Omit(clause.Associations, "FirstSeenAt").
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
-				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "is_available", "slug"}),
+				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "is_available", "slug", "bedroom_count", "bathroom_count", "interior_area_sqft"}),
 			}).
 			CreateInBatches(listings, 200).Error; err != nil {
 			return err
@@ -93,6 +93,15 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	if where.NewSince != nil {
 		q = q.Where("listings.first_seen_at >= ?", *where.NewSince)
 	}
+	if where.MinBedrooms != nil {
+		q = q.Where("listings.bedroom_count >= ?", *where.MinBedrooms)
+	}
+	if where.MinBathrooms != nil {
+		q = q.Where("listings.bathroom_count >= ?", *where.MinBathrooms)
+	}
+	if where.MinInteriorAreaSqft != nil {
+		q = q.Where("listings.interior_area_sqft >= ?", *where.MinInteriorAreaSqft)
+	}
 
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -118,7 +127,7 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 		Order("board, mls, observed_at DESC")
 
 	q := r.db.WithContext(ctx).Model(&Listing{}).
-		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.commute_seconds_downtown, listings.first_seen_at, lp.price AS current_price").
+		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.bedroom_count, listings.bathroom_count, listings.interior_area_sqft, listings.commute_seconds_downtown, listings.first_seen_at, lp.price AS current_price").
 		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice).
 		Where("listings.latitude <> 0 AND listings.longitude <> 0")
 
@@ -133,6 +142,15 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 	}
 	if where.NewSince != nil {
 		q = q.Where("listings.first_seen_at >= ?", *where.NewSince)
+	}
+	if where.MinBedrooms != nil {
+		q = q.Where("listings.bedroom_count >= ?", *where.MinBedrooms)
+	}
+	if where.MinBathrooms != nil {
+		q = q.Where("listings.bathroom_count >= ?", *where.MinBathrooms)
+	}
+	if where.MinInteriorAreaSqft != nil {
+		q = q.Where("listings.interior_area_sqft >= ?", *where.MinInteriorAreaSqft)
 	}
 
 	var rows []MapPinRow

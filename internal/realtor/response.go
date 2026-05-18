@@ -26,6 +26,7 @@ type listingResult struct {
 	MlsNumber          int          `json:"MlsNumber,string"`
 	StatusId           string       `json:"StatusId"`
 	Property           property     `json:"Property"`
+	Building           building     `json:"Building"`
 	RelativeDetailsURL string       `json:"RelativeDetailsURL"`
 	Individual         []individual `json:"Individual"`
 }
@@ -33,6 +34,12 @@ type listingResult struct {
 type property struct {
 	PriceUnformattedValue string  `json:"PriceUnformattedValue"`
 	Address               address `json:"Address"`
+}
+
+type building struct {
+	BathroomTotal string `json:"BathroomTotal"`
+	Bedrooms      string `json:"Bedrooms"`
+	SizeInterior  string `json:"SizeInterior"`
 }
 
 type address struct {

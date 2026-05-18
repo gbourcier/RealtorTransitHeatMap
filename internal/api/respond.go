@@ -158,6 +158,9 @@ type ListingResponse struct {
 	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
 	FirstSeenAt            int64    `json:"firstSeenAt"`
 	Slug                   string   `json:"slug"`
+	BedroomCount           int      `json:"bedroomCount"`
+	BathroomCount          int      `json:"bathroomCount"`
+	InteriorAreaSqft       float64  `json:"interiorAreaSqft"`
 }
 
 type ListingMapPinResponse struct {
@@ -170,6 +173,9 @@ type ListingMapPinResponse struct {
 	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
 	FirstSeenAt            int64    `json:"firstSeenAt"`
 	Slug                   string   `json:"slug"`
+	BedroomCount           int      `json:"bedroomCount"`
+	BathroomCount          int      `json:"bathroomCount"`
+	InteriorAreaSqft       float64  `json:"interiorAreaSqft"`
 }
 
 func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
@@ -183,6 +189,9 @@ func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
 		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
 		FirstSeenAt:            row.FirstSeenAt.Unix(),
 		Slug:                   "https://www.realtor.ca" + row.Slug,
+		BedroomCount:           row.BedroomCount,
+		BathroomCount:          row.BathroomCount,
+		InteriorAreaSqft:       row.InteriorAreaSqft,
 	}
 }
 
@@ -213,6 +222,9 @@ func listingFromRow(row *listing.ListingRow) ListingResponse {
 		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
 		FirstSeenAt:            row.FirstSeenAt.Unix(),
 		Slug:                   "https://www.realtor.ca" + row.Slug,
+		BedroomCount:           row.BedroomCount,
+		BathroomCount:          row.BathroomCount,
+		InteriorAreaSqft:       row.InteriorAreaSqft,
 	}
 }
 
@@ -239,6 +251,9 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 			CommuteSecondsDowntown: l.CommuteSecondsDowntown,
 			FirstSeenAt:            l.FirstSeenAt.Unix(),
 			Slug:                   "https://www.realtor.ca" + l.Slug,
+			BedroomCount:           l.BedroomCount,
+			BathroomCount:          l.BathroomCount,
+			InteriorAreaSqft:       l.InteriorAreaSqft,
 		},
 		Status:         mapStatus(l.IsAvailable),
 		PriceHistories: histories,

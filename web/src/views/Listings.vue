@@ -27,9 +27,15 @@ const sortDir = ref<SortDir>("desc");
 const maxPrice = ref<number | null>(null);
 const maxCommuteSec = ref<number | null>(null);
 const newWithinDays = ref<number | null>(null);
+const minBedrooms = ref<number | null>(null);
+const minBathrooms = ref<number | null>(null);
+const minInteriorAreaSqft = ref<number | null>(null);
 
 const priceOptions = [500000, 700000, 1000000, 1500000];
 const commuteOptions = [30, 45, 60, 90];
+const bedroomOptions = [1, 2, 3, 4];
+const bathroomOptions = [1, 2, 3];
+const interiorAreaOptions = [500, 750, 1000, 1250, 1500, 1750, 2000];
 const recencyOptions: { label: string; days: number | null }[] = [
     { label: "All time", days: null },
     { label: "Today", days: 1 },
@@ -43,6 +49,9 @@ const activeFilterCount = computed(() => {
     if (maxPrice.value != null) n++;
     if (maxCommuteSec.value != null) n++;
     if (newWithinDays.value != null) n++;
+    if (minBedrooms.value != null) n++;
+    if (minBathrooms.value != null) n++;
+    if (minInteriorAreaSqft.value != null) n++;
     return n;
 });
 
@@ -73,10 +82,28 @@ function setRecency(days: number | null) {
     applyFilters();
 }
 
+function setMinBedrooms(value: number | null) {
+    minBedrooms.value = value;
+    applyFilters();
+}
+
+function setMinBathrooms(value: number | null) {
+    minBathrooms.value = value;
+    applyFilters();
+}
+
+function setMinInteriorAreaSqft(value: number | null) {
+    minInteriorAreaSqft.value = value;
+    applyFilters();
+}
+
 function clearAllFilters() {
     maxPrice.value = null;
     maxCommuteSec.value = null;
     newWithinDays.value = null;
+    minBedrooms.value = null;
+    minBathrooms.value = null;
+    minInteriorAreaSqft.value = null;
     applyFilters();
 }
 
@@ -111,6 +138,9 @@ function loadMore(gen: number = loadGen): Promise<void> {
                 ...(maxPrice.value != null && { maxPrice: maxPrice.value }),
                 ...(maxCommuteSec.value != null && { maxCommuteSec: maxCommuteSec.value }),
                 ...(newWithinDays.value != null && { newWithinDays: newWithinDays.value }),
+                ...(minBedrooms.value != null && { minBedrooms: minBedrooms.value }),
+                ...(minBathrooms.value != null && { minBathrooms: minBathrooms.value }),
+                ...(minInteriorAreaSqft.value != null && { minInteriorAreaSqft: minInteriorAreaSqft.value }),
             });
             if (gen !== loadGen) return;
             items.value = [...items.value, ...res.items];
@@ -402,6 +432,63 @@ onBeforeUnmount(() => {
                     </div>
                 </section>
 
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Min bedrooms</span>
+                        <span class="filter-modal__section-value">
+                            — {{ minBedrooms == null ? "no min" : `${minBedrooms}+` }}
+                        </span>
+                    </div>
+                    <div class="filter-modal__chips">
+                        <button type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minBedrooms == null }"
+                            @click="setMinBedrooms(null)">No min</button>
+                        <button v-for="b in bedroomOptions" :key="b" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minBedrooms === b }"
+                            @click="setMinBedrooms(minBedrooms === b ? null : b)">
+                            {{ b }}+
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Min bathrooms</span>
+                        <span class="filter-modal__section-value">
+                            — {{ minBathrooms == null ? "no min" : `${minBathrooms}+` }}
+                        </span>
+                    </div>
+                    <div class="filter-modal__chips">
+                        <button type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minBathrooms == null }"
+                            @click="setMinBathrooms(null)">No min</button>
+                        <button v-for="b in bathroomOptions" :key="b" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minBathrooms === b }"
+                            @click="setMinBathrooms(minBathrooms === b ? null : b)">
+                            {{ b }}+
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Min interior space</span>
+                        <span class="filter-modal__section-value">
+                            — {{ minInteriorAreaSqft == null ? "no min" : `${minInteriorAreaSqft.toLocaleString()} sqft` }}
+                        </span>
+                    </div>
+                    <div class="filter-modal__chips">
+                        <button type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minInteriorAreaSqft == null }"
+                            @click="setMinInteriorAreaSqft(null)">No min</button>
+                        <button v-for="a in interiorAreaOptions" :key="a" type="button" class="filter-chip"
+                            :class="{ 'filter-chip--active': minInteriorAreaSqft === a }"
+                            @click="setMinInteriorAreaSqft(minInteriorAreaSqft === a ? null : a)">
+                            {{ a.toLocaleString() }}
+                        </button>
+                    </div>
+                </section>
+
                 <footer class="filter-modal__footer">
                     <button type="button" class="filter-modal__reset" :disabled="activeFilterCount === 0"
                         @click="clearAllFilters">Reset</button>
@@ -424,7 +511,8 @@ onBeforeUnmount(() => {
     <div v-show="mdAndUp || viewMode === 'map'" class="map-fullbleed"
         :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }">
             <ListingsMap ref="mapRef" class="map-fullbleed__map" :max-price="maxPrice" :max-commute-sec="maxCommuteSec"
-                :new-within-days="newWithinDays" @update:count="mapCount = $event" />
+                :new-within-days="newWithinDays" :min-bedrooms="minBedrooms" :min-bathrooms="minBathrooms"
+                :min-interior-area-sqft="minInteriorAreaSqft" @update:count="mapCount = $event" />
             <aside v-if="mdAndUp && drawerOpen" class="listings-side-panel">
                 <div class="list-toolbar">
                     <div class="list-toolbar__row">
