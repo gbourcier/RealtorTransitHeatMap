@@ -20,7 +20,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "update:count", n: number): void;
+    (e: "update:loading", v: boolean): void;
     (e: "pin-click", payload: { board: number; mls: number }): void;
+    (e: "error", message: string): void;
 }>();
 
 const mapEl = ref<HTMLElement | null>(null);
@@ -29,7 +31,6 @@ const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
 const hexLayer = shallowRef<L.LayerGroup | null>(null);
 const HEX_RESOLUTION = 8;
 const loading = ref(false);
-const error = ref<string | null>(null);
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
@@ -219,7 +220,6 @@ function popupHtml(pin: ListingMapPin): string {
 async function load() {
     if (!map.value || !cluster.value) return;
     loading.value = true;
-    error.value = null;
     try {
         const pins = await listListingsForMap({
             ...(props.maxPrice != null && { maxPrice: props.maxPrice }),
@@ -263,10 +263,12 @@ async function load() {
             hasFitBounds = true;
         }
     } catch (e: any) {
-        error.value =
+        emit(
+            "error",
             e?.response?.data?.error ??
-            e?.message ??
-            "failed to load map listings";
+                e?.message ??
+                "failed to load map listings",
+        );
     } finally {
         loading.value = false;
     }
@@ -415,6 +417,8 @@ watch(
     () => load(),
 );
 
+watch(loading, (v) => emit("update:loading", v));
+
 function focusListing(board: number, mls: number): boolean {
     const marker = markersByKey.get(listingKey(board, mls));
     if (!marker || !map.value || !cluster.value) return false;
@@ -449,10 +453,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 <template>
     <div class="listings-map-wrap">
-        <div v-if="loading || error" class="listings-map-status">
-            <v-progress-circular v-if="loading" indeterminate size="20" width="2" class="mr-2" />
-            <v-alert v-if="error" type="error" density="compact" variant="tonal" class="ma-0">{{ error }}</v-alert>
-        </div>
         <div ref="mapEl" class="listings-map" />
         <div class="listings-map-legend" aria-label="Transit commute time legend">
             <div class="listings-map-legend__title">Commute to downtown</div>
@@ -487,20 +487,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     min-height: 320px;
     border-radius: 4px;
     overflow: hidden;
-}
-
-.listings-map-status {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    background-color: rgba(var(--v-theme-surface), 0.85);
-    padding: 6px 12px;
-    border-radius: 999px;
-    backdrop-filter: blur(4px);
-    pointer-events: none;
 }
 
 .listings-map-legend {
