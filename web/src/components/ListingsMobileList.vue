@@ -80,7 +80,7 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
 
 <style scoped>
 .listings-mobile {
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - 40px);
     overflow-y: auto;
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }

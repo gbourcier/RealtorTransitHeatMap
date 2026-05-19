@@ -2,8 +2,9 @@
   <v-navigation-drawer
     :model-value="modelValue"
     location="left"
-    temporary
-    width="320"
+    :temporary="!permanent"
+    :permanent="permanent"
+    width="260"
     @update:model-value="(v) => emit('update:modelValue', v)"
   >
     <div class="settings-drawer__header px-4 pt-4 pb-2">
@@ -18,16 +19,17 @@
         :title="item.title"
         :prepend-icon="item.icon"
         :subtitle="item.subtitle"
-        color="primary"
+        color="secondary"
         rounded="lg"
-        @click="emit('update:modelValue', false)"
       />
     </v-list>
   </v-navigation-drawer>
 </template>
 
 <script lang="ts" setup>
-defineProps<{ modelValue: boolean | null }>()
+withDefaults(defineProps<{ modelValue: boolean | null; permanent?: boolean }>(), {
+  permanent: false,
+})
 const emit = defineEmits(['update:modelValue'])
 
 const items = [

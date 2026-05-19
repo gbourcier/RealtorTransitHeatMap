@@ -335,9 +335,9 @@ onMounted(() => {
         preferCanvas: true,
     });
     L.control
-        .attribution({ prefix: false, position: "topright" })
+        .attribution({ prefix: false, position: "bottomleft" })
         .addAttribution(
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
         )
         .addTo(map.value);
     map.value.createPane("hexPane");
@@ -780,17 +780,18 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .leaflet-control-attribution {
-    background: rgba(var(--v-theme-popup-overlay), 0.45) !important;
-    color: rgba(var(--v-theme-on-surface), 0.45) !important;
-    font-size: 9px !important;
-    padding: 1px 6px !important;
+    background: rgba(var(--v-theme-popup-overlay), 0.65) !important;
+    color: rgba(var(--v-theme-on-surface), 0.85) !important;
+    font-size: 11px !important;
+    padding: 2px 8px !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    border-radius: 0 0 0 4px;
+    border-radius: 0 4px 0 0;
 }
 
 .leaflet-control-attribution a {
-    color: rgba(var(--v-theme-on-surface), 0.6) !important;
+    color: rgba(var(--v-theme-on-surface), 0.95) !important;
+    text-decoration: underline;
 }
 
 .leaflet-popup-content-wrapper {

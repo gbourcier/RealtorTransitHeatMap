@@ -1,26 +1,15 @@
 <template>
-  <v-system-bar color="header-bar" height="56" class="header-bar">
+  <v-system-bar color="header-bar" height="40" class="header-bar">
     <v-btn
-      :to="'/listings'"
-      :active="false"
       icon
       variant="text"
-      size="small"
+      :active="settingsActive"
+      size="x-small"
       class="ms-2"
-      aria-label="Home"
-      @click="emit('click:home')"
-    >
-      <v-icon size="22">mdi-home-outline</v-icon>
-    </v-btn>
-
-    <v-btn
-      icon
-      variant="text"
-      size="small"
       aria-label="Settings"
       @click="emit('click:settings')"
     >
-      <v-icon size="22">mdi-cog-outline</v-icon>
+      <v-icon size="20">mdi-cog-outline</v-icon>
     </v-btn>
 
     <v-spacer />
@@ -31,7 +20,10 @@
 </template>
 
 <script lang="ts" setup>
-const emit = defineEmits(['click:settings', 'click:home'])
+withDefaults(defineProps<{ settingsActive?: boolean }>(), {
+  settingsActive: false,
+})
+const emit = defineEmits(['click:settings'])
 </script>
 
 <style scoped>

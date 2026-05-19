@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
+
+defineOptions({ name: "Listings" });
 import { useDisplay } from "vuetify";
 import type { Listing } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
@@ -88,12 +90,12 @@ onMounted(() => {
             v-if="mdAndUp"
             icon
             variant="text"
-            size="small"
+            size="x-small"
             :active="drawerOpen"
             :aria-label="drawerOpen ? 'Hide results panel' : 'Show results panel'"
             @click="drawerOpen = !drawerOpen"
         >
-            <v-icon size="22">mdi-dock-right</v-icon>
+            <v-icon size="20">mdi-dock-right</v-icon>
         </v-btn>
     </Teleport>
 
@@ -175,7 +177,7 @@ onMounted(() => {
 <style scoped>
 .map-fullbleed {
     position: relative;
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - 40px);
     width: 100%;
     display: flex;
 }

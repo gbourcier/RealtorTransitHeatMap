@@ -1,5 +1,9 @@
 <template>
   <v-main>
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <keep-alive include="Listings">
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
   </v-main>
 </template>

@@ -1,11 +1,15 @@
 <template>
   <v-app>
     <default-system-bar
-      @click:settings="settingsDrawer = !settingsDrawer"
-      @click:home="settingsDrawer = false"
+      :settings-active="isSettingsActive"
+      @click:settings="onToggleSettings"
     />
 
-    <default-drawer v-model="settingsDrawer" />
+    <default-drawer
+      :model-value="isSettingsRoute || settingsDrawer"
+      :permanent="isSettingsRoute"
+      @update:model-value="(v) => (settingsDrawer = v)"
+    />
 
     <default-view />
   </v-app>
@@ -16,7 +20,25 @@ import DefaultDrawer from './Drawer.vue'
 import DefaultSystemBar from './SystemBar.vue'
 import DefaultView from './View.vue'
 
-import { shallowRef } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute()
+const router = useRouter()
+const isSettingsRoute = computed(() => route.meta?.settings === true)
 const settingsDrawer = shallowRef<boolean | null>(false)
+const isSettingsActive = computed(() => isSettingsRoute.value || !!settingsDrawer.value)
+
+watch(isSettingsRoute, (active) => {
+  if (active) settingsDrawer.value = false
+})
+
+function onToggleSettings() {
+  if (isSettingsRoute.value) {
+    settingsDrawer.value = false
+    router.push('/listings')
+    return
+  }
+  settingsDrawer.value = !settingsDrawer.value
+}
 </script>
