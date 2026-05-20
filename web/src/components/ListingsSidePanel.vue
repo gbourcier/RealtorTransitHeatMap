@@ -12,7 +12,6 @@ const SKELETON_LIST_PADDING = 20;
 
 interface Props {
     items: Listing[];
-    total: number;
     loading: boolean;
     hasMore: boolean;
     sortBy: SortBy;
@@ -67,7 +66,7 @@ function listingKey(item: Listing): string {
 
 <template>
     <aside class="listings-side-panel">
-        <ListingsSortToolbar :total="total" :sort-by="sortBy" :sort-dir="sortDir" :sort-options="sortOptions"
+        <ListingsSortToolbar :sort-by="sortBy" :sort-dir="sortDir" :sort-options="sortOptions"
             @select-sort="emit('selectSort', $event)" />
         <div ref="bodyEl" class="listings-side-panel__body">
             <div v-if="loading && items.length === 0" class="listing-cards listing-cards--panel">

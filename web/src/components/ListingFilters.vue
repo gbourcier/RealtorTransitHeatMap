@@ -89,7 +89,7 @@ const sqftSlider = computed({
                 class="filter-pill"
                 :class="{ 'filter-pill--active': state.activeFilterCount.value > 0 }"
             >
-                <v-icon size="16" class="filter-pill__icon">mdi-tune-variant</v-icon>
+                <v-icon size="14" class="filter-pill__icon">mdi-tune-variant</v-icon>
                 <span class="filter-pill__label">Filters</span>
                 <template v-if="state.activeFilterCount.value > 0">
                     <span class="filter-pill__dot" aria-hidden="true">•</span>
@@ -285,14 +285,14 @@ const sqftSlider = computed({
 .filter-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 32px;
-    padding: 0 14px;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
     border-radius: 999px;
     border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
     background: transparent;
     color: rgba(var(--v-theme-on-surface), 0.88);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: normal;
     cursor: pointer;

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
+
+defineOptions({ name: "Listings" });
 import { useDisplay } from "vuetify";
 import type { Listing } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 import ListingFilters from "../components/ListingFilters.vue";
+import ListingsCountPill from "../components/ListingsCountPill.vue";
 import ListingsSidePanel from "../components/ListingsSidePanel.vue";
 import ListingsMobileList from "../components/ListingsMobileList.vue";
 import MapLegend from "../components/MapLegend.vue";
@@ -80,6 +83,7 @@ onMounted(() => {
 
 <template>
     <Teleport to="#header-filters-slot" :disabled="!teleportReady">
+        <ListingsCountPill :total="listings.total.value" />
         <ListingFilters :state="filters" :total="listings.total.value" />
     </Teleport>
 
@@ -88,12 +92,12 @@ onMounted(() => {
             v-if="mdAndUp"
             icon
             variant="text"
-            size="small"
+            size="x-small"
             :active="drawerOpen"
             :aria-label="drawerOpen ? 'Hide results panel' : 'Show results panel'"
             @click="drawerOpen = !drawerOpen"
         >
-            <v-icon size="22">mdi-dock-right</v-icon>
+            <v-icon size="20">mdi-dock-right</v-icon>
         </v-btn>
     </Teleport>
 
@@ -126,7 +130,6 @@ onMounted(() => {
         <ListingsSidePanel
             v-if="mdAndUp && drawerOpen"
             :items="listings.items.value"
-            :total="listings.total.value"
             :loading="listings.loading.value"
             :has-more="listings.hasMore.value"
             :sort-by="listings.sortBy.value"
@@ -144,7 +147,6 @@ onMounted(() => {
     <ListingsMobileList
         v-if="!mdAndUp && viewMode === 'list'"
         :items="listings.items.value"
-        :total="listings.total.value"
         :loading="listings.loading.value"
         :has-more="listings.hasMore.value"
         :sort-by="listings.sortBy.value"
@@ -175,7 +177,7 @@ onMounted(() => {
 <style scoped>
 .map-fullbleed {
     position: relative;
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - 40px);
     width: 100%;
     display: flex;
 }
