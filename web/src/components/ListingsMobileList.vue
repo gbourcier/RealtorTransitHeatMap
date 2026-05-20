@@ -9,7 +9,6 @@ import ListingsSortToolbar from "./ListingsSortToolbar.vue";
 
 interface Props {
     items: Listing[];
-    total: number;
     loading: boolean;
     hasMore: boolean;
     sortBy: SortBy;
@@ -33,7 +32,6 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
 <template>
     <div class="listings-mobile">
         <ListingsSortToolbar
-            :total="total"
             :sort-by="sortBy"
             :sort-dir="sortDir"
             :sort-options="sortOptions"

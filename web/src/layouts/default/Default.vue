@@ -2,7 +2,9 @@
   <v-app>
     <default-system-bar
       :settings-active="isSettingsActive"
+      :on-settings-page="isSettingsRoute"
       @click:settings="onToggleSettings"
+      @click:back="onBackToMap"
     />
 
     <default-drawer
@@ -36,11 +38,12 @@ watch(isSettingsRoute, (active) => {
 })
 
 function onToggleSettings() {
-  if (isSettingsRoute.value) {
-    settingsDrawer.value = false
-    router.push('/listings')
-    return
-  }
+  if (isSettingsRoute.value) return
   settingsDrawer.value = !settingsDrawer.value
+}
+
+function onBackToMap() {
+  settingsDrawer.value = false
+  router.push('/listings')
 }
 </script>
