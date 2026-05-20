@@ -6,8 +6,8 @@
     />
 
     <default-drawer
-      :model-value="isSettingsRoute || settingsDrawer"
-      :permanent="isSettingsRoute"
+      :model-value="(isSettingsRoute && !mobile) || settingsDrawer"
+      :permanent="isSettingsRoute && !mobile"
       @update:model-value="(v) => (settingsDrawer = v)"
     />
 
@@ -22,9 +22,11 @@ import DefaultView from './View.vue'
 
 import { computed, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 
 const route = useRoute()
 const router = useRouter()
+const { mobile } = useDisplay()
 const isSettingsRoute = computed(() => route.meta?.settings === true)
 const settingsDrawer = shallowRef<boolean | null>(false)
 const isSettingsActive = computed(() => isSettingsRoute.value || !!settingsDrawer.value)
