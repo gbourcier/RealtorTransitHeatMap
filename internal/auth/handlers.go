@@ -4,20 +4,43 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/user"
 )
 
+const (
+	minPasswordLength = 8
+
+	loginMaxAttempts = 10
+	loginWindow      = 15 * time.Minute
+	loginLockout     = 15 * time.Minute
+)
+
 type Handlers struct {
-	svc *Service
-	cfg config.AuthConfig
+	svc     *Service
+	cfg     config.AuthConfig
+	limiter *rateLimiter
 }
 
 func NewHandlers(svc *Service, cfg config.AuthConfig) *Handlers {
-	return &Handlers{svc: svc, cfg: cfg}
+	return &Handlers{
+		svc:     svc,
+		cfg:     cfg,
+		limiter: newRateLimiter(loginMaxAttempts, loginWindow, loginLockout),
+	}
+}
+
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 type loginRequest struct {
@@ -57,6 +80,15 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
+func writeTooManyRequests(w http.ResponseWriter, retryAfter time.Duration) {
+	secs := int(retryAfter.Seconds())
+	if secs < 1 {
+		secs = 1
+	}
+	w.Header().Set("Retry-After", strconv.Itoa(secs))
+	writeError(w, http.StatusTooManyRequests, "too many attempts, try again later")
+}
+
 func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -68,8 +100,21 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, u, err := h.svc.Login(r.Context(), req.Username, req.Password)
+	ipKey := "ip:" + clientIP(r)
+	userKey := "user:" + limitKey(req.Username)
+	if d := h.limiter.retryAfter(ipKey); d > 0 {
+		writeTooManyRequests(w, d)
+		return
+	}
+	if d := h.limiter.retryAfter(userKey); d > 0 {
+		writeTooManyRequests(w, d)
+		return
+	}
+
+	raw, sess, u, err := h.svc.Login(r.Context(), req.Username, req.Password)
 	if errors.Is(err, ErrBadCredentials) || errors.Is(err, ErrInactive) {
+		h.limiter.fail(ipKey)
+		h.limiter.fail(userKey)
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
@@ -79,9 +124,12 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.limiter.reset(ipKey)
+	h.limiter.reset(userKey)
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
-		Value:    sess.Token,
+		Value:    raw,
 		Path:     "/",
 		Expires:  sess.ExpiresAt,
 		MaxAge:   int(time.Until(sess.ExpiresAt).Seconds()),

@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"log/slog"
 	"time"
@@ -22,16 +24,19 @@ var (
 )
 
 type Service struct {
-	users    *user.Repository
-	sessions *sessionRepository
-	cfg      config.AuthConfig
+	users     *user.Repository
+	sessions  *sessionRepository
+	cfg       config.AuthConfig
+	dummyHash []byte
 }
 
 func NewService(db *gorm.DB, users *user.Repository, cfg config.AuthConfig) *Service {
+	dummy, _ := bcrypt.GenerateFromPassword([]byte("bcrypt-timing-equalizer"), bcrypt.DefaultCost)
 	return &Service{
-		users:    users,
-		sessions: &sessionRepository{db: db},
-		cfg:      cfg,
+		users:     users,
+		sessions:  &sessionRepository{db: db},
+		cfg:       cfg,
+		dummyHash: dummy,
 	}
 }
 
@@ -43,44 +48,48 @@ func (svc *Service) HashPassword(plain string) (string, error) {
 	return string(h), nil
 }
 
-func (svc *Service) Login(ctx context.Context, username, password string) (*Session, *user.User, error) {
+func (svc *Service) Login(ctx context.Context, username, password string) (string, *Session, *user.User, error) {
 	u, err := svc.users.GetByUsername(ctx, username)
 	if errors.Is(err, user.ErrNotFound) {
-		return nil, nil, ErrBadCredentials
+		_ = bcrypt.CompareHashAndPassword(svc.dummyHash, []byte(password))
+		return "", nil, nil, ErrBadCredentials
 	}
 	if err != nil {
-		return nil, nil, err
-	}
-	if !u.IsActive {
-		return nil, nil, ErrInactive
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
-		return nil, nil, ErrBadCredentials
+		return "", nil, nil, err
 	}
 
-	token, err := generateToken()
+	compareErr := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
+	if !u.IsActive {
+		return "", nil, nil, ErrInactive
+	}
+	if compareErr != nil {
+		return "", nil, nil, ErrBadCredentials
+	}
+
+	raw, err := generateToken()
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
 
 	sess := &Session{
-		Token:     token,
+		Token:     hashToken(raw),
 		UserID:    u.ID,
 		ExpiresAt: time.Now().Add(svc.cfg.SessionTTL),
 	}
 	if err := svc.sessions.create(ctx, sess); err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
-	return sess, u, nil
+	return raw, sess, u, nil
 }
 
 func (svc *Service) Validate(ctx context.Context, token string) (*user.User, error) {
-	sess, err := svc.sessions.get(ctx, token)
+	hashed := hashToken(token)
+	sess, err := svc.sessions.get(ctx, hashed)
 	if err != nil {
 		return nil, ErrSessionExpired
 	}
 	if time.Now().After(sess.ExpiresAt) {
-		_ = svc.sessions.delete(ctx, token)
+		_ = svc.sessions.delete(ctx, hashed)
 		return nil, ErrSessionExpired
 	}
 	u, err := svc.users.GetByID(ctx, sess.UserID)
@@ -94,10 +103,18 @@ func (svc *Service) Validate(ctx context.Context, token string) (*user.User, err
 }
 
 func (svc *Service) Logout(ctx context.Context, token string) error {
-	return svc.sessions.delete(ctx, token)
+	return svc.sessions.delete(ctx, hashToken(token))
+}
+
+func (svc *Service) PurgeExpiredSessions(ctx context.Context) (int64, error) {
+	return svc.sessions.deleteExpired(ctx, time.Now())
 }
 
 func (svc *Service) Bootstrap(ctx context.Context) error {
+	if len(svc.cfg.AdminPassword) < minPasswordLength {
+		slog.Warn("admin password is shorter than recommended minimum", "min", minPasswordLength)
+	}
+
 	existing, err := svc.users.GetByUsername(ctx, svc.cfg.AdminUsername)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
 		return err
@@ -140,4 +157,9 @@ func generateToken() (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+func hashToken(raw string) string {
+	sum := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(sum[:])
 }

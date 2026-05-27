@@ -60,6 +60,10 @@ func (h *UserHandlers) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "password is required")
 		return
 	}
+	if len(req.Password) < minPasswordLength {
+		writeError(w, http.StatusBadRequest, "password is too short")
+		return
+	}
 	role := req.Role
 	if role == "" {
 		role = user.RoleUser
@@ -148,8 +152,8 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		IsActive: req.IsActive,
 	}
 	if req.Password != nil {
-		if *req.Password == "" {
-			writeError(w, http.StatusBadRequest, "password cannot be empty")
+		if len(*req.Password) < minPasswordLength {
+			writeError(w, http.StatusBadRequest, "password is too short")
 			return
 		}
 		hash, hashErr := h.svc.HashPassword(*req.Password)

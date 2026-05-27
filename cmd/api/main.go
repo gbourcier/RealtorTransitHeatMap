@@ -64,6 +64,21 @@ func run() error {
 	authHandlers := auth.NewHandlers(authSvc, cfg.Auth)
 	userHandlers := auth.NewUserHandlers(users, authSvc)
 
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if _, err := authSvc.PurgeExpiredSessions(ctx); err != nil {
+					slog.Warn("purge expired sessions", "err", err)
+				}
+			}
+		}
+	}()
+
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
 	scrapeRuns := scraperun.NewRepository(gormDB)
