@@ -12,8 +12,17 @@ import (
 type Config struct {
 	HTTP    HTTPConfig
 	DB      DBConfig
+	Auth    AuthConfig
 	Realtor RealtorConfig
 	Transit TransitConfig
+}
+
+type AuthConfig struct {
+	AdminUsername string
+	AdminPassword string
+	AdminReset    bool
+	CookieSecure  bool
+	SessionTTL    time.Duration
 }
 
 type HTTPConfig struct {
@@ -96,6 +105,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	authCfg, err := loadAuthConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		HTTP: HTTPConfig{
 			Addr: addr,
@@ -103,6 +117,7 @@ func Load() (*Config, error) {
 		DB: DBConfig{
 			URL: fmt.Sprintf("postgres://%s:%s@%s:%s/%s%s", user, password, host, port, dbName, sslMode),
 		},
+		Auth: authCfg,
 		Realtor: RealtorConfig{
 			BaseURL:      realtorBaseURL,
 			Mock:         os.Getenv("MOCK_REALTOR_API") == "true",
@@ -217,4 +232,37 @@ func parseIntEnv(name string, def int) (int, error) {
 		return 0, fmt.Errorf("%s: invalid integer %q", name, v)
 	}
 	return n, nil
+}
+
+func loadAuthConfig() (AuthConfig, error) {
+	adminUsername := os.Getenv("ADMIN_USERNAME")
+	if adminUsername == "" {
+		return AuthConfig{}, errors.New("ADMIN_USERNAME is required")
+	}
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	if adminPassword == "" {
+		return AuthConfig{}, errors.New("ADMIN_PASSWORD is required")
+	}
+
+	cookieSecure := true
+	if os.Getenv("COOKIE_SECURE") == "false" {
+		cookieSecure = false
+	}
+
+	sessionTTL := 720 * time.Hour
+	if v := os.Getenv("SESSION_TTL"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return AuthConfig{}, fmt.Errorf("SESSION_TTL: invalid duration %q", v)
+		}
+		sessionTTL = d
+	}
+
+	return AuthConfig{
+		AdminUsername: adminUsername,
+		AdminPassword: adminPassword,
+		AdminReset:    os.Getenv("ADMIN_RESET") == "true",
+		CookieSecure:  cookieSecure,
+		SessionTTL:    sessionTTL,
+	}, nil
 }

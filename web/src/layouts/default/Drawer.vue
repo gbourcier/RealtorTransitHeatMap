@@ -27,25 +27,43 @@
 </template>
 
 <script lang="ts" setup>
+import { useAuthStore } from '../../stores/auth'
+import { computed } from 'vue'
+
 withDefaults(defineProps<{ modelValue: boolean | null; permanent?: boolean }>(), {
   permanent: false,
 })
 const emit = defineEmits(['update:modelValue'])
 
-const items = [
+const authStore = useAuthStore()
+
+const allItems = [
   {
     title: 'Realtor Scraper',
     subtitle: 'Schedules & manual runs',
     icon: 'mdi-cog-transfer-outline',
     to: '/scraper',
+    admin: true,
   },
   {
     title: 'GTFS Data',
     subtitle: 'Transit feed refresh',
     icon: 'mdi-train',
     to: '/transit',
+    admin: true,
+  },
+  {
+    title: 'Users',
+    subtitle: 'Manage accounts',
+    icon: 'mdi-account-group-outline',
+    to: '/users',
+    admin: true,
   },
 ]
+
+const items = computed(() =>
+  authStore.isAdmin ? allItems : allItems.filter((i) => !i.admin),
+)
 </script>
 
 <style scoped>

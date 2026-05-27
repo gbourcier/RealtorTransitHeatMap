@@ -1,27 +1,30 @@
 package api
 
 import (
+	"io/fs"
 	"net/http"
 	"time"
 
-	"github.com/gbourcier/RealtorTransitHeatMap/web"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 )
 
-func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService, stopSvc StopService) *http.Server {
+func NewServer(addr string, staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService, stopSvc StopService) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           NewRouter(staticFS, guard, authH, userH, scrapes, gtfsRefresh, schedRepo, reloader, listings, transitSvc, stopSvc),
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+}
+
+func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService, stopSvc StopService) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 	r.Use(middleware.Timeout(60 * time.Second))
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
-	}))
 
 	h := &handlers{scrapes: scrapes}
 	gh := &gtfsRefreshHandlers{svc: gtfsRefresh}
@@ -29,46 +32,62 @@ func NewServer(addr string, scrapes ScrapeService, gtfsRefresh GtfsRefreshServic
 	lh := &listingHandlers{svc: listings}
 	th := &transitHandlers{svc: transitSvc}
 	sth := &stopHandlers{svc: stopSvc}
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+
+	rt := guard.Wrap(r)
+
+	rt.PublicGet("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	r.Route("/api", func(r chi.Router) {
-		r.Route("/scrapes", func(r chi.Router) {
-			r.Post("/", h.startScrape)
-			r.Get("/", h.listScrapes)
-			r.Get("/{id}", h.getScrape)
+	rt.Route("/api", func(rt *auth.Routes) {
+		rt.Route("/auth", func(rt *auth.Routes) {
+			rt.PublicPost("/login", authH.Login)
+			rt.Post("/logout", authH.Logout)
+			rt.Get("/me", authH.Me)
 		})
-		r.Route("/gtfs-refresh-runs", func(r chi.Router) {
-			r.Post("/", gh.start)
-			r.Get("/", gh.list)
-			r.Get("/{id}", gh.get)
+
+		rt.Route("/scrapes", func(rt *auth.Routes) {
+			rt.AdminPost("/", h.startScrape)
+			rt.AdminGet("/", h.listScrapes)
+			rt.AdminGet("/{id}", h.getScrape)
 		})
-		r.Route("/schedules", func(r chi.Router) {
-			r.Get("/", sh.list)
-			r.Post("/", sh.create)
-			r.Get("/{id}", sh.get)
-			r.Patch("/{id}", sh.update)
-			r.Delete("/{id}", sh.delete)
+
+		rt.Route("/gtfs-refresh-runs", func(rt *auth.Routes) {
+			rt.AdminPost("/", gh.start)
+			rt.AdminGet("/", gh.list)
+			rt.AdminGet("/{id}", gh.get)
 		})
-		r.Route("/listings", func(r chi.Router) {
-			r.Get("/", lh.list)
-			r.Get("/map", lh.mapList)
-			r.Get("/{board}/{mls}", lh.get)
+
+		rt.Route("/schedules", func(rt *auth.Routes) {
+			rt.AdminGet("/", sh.list)
+			rt.AdminPost("/", sh.create)
+			rt.AdminGet("/{id}", sh.get)
+			rt.AdminPatch("/{id}", sh.update)
+			rt.AdminDelete("/{id}", sh.delete)
 		})
-		r.Route("/transit", func(r chi.Router) {
-			r.Post("/compute", th.compute)
-			r.Post("/compute/{board}/{mls}", th.computeOne)
-			r.Get("/stops", sth.list)
+
+		rt.Route("/listings", func(rt *auth.Routes) {
+			rt.Get("/", lh.list)
+			rt.Get("/map", lh.mapList)
+			rt.Get("/{board}/{mls}", lh.get)
+		})
+
+		rt.Route("/transit", func(rt *auth.Routes) {
+			rt.AdminPost("/compute", th.compute)
+			rt.AdminPost("/compute/{board}/{mls}", th.computeOne)
+			rt.Get("/stops", sth.list)
+		})
+
+		rt.Route("/users", func(rt *auth.Routes) {
+			rt.AdminGet("/", userH.List)
+			rt.AdminPost("/", userH.Create)
+			rt.AdminPatch("/{id}", userH.Update)
+			rt.AdminDelete("/{id}", userH.Delete)
 		})
 	})
 
-	r.Handle("/*", staticHandler(web.Dist()))
+	rt.PublicHandle("/*", staticHandler(staticFS))
 
-	return &http.Server{
-		Addr:              addr,
-		Handler:           r,
-		ReadHeaderTimeout: 10 * time.Second,
-	}
+	return r
 }
