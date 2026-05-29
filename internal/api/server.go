@@ -21,7 +21,6 @@ func NewServer(addr string, staticFS fs.FS, guard *auth.Guard, authH *auth.Handl
 func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, listings ListingService, transitSvc TransitService, stopSvc StopService) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 	r.Use(middleware.Timeout(60 * time.Second))

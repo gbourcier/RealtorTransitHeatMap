@@ -80,10 +80,3 @@ func (l *rateLimiter) sweep(now time.Time) {
 		}
 	}
 }
-
-func limitKey(s string) string {
-	if len(s) > 128 {
-		return s[:128]
-	}
-	return s
-}

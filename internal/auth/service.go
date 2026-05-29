@@ -18,9 +18,10 @@ import (
 )
 
 var (
-	ErrBadCredentials = errors.New("auth: invalid username or password")
-	ErrInactive       = errors.New("auth: account is inactive")
-	ErrSessionExpired = errors.New("auth: session expired")
+	ErrBadCredentials  = errors.New("auth: invalid username or password")
+	ErrInactive        = errors.New("auth: account is inactive")
+	ErrSessionExpired  = errors.New("auth: session expired")
+	ErrPasswordTooLong = errors.New("auth: password exceeds 72 bytes")
 )
 
 type Service struct {
@@ -41,6 +42,9 @@ func NewService(db *gorm.DB, users *user.Repository, cfg config.AuthConfig) *Ser
 }
 
 func (svc *Service) HashPassword(plain string) (string, error) {
+	if len(plain) > maxPasswordLength {
+		return "", ErrPasswordTooLong
+	}
 	h, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

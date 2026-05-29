@@ -47,6 +47,7 @@ func (h *UserHandlers) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandlers) Create(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxAuthBodyBytes)
 	var req createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid json body")
@@ -62,6 +63,10 @@ func (h *UserHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(req.Password) < minPasswordLength {
 		writeError(w, http.StatusBadRequest, "password is too short")
+		return
+	}
+	if len(req.Password) > maxPasswordLength {
+		writeError(w, http.StatusBadRequest, "password is too long")
 		return
 	}
 	role := req.Role
@@ -100,6 +105,7 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxAuthBodyBytes)
 	var req updateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid json body")
@@ -154,6 +160,10 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	if req.Password != nil {
 		if len(*req.Password) < minPasswordLength {
 			writeError(w, http.StatusBadRequest, "password is too short")
+			return
+		}
+		if len(*req.Password) > maxPasswordLength {
+			writeError(w, http.StatusBadRequest, "password is too long")
 			return
 		}
 		hash, hashErr := h.svc.HashPassword(*req.Password)

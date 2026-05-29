@@ -22,6 +22,7 @@ type AuthConfig struct {
 	AdminPassword string
 	AdminReset    bool
 	CookieSecure  bool
+	TrustProxy    bool
 	SessionTTL    time.Duration
 }
 
@@ -34,15 +35,15 @@ type DBConfig struct {
 }
 
 type TransitConfig struct {
-	ReferenceKey  string
-	ReferenceLat  float64
-	ReferenceLon  float64
-	SnapshotKey   string
-	SnapshotDay   time.Weekday
-	SnapshotHour  int
-	NearestStops  int
-	WalkSpeedMps  float64
-	WalkDetour    float64
+	ReferenceKey string
+	ReferenceLat float64
+	ReferenceLon float64
+	SnapshotKey  string
+	SnapshotDay  time.Weekday
+	SnapshotHour int
+	NearestStops int
+	WalkSpeedMps float64
+	WalkDetour   float64
 }
 
 type RealtorConfig struct {
@@ -263,6 +264,7 @@ func loadAuthConfig() (AuthConfig, error) {
 		AdminPassword: adminPassword,
 		AdminReset:    os.Getenv("ADMIN_RESET") == "true",
 		CookieSecure:  cookieSecure,
+		TrustProxy:    os.Getenv("TRUST_PROXY") == "true",
 		SessionTTL:    sessionTTL,
 	}, nil
 }

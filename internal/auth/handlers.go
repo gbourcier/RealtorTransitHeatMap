@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
@@ -15,6 +16,9 @@ import (
 
 const (
 	minPasswordLength = 8
+	maxPasswordLength = 72
+
+	maxAuthBodyBytes = 4096
 
 	loginMaxAttempts = 10
 	loginWindow      = 15 * time.Minute
@@ -35,7 +39,16 @@ func NewHandlers(svc *Service, cfg config.AuthConfig) *Handlers {
 	}
 }
 
-func clientIP(r *http.Request) string {
+func (h *Handlers) clientIP(r *http.Request) string {
+	if h.cfg.TrustProxy {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			parts := strings.Split(xff, ",")
+			last := strings.TrimSpace(parts[len(parts)-1])
+			if last != "" {
+				return last
+			}
+		}
+	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
@@ -90,6 +103,7 @@ func writeTooManyRequests(w http.ResponseWriter, retryAfter time.Duration) {
 }
 
 func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxAuthBodyBytes)
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid json body")
@@ -99,14 +113,13 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "username and password are required")
 		return
 	}
-
-	ipKey := "ip:" + clientIP(r)
-	userKey := "user:" + limitKey(req.Username)
-	if d := h.limiter.retryAfter(ipKey); d > 0 {
-		writeTooManyRequests(w, d)
+	if len(req.Password) > maxPasswordLength {
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
-	if d := h.limiter.retryAfter(userKey); d > 0 {
+
+	ipKey := "ip:" + h.clientIP(r)
+	if d := h.limiter.retryAfter(ipKey); d > 0 {
 		writeTooManyRequests(w, d)
 		return
 	}
@@ -114,7 +127,6 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	raw, sess, u, err := h.svc.Login(r.Context(), req.Username, req.Password)
 	if errors.Is(err, ErrBadCredentials) || errors.Is(err, ErrInactive) {
 		h.limiter.fail(ipKey)
-		h.limiter.fail(userKey)
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
@@ -125,7 +137,6 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.limiter.reset(ipKey)
-	h.limiter.reset(userKey)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
