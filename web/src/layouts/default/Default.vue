@@ -1,17 +1,19 @@
 <template>
   <v-app>
-    <default-system-bar
-      :settings-active="isSettingsActive"
-      :on-settings-page="isSettingsRoute"
-      @click:settings="onToggleSettings"
-      @click:back="onBackToMap"
-    />
+    <template v-if="!isPublicRoute">
+      <default-system-bar
+        :settings-active="isSettingsActive"
+        :on-settings-page="isSettingsRoute"
+        @click:settings="onToggleSettings"
+        @click:back="onBackToMap"
+      />
 
-    <default-drawer
-      :model-value="(isSettingsRoute && !mobile) || settingsDrawer"
-      :permanent="isSettingsRoute && !mobile"
-      @update:model-value="(v) => (settingsDrawer = v)"
-    />
+      <default-drawer
+        :model-value="(isSettingsRoute && !mobile) || settingsDrawer"
+        :permanent="isSettingsRoute && !mobile"
+        @update:model-value="(v) => (settingsDrawer = v)"
+      />
+    </template>
 
     <default-view />
   </v-app>
@@ -29,6 +31,7 @@ import { useDisplay } from 'vuetify'
 const route = useRoute()
 const router = useRouter()
 const { mobile } = useDisplay()
+const isPublicRoute = computed(() => route.meta?.public === true)
 const isSettingsRoute = computed(() => route.meta?.settings === true)
 const settingsDrawer = shallowRef<boolean | null>(false)
 const isSettingsActive = computed(() => isSettingsRoute.value || !!settingsDrawer.value)

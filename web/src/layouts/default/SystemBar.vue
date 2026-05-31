@@ -11,6 +11,7 @@
     </button>
 
     <button
+      v-if="authStore.isAdmin"
       type="button"
       class="settings-pill"
       :class="[
@@ -29,15 +30,43 @@
 
     <div id="header-filters-slot" class="header-bar__filters" />
     <div id="header-actions-slot" class="header-bar__actions" />
+
+    <v-menu location="bottom end" :close-on-content-click="true">
+      <template #activator="{ props: menuProps }">
+        <button type="button" class="user-pill me-2" v-bind="menuProps" aria-label="User menu">
+          <v-icon size="14" class="user-pill__icon">mdi-account-outline</v-icon>
+          <span class="user-pill__label">{{ authStore.user?.username }}</span>
+          <v-icon size="12" class="user-pill__chevron">mdi-chevron-down</v-icon>
+        </button>
+      </template>
+      <v-list density="compact" min-width="140">
+        <v-list-item
+          prepend-icon="mdi-logout"
+          title="Sign out"
+          @click="onLogout"
+        />
+      </v-list>
+    </v-menu>
   </v-system-bar>
 </template>
 
 <script lang="ts" setup>
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+
 withDefaults(defineProps<{ settingsActive?: boolean; onSettingsPage?: boolean }>(), {
   settingsActive: false,
   onSettingsPage: false,
 })
 const emit = defineEmits(['click:settings', 'click:back'])
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+async function onLogout() {
+  await authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
@@ -58,7 +87,6 @@ const emit = defineEmits(['click:settings', 'click:back'])
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-right: 8px;
   flex: 0 0 auto;
 }
 
@@ -135,5 +163,40 @@ const emit = defineEmits(['click:settings', 'click:back'])
 
 .settings-pill__icon {
   opacity: 0.9;
+}
+
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+  background: transparent;
+  color: rgba(var(--v-theme-on-surface), 0.88);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.user-pill:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.05);
+  border-color: rgba(var(--v-theme-on-surface), 0.32);
+}
+
+.user-pill:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-secondary));
+  outline-offset: 2px;
+}
+
+.user-pill__icon {
+  opacity: 0.9;
+}
+
+.user-pill__chevron {
+  opacity: 0.6;
 }
 </style>

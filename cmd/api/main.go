@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/api"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/auth"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/dispatch"
@@ -21,6 +22,8 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/transit"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/user"
+	"github.com/gbourcier/RealtorTransitHeatMap/web"
 	"github.com/joho/godotenv"
 )
 
@@ -52,6 +55,30 @@ func run() error {
 	}
 	defer sqlDB.Close()
 
+	users := user.NewRepository(gormDB)
+	authSvc := auth.NewService(gormDB, users, cfg.Auth)
+	if err := authSvc.Bootstrap(ctx); err != nil {
+		return err
+	}
+	authGuard := auth.NewGuard(authSvc)
+	authHandlers := auth.NewHandlers(authSvc, cfg.Auth)
+	userHandlers := auth.NewUserHandlers(users, authSvc)
+
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if _, err := authSvc.PurgeExpiredSessions(ctx); err != nil {
+					slog.Warn("purge expired sessions", "err", err)
+				}
+			}
+		}
+	}()
+
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
 	scrapeRuns := scraperun.NewRepository(gormDB)
@@ -79,7 +106,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, scrapeWorker, refreshWorker, schedules, scheduler, listings, commuteComputer, stops)
+	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, listings, commuteComputer, stops)
 
 	serverErr := make(chan error, 1)
 	go func() {
