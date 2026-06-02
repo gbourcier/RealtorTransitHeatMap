@@ -359,8 +359,9 @@ onMounted(() => {
     cluster.value = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
-        maxClusterRadius: 50,
-        disableClusteringAtZoom: 14,
+        chunkedLoading: true,
+        maxClusterRadius: 80,
+        disableClusteringAtZoom: 16,
         iconCreateFunction: clusterIcon,
     });
     loadStops();
