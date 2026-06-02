@@ -11,6 +11,7 @@
     </button>
 
     <v-menu
+      v-model="menuOpen"
       location="bottom start"
       offset="18"
       transition="scale-transition"
@@ -20,7 +21,7 @@
         <button
           type="button"
           class="user-pill"
-          :class="onSettingsPage ? 'ms-1' : 'ms-2'"
+          :class="[onSettingsPage ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
           v-bind="menuProps"
           aria-label="User menu"
         >
@@ -70,6 +71,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
@@ -81,6 +83,7 @@ const emit = defineEmits(['click:settings', 'click:back'])
 
 const authStore = useAuthStore()
 const router = useRouter()
+const menuOpen = ref(false)
 
 async function onLogout() {
   await authStore.logout()
@@ -166,6 +169,11 @@ async function onLogout() {
 .user-pill:hover {
   background-color: rgba(var(--v-theme-on-surface), 0.05);
   border-color: rgba(var(--v-theme-on-surface), 0.32);
+}
+
+.user-pill--open {
+  background-color: rgba(var(--v-theme-on-surface), 0.12);
+  border-color: rgba(var(--v-theme-on-surface), 0.4);
 }
 
 .user-pill:focus-visible {

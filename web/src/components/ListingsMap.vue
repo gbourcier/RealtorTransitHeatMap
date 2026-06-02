@@ -248,7 +248,7 @@ async function load() {
                 price: pin.currentPrice,
                 commuteSec: pin.commuteSecondsDowntown,
             };
-            m.bindPopup(popupHtml(pin));
+            m.bindPopup(popupHtml(pin), { closeButton: false });
             m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
             markers.push(m);
             markersByKey.set(listingKey(pin.board, pin.mls), m);
@@ -812,12 +812,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 
 .leaflet-popup-tip {
     background-color: rgb(var(--v-theme-surface));
-}
-
-.leaflet-container a.leaflet-popup-close-button {
-    color: rgba(var(--v-theme-on-surface), 0.55);
-    padding: 10px 10px 0 0;
-    font-size: 22px;
 }
 
 .map-popup {
