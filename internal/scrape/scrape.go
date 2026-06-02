@@ -17,7 +17,7 @@ import (
 var ErrBusy = errors.New("scrape: already in progress")
 
 type RealtorClient interface {
-	FetchPrices(ctx context.Context) ([]listing.Observation, error)
+	FetchPrices(ctx context.Context, params realtor.SearchParams) ([]listing.Observation, error)
 }
 
 type ListingRepository interface {
@@ -60,20 +60,12 @@ func (w *Worker) Bind(rootCtx context.Context) {
 	w.rootCtx = rootCtx
 }
 
-func (w *Worker) StartScrape() (uuid.UUID, error) {
-	return w.startScrape(nil)
-}
-
-func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error) {
-	return w.startScrape(&scheduleID)
-}
-
-func (w *Worker) startScrape(scheduleID *uuid.UUID) (uuid.UUID, error) {
+func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID, params realtor.SearchParams) (uuid.UUID, error) {
 	if !w.busy.CompareAndSwap(false, true) {
 		return uuid.Nil, ErrBusy
 	}
 
-	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, scheduleID)
+	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, &scheduleID)
 
 	if err != nil {
 		w.busy.Store(false)
@@ -85,7 +77,7 @@ func (w *Worker) startScrape(scheduleID *uuid.UUID) (uuid.UUID, error) {
 	go func() {
 		defer w.wg.Done()
 		defer w.busy.Store(false)
-		w.executeScrape(w.rootCtx, run)
+		w.executeScrape(w.rootCtx, run, params)
 	}()
 
 	return run.ID, nil
@@ -101,8 +93,8 @@ func (w *Worker) ListRuns(ctx context.Context, where scraperun.Where, page scrap
 	return w.runs.List(ctx, where, page)
 }
 
-func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun) {
-	observations, fetchErr := w.realtor.FetchPrices(ctx)
+func (w *Worker) executeScrape(ctx context.Context, run *scraperun.ScrapeRun, params realtor.SearchParams) {
+	observations, fetchErr := w.realtor.FetchPrices(ctx, params)
 	totalCount := len(observations)
 	newCount := 0
 

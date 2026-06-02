@@ -32,8 +32,3 @@ export async function getRun(id: string): Promise<ScrapeRun> {
   const { data } = await api.get<ScrapeRun>(`/api/scrapes/${id}`)
   return data
 }
-
-export async function startScrape(): Promise<{ runId: string }> {
-  const { data } = await api.post<{ runId: string }>('/api/scrapes')
-  return data
-}

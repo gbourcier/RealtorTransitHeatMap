@@ -106,7 +106,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, listings, commuteComputer, stops)
+	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, dispatcher, listings, commuteComputer, stops)
 
 	serverErr := make(chan error, 1)
 	go func() {

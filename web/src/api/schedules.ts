@@ -2,7 +2,16 @@ import { api, type Paginated } from './client'
 
 export type JobType = 'scrape_realtor' | 'refresh_gtfs'
 
-export interface Schedule {
+export interface ScheduleParams {
+  buildingTypeId?: number | null
+  bedRange?: string | null
+  bathRange?: string | null
+  priceMin?: number | null
+  priceMax?: number | null
+  polygonWkt?: string | null
+}
+
+export interface Schedule extends ScheduleParams {
   id: string
   name: string
   cronExpr: string
@@ -12,14 +21,14 @@ export interface Schedule {
   updatedAt: number
 }
 
-export interface CreateScheduleRequest {
+export interface CreateScheduleRequest extends ScheduleParams {
   name: string
   cronExpr: string
   enabled?: boolean
   jobType?: JobType
 }
 
-export interface UpdateScheduleRequest {
+export interface UpdateScheduleRequest extends ScheduleParams {
   name?: string
   cronExpr?: string
   enabled?: boolean
@@ -50,4 +59,9 @@ export async function updateSchedule(id: string, req: UpdateScheduleRequest): Pr
 
 export async function deleteSchedule(id: string): Promise<void> {
   await api.delete(`/api/schedules/${id}`)
+}
+
+export async function runSchedule(id: string): Promise<{ runId: string }> {
+  const { data } = await api.post<{ runId: string }>(`/api/schedules/${id}/run`)
+  return data
 }

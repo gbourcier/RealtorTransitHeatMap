@@ -49,11 +49,6 @@ type TransitConfig struct {
 type RealtorConfig struct {
 	BaseURL      string
 	Mock         bool
-	PolygonWKT   string
-	PriceMin     string
-	PriceMax     string
-	BedRange     string
-	BathRange    string
 	LatitudeMax  string
 	LatitudeMin  string
 	LongitudeMax string
@@ -84,11 +79,6 @@ func Load() (*Config, error) {
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
 		addr = "127.0.0.1:3000"
-	}
-
-	polygonWKT := os.Getenv("POLYGON_WKT")
-	if polygonWKT == "" {
-		return nil, errors.New("POLYGON_WKT is required")
 	}
 
 	realtorBaseURL := os.Getenv("REALTOR_BASE_URL")
@@ -122,11 +112,6 @@ func Load() (*Config, error) {
 		Realtor: RealtorConfig{
 			BaseURL:      realtorBaseURL,
 			Mock:         os.Getenv("MOCK_REALTOR_API") == "true",
-			PolygonWKT:   polygonWKT,
-			PriceMin:     os.Getenv("PRICE_MIN"),
-			PriceMax:     os.Getenv("PRICE_MAX"),
-			BedRange:     os.Getenv("BED_RANGE"),
-			BathRange:    os.Getenv("BATH_RANGE"),
 			LatitudeMax:  os.Getenv("LAT_MAX"),
 			LatitudeMin:  os.Getenv("LAT_MIN"),
 			LongitudeMax: os.Getenv("LON_MAX"),

@@ -9,7 +9,7 @@ import (
 
 func TestFetchPricesMock(t *testing.T) {
 	c := NewClient(config.RealtorConfig{Mock: true})
-	obs, err := c.FetchPrices(context.Background())
+	obs, err := c.FetchPrices(context.Background(), SearchParams{})
 	if err != nil {
 		t.Fatalf("FetchPrices: %v", err)
 	}

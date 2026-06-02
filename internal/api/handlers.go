@@ -6,34 +6,18 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type ScrapeService interface {
-	StartScrape() (uuid.UUID, error)
 	GetRun(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
 	ListRuns(ctx context.Context, where scraperun.Where, page scraperun.Page) ([]scraperun.ScrapeRun, int64, error)
 }
 
 type handlers struct {
 	scrapes ScrapeService
-}
-
-func (h *handlers) startScrape(w http.ResponseWriter, r *http.Request) {
-	id, err := h.scrapes.StartScrape()
-	if err != nil {
-		if errors.Is(err, scrape.ErrBusy) {
-			writeError(w, http.StatusConflict, "a scrape is already in progress")
-			return
-		}
-		slog.Error("startScrape failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	writeJSON(w, http.StatusAccepted, StartScrapeResponse{RunID: id.String()})
 }
 
 func (h *handlers) listScrapes(w http.ResponseWriter, r *http.Request) {

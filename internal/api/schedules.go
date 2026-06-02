@@ -25,9 +25,15 @@ type ScheduleReloader interface {
 	Reload(ctx context.Context) error
 }
 
+type ScheduleDispatcher interface {
+	Dispatch(s schedule.Schedule) (uuid.UUID, error)
+	IsBusy(err error) bool
+}
+
 type scheduleHandlers struct {
-	repo     ScheduleRepo
-	reloader ScheduleReloader
+	repo       ScheduleRepo
+	reloader   ScheduleReloader
+	dispatcher ScheduleDispatcher
 }
 
 func (h *scheduleHandlers) list(w http.ResponseWriter, r *http.Request) {
@@ -121,6 +127,14 @@ func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 	if req.Enabled != nil {
 		s.Enabled = *req.Enabled
 	}
+	if jobType == schedule.JobTypeScrapeRealtor {
+		sp, _ := req.toScrapeParams()
+		if err := schedule.ValidateScrapeParams(sp); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.ScrapeParams = sp
+	}
 
 	if err := h.repo.Create(r.Context(), s); err != nil {
 		slog.Error("schedules create failed", "err", err)
@@ -161,12 +175,21 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	s, err := h.repo.Update(r.Context(), id, schedule.Patch{
+	patch := schedule.Patch{
 		Name:     req.Name,
 		CronExpr: req.CronExpr,
 		JobType:  req.JobType,
 		Enabled:  req.Enabled,
-	})
+	}
+	if sp, ok := req.toScrapeParams(); ok {
+		if err := schedule.ValidateScrapeParams(sp); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		patch.ScrapeParams = &sp
+	}
+
+	s, err := h.repo.Update(r.Context(), id, patch)
 	if err != nil {
 		if errors.Is(err, schedule.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "schedule not found")
@@ -180,6 +203,35 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 		slog.Error("schedules reload failed", "err", err)
 	}
 	writeJSON(w, http.StatusOK, scheduleFromModel(s))
+}
+
+func (h *scheduleHandlers) run(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid schedule id")
+		return
+	}
+	s, err := h.repo.Get(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, schedule.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "schedule not found")
+			return
+		}
+		slog.Error("schedules run get failed", "err", err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	runID, err := h.dispatcher.Dispatch(*s)
+	if err != nil {
+		if h.dispatcher.IsBusy(err) {
+			writeError(w, http.StatusConflict, "a job is already in progress")
+			return
+		}
+		slog.Error("schedules run dispatch failed", "err", err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusAccepted, RunScheduleResponse{RunID: runID.String()})
 }
 
 func (h *scheduleHandlers) delete(w http.ResponseWriter, r *http.Request) {

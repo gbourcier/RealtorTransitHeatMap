@@ -13,10 +13,11 @@ type Repository struct{ db *gorm.DB }
 func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
 type Patch struct {
-	Name     *string
-	CronExpr *string
-	JobType  *string
-	Enabled  *bool
+	Name         *string
+	CronExpr     *string
+	JobType      *string
+	Enabled      *bool
+	ScrapeParams *ScrapeParams
 }
 
 type Where struct {
@@ -84,6 +85,15 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, patch Patch) (*Sc
 	}
 	if patch.Enabled != nil {
 		updates["enabled"] = *patch.Enabled
+	}
+	if patch.ScrapeParams != nil {
+		sp := patch.ScrapeParams
+		updates["building_type_id"] = sp.BuildingTypeID
+		updates["bed_range"] = sp.BedRange
+		updates["bath_range"] = sp.BathRange
+		updates["price_min"] = sp.PriceMin
+		updates["price_max"] = sp.PriceMax
+		updates["polygon_wkt"] = sp.PolygonWKT
 	}
 	if len(updates) == 0 {
 		return r.Get(ctx, id)

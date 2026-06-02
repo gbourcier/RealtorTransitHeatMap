@@ -11,7 +11,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 )
 
-type StartScrapeResponse struct {
+type RunScheduleResponse struct {
 	RunID string `json:"runId"`
 }
 
@@ -52,14 +52,24 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, errorResponse{Error: msg})
 }
 
+type ScheduleParamsDTO struct {
+	BuildingTypeID *int    `json:"buildingTypeId,omitempty"`
+	BedRange       *string `json:"bedRange,omitempty"`
+	BathRange      *string `json:"bathRange,omitempty"`
+	PriceMin       *int    `json:"priceMin,omitempty"`
+	PriceMax       *int    `json:"priceMax,omitempty"`
+	PolygonWKT     *string `json:"polygonWkt,omitempty"`
+}
+
 type ScheduleResponse struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	CronExpr  string `json:"cronExpr"`
-	JobType   string `json:"jobType"`
-	Enabled   bool   `json:"enabled"`
-	CreatedAt int64  `json:"createdAt"`
-	UpdatedAt int64  `json:"updatedAt"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	CronExpr string `json:"cronExpr"`
+	JobType  string `json:"jobType"`
+	Enabled  bool   `json:"enabled"`
+	ScheduleParamsDTO
+	CreatedAt int64 `json:"createdAt"`
+	UpdatedAt int64 `json:"updatedAt"`
 }
 
 type CreateScheduleRequest struct {
@@ -67,6 +77,7 @@ type CreateScheduleRequest struct {
 	CronExpr string `json:"cronExpr"`
 	JobType  string `json:"jobType"`
 	Enabled  *bool  `json:"enabled,omitempty"`
+	ScheduleParamsDTO
 }
 
 type UpdateScheduleRequest struct {
@@ -74,15 +85,39 @@ type UpdateScheduleRequest struct {
 	CronExpr *string `json:"cronExpr,omitempty"`
 	JobType  *string `json:"jobType,omitempty"`
 	Enabled  *bool   `json:"enabled,omitempty"`
+	ScheduleParamsDTO
+}
+
+func (d ScheduleParamsDTO) toScrapeParams() (schedule.ScrapeParams, bool) {
+	if d.BuildingTypeID == nil && d.BedRange == nil && d.BathRange == nil &&
+		d.PriceMin == nil && d.PriceMax == nil && d.PolygonWKT == nil {
+		return schedule.ScrapeParams{}, false
+	}
+	return schedule.ScrapeParams{
+		BuildingTypeID: d.BuildingTypeID,
+		BedRange:       d.BedRange,
+		BathRange:      d.BathRange,
+		PriceMin:       d.PriceMin,
+		PriceMax:       d.PriceMax,
+		PolygonWKT:     d.PolygonWKT,
+	}, true
 }
 
 func scheduleFromModel(s *schedule.Schedule) ScheduleResponse {
 	return ScheduleResponse{
-		ID:        s.ID.String(),
-		Name:      s.Name,
-		CronExpr:  s.CronExpr,
-		JobType:   s.JobType,
-		Enabled:   s.Enabled,
+		ID:       s.ID.String(),
+		Name:     s.Name,
+		CronExpr: s.CronExpr,
+		JobType:  s.JobType,
+		Enabled:  s.Enabled,
+		ScheduleParamsDTO: ScheduleParamsDTO{
+			BuildingTypeID: s.BuildingTypeID,
+			BedRange:       s.BedRange,
+			BathRange:      s.BathRange,
+			PriceMin:       s.PriceMin,
+			PriceMax:       s.PriceMax,
+			PolygonWKT:     s.PolygonWKT,
+		},
 		CreatedAt: s.CreatedAt.Unix(),
 		UpdatedAt: s.UpdatedAt.Unix(),
 	}

@@ -3,8 +3,10 @@ package dispatch
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
 	"github.com/google/uuid"
@@ -27,7 +29,7 @@ func (d *Dispatcher) IsBusy(err error) bool {
 }
 
 type ScrapeTrigger interface {
-	StartScrapeForSchedule(scheduleID uuid.UUID) (uuid.UUID, error)
+	StartScrapeForSchedule(scheduleID uuid.UUID, params realtor.SearchParams) (uuid.UUID, error)
 }
 
 type GtfsRefreshTrigger interface {
@@ -46,10 +48,35 @@ func New(scrape ScrapeTrigger, refresh GtfsRefreshTrigger) *Dispatcher {
 func (d *Dispatcher) Dispatch(s schedule.Schedule) (uuid.UUID, error) {
 	switch s.JobType {
 	case schedule.JobTypeScrapeRealtor:
-		return d.scrape.StartScrapeForSchedule(s.ID)
+		return d.scrape.StartScrapeForSchedule(s.ID, searchParamsFromSchedule(s))
 	case schedule.JobTypeRefreshGtfs:
 		return d.refresh.StartForSchedule(s.ID)
 	default:
 		return uuid.Nil, fmt.Errorf("%w: %q", ErrUnknownJobType, s.JobType)
 	}
+}
+
+func searchParamsFromSchedule(s schedule.Schedule) realtor.SearchParams {
+	return realtor.SearchParams{
+		BuildingTypeID: intPtrToStr(s.BuildingTypeID),
+		BedRange:       strPtr(s.BedRange),
+		BathRange:      strPtr(s.BathRange),
+		PriceMin:       intPtrToStr(s.PriceMin),
+		PriceMax:       intPtrToStr(s.PriceMax),
+		PolygonWKT:     strPtr(s.PolygonWKT),
+	}
+}
+
+func intPtrToStr(p *int) string {
+	if p == nil {
+		return ""
+	}
+	return strconv.Itoa(*p)
+}
+
+func strPtr(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }
