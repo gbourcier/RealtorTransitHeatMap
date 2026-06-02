@@ -36,7 +36,7 @@ func TestRouteGuard(t *testing.T) {
 		"index.html": &fstest.MapFile{Data: []byte("<html></html>")},
 	}
 
-	r := NewRouter(staticFS, guard, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	r := NewRouter(staticFS, guard, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	authPtr := reflect.ValueOf(authSentinel).Pointer()
 	adminPtr := reflect.ValueOf(adminSentinel).Pointer()

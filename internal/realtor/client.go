@@ -62,7 +62,7 @@ func (c *Client) fetchMock() ([]listing.Observation, error) {
 	return decodeObservations(parsed.Results), nil
 }
 
-func (c *Client) FetchPrices(ctx context.Context) ([]listing.Observation, error) {
+func (c *Client) FetchPrices(ctx context.Context, params SearchParams) ([]listing.Observation, error) {
 	if c.cfg.Mock {
 		return c.fetchMock()
 	}
@@ -73,7 +73,7 @@ func (c *Client) FetchPrices(ctx context.Context) ([]listing.Observation, error)
 	var all []listing.Observation
 	page := 1
 	for {
-		batch, totalPages, err := c.fetchPage(ctx, page)
+		batch, totalPages, err := c.fetchPage(ctx, params, page)
 		if err != nil {
 			return nil, fmt.Errorf("page %d: %w", page, err)
 		}
@@ -130,8 +130,8 @@ func (c *Client) primeSession(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) fetchPage(ctx context.Context, page int) ([]listing.Observation, int, error) {
-	vals := searchValues(c.cfg, page)
+func (c *Client) fetchPage(ctx context.Context, params SearchParams, page int) ([]listing.Observation, int, error) {
+	vals := searchValues(c.cfg, params, page)
 	encoded := vals.Encode()
 	slog.Debug("realtor search request", "page", page, "body", encoded)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,

@@ -15,6 +15,10 @@ const props = defineProps<{
   jobType?: JobType
 }>()
 
+const emit = defineEmits<{
+  (e: 'changed'): void
+}>()
+
 const items = ref<Schedule[]>([])
 const total = ref(0)
 const limit = ref(50)
@@ -63,7 +67,17 @@ function openEdit(s: Schedule) {
   dialogOpen.value = true
 }
 
-async function onSubmit(payload: { name: string; cronExpr: string; enabled: boolean }) {
+async function onSubmit(payload: {
+  name: string
+  cronExpr: string
+  enabled: boolean
+  buildingTypeId?: number | null
+  bedRange?: string | null
+  bathRange?: string | null
+  priceMin?: number | null
+  priceMax?: number | null
+  polygonWkt?: string | null
+}) {
   try {
     if (editing.value) {
       await updateSchedule(editing.value.id, payload)
@@ -72,6 +86,7 @@ async function onSubmit(payload: { name: string; cronExpr: string; enabled: bool
     }
     dialogOpen.value = false
     await refresh()
+    emit('changed')
   } catch (e: any) {
     error.value = e?.response?.data?.error ?? e?.message ?? 'save failed'
   }
@@ -81,6 +96,7 @@ async function toggleEnabled(s: Schedule) {
   try {
     await updateSchedule(s.id, { enabled: !s.enabled })
     await refresh()
+    emit('changed')
   } catch (e: any) {
     error.value = e?.response?.data?.error ?? e?.message ?? 'toggle failed'
   }
@@ -91,6 +107,7 @@ async function onDelete(s: Schedule) {
   try {
     await deleteSchedule(s.id)
     await refresh()
+    emit('changed')
   } catch (e: any) {
     error.value = e?.response?.data?.error ?? e?.message ?? 'delete failed'
   }
@@ -135,6 +152,6 @@ async function onDelete(s: Schedule) {
       Showing {{ items.length }} of {{ total }}
     </v-card-text>
 
-    <ScheduleDialog v-model="dialogOpen" :schedule="editing" @submit="onSubmit" />
+    <ScheduleDialog v-model="dialogOpen" :schedule="editing" :job-type="jobType" @submit="onSubmit" />
   </v-card>
 </template>

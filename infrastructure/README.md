@@ -36,7 +36,6 @@ Edit `.env`. At minimum set:
 
 - `DATA_DIR=/volume1/docker/realtor`
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- `POLYGON_WKT` (search area, required)
 - `GHCR_OWNER=gbourcier`
 - `IMAGE_TAG=main` (Watchtower will track this tag)
 - `API_PORT=3000` (or whatever the NAS exposes externally)

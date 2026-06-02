@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { listRuns, startScrape, type ScrapeRun, type ScrapeStatus } from '../api/scrapes'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
+import { listRuns, type ScrapeRun, type ScrapeStatus } from '../api/scrapes'
+import { listSchedules, runSchedule, type Schedule } from '../api/schedules'
+import { BUILDING_TYPES } from '../constants/realtor'
+
+const props = defineProps<{
+  reloadKey?: number
+}>()
 
 const items = ref<ScrapeRun[]>([])
 const total = ref(0)
@@ -9,6 +15,8 @@ const offset = ref(0)
 const loading = ref(false)
 const triggering = ref(false)
 const error = ref<string | null>(null)
+const scrapeSchedules = ref<Schedule[]>([])
+const runDialog = ref(false)
 
 let pollTimer: number | null = null
 
@@ -28,11 +36,26 @@ async function refresh() {
   }
 }
 
-async function onTrigger() {
+async function loadSchedules() {
+  try {
+    const res = await listSchedules({ jobType: 'scrape_realtor', limit: 100 })
+    scrapeSchedules.value = res.items
+  } catch {
+    scrapeSchedules.value = []
+  }
+}
+
+async function openRunDialog() {
+  await loadSchedules()
+  runDialog.value = true
+}
+
+async function runScrape(scheduleId: string) {
   triggering.value = true
   error.value = null
   try {
-    await startScrape()
+    await runSchedule(scheduleId)
+    runDialog.value = false
     await refresh()
   } catch (e: any) {
     if (e?.response?.status === 409) {
@@ -43,6 +66,34 @@ async function onTrigger() {
   } finally {
     triggering.value = false
   }
+}
+
+function buildingLabel(id?: number | null): string {
+  return BUILDING_TYPES.find((b) => b.id === id)?.label ?? ''
+}
+
+function rangeLabel(r?: string | null): string {
+  if (!r) return ''
+  return `${r.split('-')[0]}+`
+}
+
+function priceSummary(s: Schedule): string {
+  const fmt = (n: number) => `$${n.toLocaleString()}`
+  if (s.priceMin != null && s.priceMax != null) return `${fmt(s.priceMin)}–${fmt(s.priceMax)}`
+  if (s.priceMin != null) return `≥ ${fmt(s.priceMin)}`
+  if (s.priceMax != null) return `≤ ${fmt(s.priceMax)}`
+  return ''
+}
+
+function paramsSummary(s: Schedule): string {
+  const parts: string[] = []
+  const building = buildingLabel(s.buildingTypeId)
+  if (building) parts.push(building)
+  const price = priceSummary(s)
+  if (price) parts.push(price)
+  if (s.bedRange) parts.push(`${rangeLabel(s.bedRange)} bed`)
+  if (s.bathRange) parts.push(`${rangeLabel(s.bathRange)} bath`)
+  return parts.join(' · ')
 }
 
 function statusColor(s: ScrapeStatus): string {
@@ -90,8 +141,13 @@ function durationLabel(r: ScrapeRun): string {
   return `${m}m ${s}s`
 }
 
+watch(
+  () => props.reloadKey,
+  () => loadSchedules(),
+)
+
 onMounted(async () => {
-  await refresh()
+  await Promise.all([refresh(), loadSchedules()])
   pollTimer = window.setInterval(() => {
     if (hasRunning.value) refresh()
   }, 2000)
@@ -107,12 +163,12 @@ onUnmounted(() => {
     <v-card-title class="d-flex align-center">
       <span>Scrape Jobs</span>
       <v-spacer />
-      <v-btn color="primary" prepend-icon="mdi-play" :loading="triggering" :disabled="hasRunning"
-        class="d-none d-sm-inline-flex" @click="onTrigger">
+      <v-btn color="primary" prepend-icon="mdi-play" :disabled="hasRunning"
+        class="d-none d-sm-inline-flex" @click="openRunDialog">
         Run scrape now
       </v-btn>
-      <v-btn color="primary" icon="mdi-play" :loading="triggering" :disabled="hasRunning" size="small"
-        class="d-inline-flex d-sm-none" @click="onTrigger" />
+      <v-btn color="primary" icon="mdi-play" :disabled="hasRunning" size="small"
+        class="d-inline-flex d-sm-none" @click="openRunDialog" />
     </v-card-title>
     <v-divider />
     <v-alert v-if="error" type="error" variant="tonal" class="ma-3">{{ error }}</v-alert>
@@ -198,6 +254,42 @@ onUnmounted(() => {
     <v-card-text v-if="total > limit" class="text-caption">
       Showing {{ items.length }} of {{ total }}
     </v-card-text>
+
+    <v-dialog v-model="runDialog" max-width="520">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <span>Run scrape now</span>
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="runDialog = false" />
+        </v-card-title>
+        <v-divider />
+        <v-card-text>
+          <v-alert v-if="hasRunning" type="info" variant="tonal" density="compact" class="mb-3">
+            A scrape is already in progress.
+          </v-alert>
+          <div v-if="scrapeSchedules.length === 0" class="text-medium-emphasis text-center py-6">
+            No scrape schedules configured yet. Create one in the Schedules panel.
+          </div>
+          <v-list v-else lines="two" density="compact">
+            <template v-for="(s, i) in scrapeSchedules" :key="s.id">
+              <v-list-item :title="s.name" :subtitle="paramsSummary(s) || '—'">
+                <template #append>
+                  <v-btn color="primary" size="small" variant="flat" :loading="triggering"
+                    :disabled="hasRunning" @click="runScrape(s.id)">
+                    Run
+                  </v-btn>
+                </template>
+              </v-list-item>
+              <v-divider v-if="i < scrapeSchedules.length - 1" />
+            </template>
+          </v-list>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="runDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
