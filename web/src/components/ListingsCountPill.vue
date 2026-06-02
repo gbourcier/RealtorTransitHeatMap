@@ -22,7 +22,6 @@ defineProps<Props>();
     height: 28px;
     padding: 0 10px;
     border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
     background: transparent;
     color: rgba(var(--v-theme-on-surface), 0.88);
     font-size: 0.75rem;

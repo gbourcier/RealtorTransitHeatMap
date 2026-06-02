@@ -780,13 +780,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .leaflet-control-attribution {
+    margin: 0 0 8px 8px !important;
     background: rgba(var(--v-theme-popup-overlay), 0.65) !important;
     color: rgba(var(--v-theme-on-surface), 0.85) !important;
     font-size: 11px !important;
-    padding: 2px 8px !important;
+    line-height: 1.5 !important;
+    padding: 3px 8px !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    border-radius: 0 4px 0 0;
+    border-radius: 6px;
 }
 
 .leaflet-control-attribution a {
