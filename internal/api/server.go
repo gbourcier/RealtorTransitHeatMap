@@ -10,15 +10,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewServer(addr string, staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, dispatcher ScheduleDispatcher, listings ListingService, transitSvc TransitService, stopSvc StopService) *http.Server {
+func NewServer(addr string, staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, dispatcher ScheduleDispatcher, listings ListingService, favorites FavoriteService, transitSvc TransitService, stopSvc StopService) *http.Server {
 	return &http.Server{
 		Addr:              addr,
-		Handler:           NewRouter(staticFS, guard, authH, userH, scrapes, gtfsRefresh, schedRepo, reloader, dispatcher, listings, transitSvc, stopSvc),
+		Handler:           NewRouter(staticFS, guard, authH, userH, scrapes, gtfsRefresh, schedRepo, reloader, dispatcher, listings, favorites, transitSvc, stopSvc),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 }
 
-func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, dispatcher ScheduleDispatcher, listings ListingService, transitSvc TransitService, stopSvc StopService) chi.Router {
+func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *auth.UserHandlers, scrapes ScrapeService, gtfsRefresh GtfsRefreshService, schedRepo ScheduleRepo, reloader ScheduleReloader, dispatcher ScheduleDispatcher, listings ListingService, favorites FavoriteService, transitSvc TransitService, stopSvc StopService) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
@@ -29,6 +29,7 @@ func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *a
 	gh := &gtfsRefreshHandlers{svc: gtfsRefresh}
 	sh := &scheduleHandlers{repo: schedRepo, reloader: reloader, dispatcher: dispatcher}
 	lh := &listingHandlers{svc: listings}
+	fh := &favoriteHandlers{svc: favorites}
 	th := &transitHandlers{svc: transitSvc}
 	sth := &stopHandlers{svc: stopSvc}
 
@@ -70,6 +71,13 @@ func NewRouter(staticFS fs.FS, guard *auth.Guard, authH *auth.Handlers, userH *a
 			rt.Get("/", lh.list)
 			rt.Get("/map", lh.mapList)
 			rt.Get("/{board}/{mls}", lh.get)
+		})
+
+		rt.Route("/favorites", func(rt *auth.Routes) {
+			rt.Get("/", fh.list)
+			rt.Post("/", fh.add)
+			rt.Delete("/", fh.removeBatch)
+			rt.Delete("/{board}/{mls}", fh.removeOne)
 		})
 
 		rt.Route("/transit", func(rt *auth.Routes) {

@@ -6,6 +6,7 @@ import { useInfiniteScroll } from "../composables/useInfiniteScroll";
 import ListingCard from "./ListingCard.vue";
 import ListingCardSkeleton from "./ListingCardSkeleton.vue";
 import ListingsSortToolbar from "./ListingsSortToolbar.vue";
+import EmptyState from "./EmptyState.vue";
 
 interface Props {
     items: Listing[];
@@ -70,9 +71,7 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
             </div>
         </template>
 
-        <div v-else class="text-medium-emphasis text-center py-8">
-            No listings found.
-        </div>
+        <EmptyState v-else />
     </div>
 </template>
 

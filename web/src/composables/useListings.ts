@@ -70,6 +70,8 @@ export function useListings(filters: ListingFiltersState): ListingsState {
                     ...(filters.minBedrooms.value != null && filters.minBedrooms.value > 1 && { minBedrooms: filters.minBedrooms.value }),
                     ...(filters.minBathrooms.value != null && filters.minBathrooms.value > 1 && { minBathrooms: filters.minBathrooms.value }),
                     ...(filters.minInteriorAreaSqft.value != null && { minInteriorAreaSqft: filters.minInteriorAreaSqft.value }),
+                    ...(filters.favoritesOnly.value && { favoritesOnly: true }),
+                    ...(filters.includeExpired.value && { includeExpired: true }),
                 });
                 if (gen !== loadGen) return;
                 items.value = [...items.value, ...res.items];

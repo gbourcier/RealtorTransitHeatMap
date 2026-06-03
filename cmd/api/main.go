@@ -15,6 +15,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/db"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/dispatch"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/favorite"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
@@ -81,6 +82,7 @@ func run() error {
 
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
+	favorites := favorite.NewRepository(gormDB)
 	scrapeRuns := scraperun.NewRepository(gormDB)
 	refreshRuns := refresh.NewRepository(gormDB)
 	schedules := schedule.NewRepository(gormDB)
@@ -106,7 +108,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, dispatcher, listings, commuteComputer, stops)
+	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, dispatcher, listings, favorites, commuteComputer, stops)
 
 	serverErr := make(chan error, 1)
 	go func() {

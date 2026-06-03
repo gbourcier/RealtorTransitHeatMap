@@ -78,11 +78,15 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	var total int64
 
 	q := r.db.WithContext(ctx).Model(&Listing{}).
-		Select("listings.*, lp.price AS current_price").
-		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice)
+		Select("listings.*, lp.price AS current_price, (fav.user_id IS NOT NULL) AS is_favorite").
+		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice).
+		Joins("LEFT JOIN favorites fav ON fav.board = listings.board AND fav.mls = listings.mls AND fav.user_id = ?", where.UserID)
 
 	if !where.ShowUnavailable {
 		q = q.Where("listings.is_available = ?", true)
+	}
+	if where.FavoritesOnly {
+		q = q.Where("fav.user_id IS NOT NULL")
 	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
@@ -127,12 +131,16 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 		Order("board, mls, observed_at DESC")
 
 	q := r.db.WithContext(ctx).Model(&Listing{}).
-		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.bedroom_count, listings.bathroom_count, listings.interior_area_sqft, listings.commute_seconds_downtown, listings.first_seen_at, lp.price AS current_price").
+		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.bedroom_count, listings.bathroom_count, listings.interior_area_sqft, listings.commute_seconds_downtown, listings.first_seen_at, listings.is_available, lp.price AS current_price, (fav.user_id IS NOT NULL) AS is_favorite").
 		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice).
+		Joins("LEFT JOIN favorites fav ON fav.board = listings.board AND fav.mls = listings.mls AND fav.user_id = ?", where.UserID).
 		Where("listings.latitude <> 0 AND listings.longitude <> 0")
 
 	if !where.ShowUnavailable {
 		q = q.Where("listings.is_available = ?", true)
+	}
+	if where.FavoritesOnly {
+		q = q.Where("fav.user_id IS NOT NULL")
 	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)

@@ -17,6 +17,8 @@ tags:
     description: CRUD on recurring schedules (cron-driven). Each schedule has a `jobType` (`scrape_realtor` or `refresh_gtfs`) that selects which worker fires when the cron ticks.
   - name: listings
     description: Browse scraped property listings
+  - name: favorites
+    description: Per-user saved listings (private to each user)
   - name: transit
     description: Trigger transit commute-time computation
   - name: gtfs-refresh-runs
@@ -266,6 +268,20 @@ paths:
           schema:
             type: integer
             minimum: 1
+        - in: query
+          name: favoritesOnly
+          required: false
+          description: Only include listings favorited by the current user.
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: includeExpired
+          required: false
+          description: Include delisted/expired (unavailable) listings.
+          schema:
+            type: boolean
+            default: false
       responses:
         "200":
           description: Paginated listings.
@@ -294,6 +310,102 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/favorites:
+    get:
+      tags: [favorites]
+      summary: List the current user's favorites
+      description: Returns the current user's favorited listings, favorited-newest-first by default.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - in: query
+          name: sortBy
+          required: false
+          description: Field to sort by (default favorited_date).
+          schema:
+            type: string
+            enum: [favorited_date, listing_posted_date, price, commute]
+            default: favorited_date
+        - in: query
+          name: sortDir
+          required: false
+          description: Sort direction (default desc).
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Paginated favorites.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaginatedFavorites" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [favorites]
+      summary: Add a listing to the current user's favorites
+      description: Idempotent; favoriting an already-favorited listing returns 200.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FavoriteKey" }
+      responses:
+        "200":
+          description: The favorited listing key.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FavoriteKey" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [favorites]
+      summary: Remove multiple favorites in one transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RemoveFavoritesRequest" }
+      responses:
+        "200":
+          description: Count of favorites removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted:
+                    type: integer
+                    format: int64
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/favorites/{board}/{mls}:
+    delete:
+      tags: [favorites]
+      summary: Remove a single favorite
+      description: Idempotent; succeeds even if the favorite does not exist.
+      parameters:
+        - $ref: "#/components/parameters/BoardPath"
+        - $ref: "#/components/parameters/MLSPath"
+      responses:
+        "204":
+          description: Favorite removed.
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -712,6 +824,12 @@ components:
         slug:
           type: string
           description: Full realtor.ca URL for the listing.
+        isAvailable:
+          type: boolean
+          description: False when the listing has been delisted/expired.
+        isFavorite:
+          type: boolean
+          description: True when the current user has favorited this listing.
 
     PriceHistory:
       type: object
@@ -747,6 +865,72 @@ components:
             items:
               type: array
               items: { $ref: "#/components/schemas/Listing" }
+
+    FavoriteKey:
+      type: object
+      required: [board, mls]
+      properties:
+        board:
+          type: integer
+        mls:
+          type: integer
+
+    RemoveFavoritesRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/FavoriteKey" }
+
+    Favorite:
+      type: object
+      required: [board, mls, address, latitude, longitude, firstSeenAt, favoritedAt, slug, isAvailable]
+      properties:
+        board:
+          type: integer
+        mls:
+          type: integer
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        address:
+          type: string
+        currentPrice:
+          type: number
+          format: double
+          nullable: true
+        commuteSecondsDowntown:
+          type: integer
+          nullable: true
+          description: Transit commute time in seconds; null until computed.
+        firstSeenAt:
+          type: integer
+          format: int64
+          description: Unix seconds the listing was first seen.
+        favoritedAt:
+          type: integer
+          format: int64
+          description: Unix seconds the listing was favorited.
+        slug:
+          type: string
+          description: Full realtor.ca URL for the listing.
+        isAvailable:
+          type: boolean
+          description: False when the listing has been delisted/expired.
+
+    PaginatedFavorites:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/Favorite" }
 
     TransitComputeResponse:
       type: object

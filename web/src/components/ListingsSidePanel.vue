@@ -6,6 +6,7 @@ import { useInfiniteScroll } from "../composables/useInfiniteScroll";
 import ListingCard from "./ListingCard.vue";
 import ListingCardSkeleton from "./ListingCardSkeleton.vue";
 import ListingsSortToolbar from "./ListingsSortToolbar.vue";
+import EmptyState from "./EmptyState.vue";
 
 const SKELETON_ROW_HEIGHT = 156;
 const SKELETON_LIST_PADDING = 20;
@@ -81,9 +82,7 @@ function listingKey(item: Listing): string {
                 </div>
             </template>
 
-            <div v-else class="text-medium-emphasis text-center py-8">
-                No listings found.
-            </div>
+            <EmptyState v-else />
 
             <div v-if="hasMore && items.length > 0" ref="sentinelEl" class="listings-side-panel__sentinel">
                 <v-progress-circular v-if="loading" indeterminate size="20" width="2" />

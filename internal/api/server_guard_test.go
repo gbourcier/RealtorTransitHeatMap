@@ -16,12 +16,16 @@ var publicAllowlist = map[string]bool{
 }
 
 var authOnlyAllowlist = map[string]bool{
-	"POST /api/auth/logout":           true,
-	"GET /api/auth/me":                true,
-	"GET /api/listings/":              true,
-	"GET /api/listings/map":           true,
-	"GET /api/listings/{board}/{mls}": true,
-	"GET /api/transit/stops":          true,
+	"POST /api/auth/logout":               true,
+	"GET /api/auth/me":                    true,
+	"GET /api/listings/":                  true,
+	"GET /api/listings/map":               true,
+	"GET /api/listings/{board}/{mls}":     true,
+	"GET /api/favorites/":                 true,
+	"POST /api/favorites/":                true,
+	"DELETE /api/favorites/":              true,
+	"DELETE /api/favorites/{board}/{mls}": true,
+	"GET /api/transit/stops":              true,
 }
 
 func TestRouteGuard(t *testing.T) {
@@ -36,7 +40,7 @@ func TestRouteGuard(t *testing.T) {
 		"index.html": &fstest.MapFile{Data: []byte("<html></html>")},
 	}
 
-	r := NewRouter(staticFS, guard, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	r := NewRouter(staticFS, guard, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	authPtr := reflect.ValueOf(authSentinel).Pointer()
 	adminPtr := reflect.ValueOf(adminSentinel).Pointer()

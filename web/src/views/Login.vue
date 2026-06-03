@@ -3,7 +3,7 @@
     <v-container class="fill-height" fluid>
       <v-row align="center" justify="center">
         <v-col cols="12" sm="8" md="5" lg="4">
-          <v-card rounded="xl" elevation="4" class="pa-2">
+          <v-card elevation="4" class="pa-2">
             <v-card-title class="pt-6 pb-2 text-center text-h6">
               Realtor Transit Heatmap
             </v-card-title>

@@ -11,6 +11,8 @@ export interface Listing {
   bedroomCount: number;
   bathroomCount: number;
   interiorAreaSqft: number;
+  isAvailable: boolean;
+  isFavorite: boolean;
 }
 
 export interface PriceHistory {
@@ -37,6 +39,8 @@ export interface ListListingsParams {
   minBedrooms?: number;
   minBathrooms?: number;
   minInteriorAreaSqft?: number;
+  favoritesOnly?: boolean;
+  includeExpired?: boolean;
 }
 
 export interface ListingMapPin {
@@ -52,6 +56,8 @@ export interface ListingMapPin {
   bedroomCount: number;
   bathroomCount: number;
   interiorAreaSqft: number;
+  isAvailable: boolean;
+  isFavorite: boolean;
 }
 
 export interface MapFilterParams {
@@ -61,6 +67,8 @@ export interface MapFilterParams {
   minBedrooms?: number;
   minBathrooms?: number;
   minInteriorAreaSqft?: number;
+  favoritesOnly?: boolean;
+  includeExpired?: boolean;
 }
 
 export async function listListings(

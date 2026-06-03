@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/auth"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/go-chi/chi/v5"
 )
@@ -57,6 +58,15 @@ func parseListingWhere(r *http.Request) (listing.Where, error) {
 			return where, fmt.Errorf("invalid 'minInteriorAreaSqft' query param")
 		}
 		where.MinInteriorAreaSqft = &n
+	}
+	if r.URL.Query().Get("favoritesOnly") == "true" {
+		where.FavoritesOnly = true
+	}
+	if r.URL.Query().Get("includeExpired") == "true" {
+		where.ShowUnavailable = true
+	}
+	if u := auth.UserFromContext(r); u != nil {
+		where.UserID = u.ID
 	}
 	return where, nil
 }

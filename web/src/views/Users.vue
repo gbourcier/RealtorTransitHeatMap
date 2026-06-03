@@ -87,7 +87,7 @@
   </v-container>
 
   <v-dialog v-model="dialog.open" max-width="440" persistent>
-    <v-card rounded="xl">
+    <v-card>
       <v-card-title>{{ dialog.title }}</v-card-title>
       <v-card-text>
         <v-text-field

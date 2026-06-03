@@ -40,6 +40,18 @@
         </header>
         <div class="user-menu__items">
           <button
+            type="button"
+            role="menuitem"
+            class="user-menu__item"
+            :class="{ 'user-menu__item--active': favoritesActive }"
+            @click="onFavorites"
+          >
+            <v-icon size="18" class="user-menu__item-icon">mdi-heart-outline</v-icon>
+            <span class="user-menu__item-label">Manage Favorites</span>
+          </button>
+        </div>
+        <div class="user-menu__items">
+          <button
             v-if="authStore.isAdmin"
             type="button"
             role="menuitem"
@@ -71,8 +83,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
 withDefaults(defineProps<{ settingsActive?: boolean; onSettingsPage?: boolean }>(), {
@@ -83,7 +95,14 @@ const emit = defineEmits(['click:settings', 'click:back'])
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const menuOpen = ref(false)
+
+const favoritesActive = computed(() => route.name === 'favorites')
+
+function onFavorites() {
+  router.push('/favorites')
+}
 
 async function onLogout() {
   await authStore.logout()

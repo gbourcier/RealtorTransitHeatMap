@@ -7,6 +7,8 @@ export interface ListingFiltersState {
     minBedrooms: Ref<number | null>;
     minBathrooms: Ref<number | null>;
     minInteriorAreaSqft: Ref<number | null>;
+    favoritesOnly: Ref<boolean>;
+    includeExpired: Ref<boolean>;
     activeFilterCount: ComputedRef<number>;
     clearAll: () => void;
 }
@@ -18,6 +20,8 @@ export function useListingFilters(): ListingFiltersState {
     const minBedrooms = ref<number | null>(1);
     const minBathrooms = ref<number | null>(1);
     const minInteriorAreaSqft = ref<number | null>(null);
+    const favoritesOnly = ref(false);
+    const includeExpired = ref(false);
 
     const activeFilterCount = computed(() => {
         let n = 0;
@@ -27,6 +31,8 @@ export function useListingFilters(): ListingFiltersState {
         if (minBedrooms.value != null && minBedrooms.value > 1) n++;
         if (minBathrooms.value != null && minBathrooms.value > 1) n++;
         if (minInteriorAreaSqft.value != null) n++;
+        if (favoritesOnly.value) n++;
+        if (includeExpired.value) n++;
         return n;
     });
 
@@ -37,6 +43,8 @@ export function useListingFilters(): ListingFiltersState {
         minBedrooms.value = 1;
         minBathrooms.value = 1;
         minInteriorAreaSqft.value = null;
+        favoritesOnly.value = false;
+        includeExpired.value = false;
     }
 
     return {
@@ -46,6 +54,8 @@ export function useListingFilters(): ListingFiltersState {
         minBedrooms,
         minBathrooms,
         minInteriorAreaSqft,
+        favoritesOnly,
+        includeExpired,
         activeFilterCount,
         clearAll,
     };
