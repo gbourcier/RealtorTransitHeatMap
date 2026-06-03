@@ -44,6 +44,10 @@ function flushFavorites(): void {
     favorites.flush();
 }
 
+function onVisibilityChange(): void {
+    if (document.visibilityState === "hidden") flushFavorites();
+}
+
 const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
 const mapCount = ref(0);
 const mapLoading = ref(false);
@@ -103,10 +107,12 @@ onMounted(() => {
     teleportReady.value = true;
     listings.loadInitial();
     window.addEventListener("beforeunload", flushFavorites);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 });
 
 onBeforeUnmount(() => {
     window.removeEventListener("beforeunload", flushFavorites);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
     flushFavorites();
 });
 </script>
@@ -168,8 +174,10 @@ onBeforeUnmount(() => {
             :sort-by="listings.sortBy.value"
             :sort-dir="listings.sortDir.value"
             :sort-options="listings.sortOptions"
+            :favorites-only="filters.favoritesOnly.value"
             :selected-key="selectedKey"
             @select-sort="listings.selectSort"
+            @toggle-favorites="filters.favoritesOnly.value = !filters.favoritesOnly.value"
             @card-click="focusListingOnMap"
             @card-hover="highlightListingOnMap"
             @card-leave="clearMapHighlight"
@@ -185,7 +193,9 @@ onBeforeUnmount(() => {
         :sort-by="listings.sortBy.value"
         :sort-dir="listings.sortDir.value"
         :sort-options="listings.sortOptions"
+        :favorites-only="filters.favoritesOnly.value"
         @select-sort="listings.selectSort"
+        @toggle-favorites="filters.favoritesOnly.value = !filters.favoritesOnly.value"
         @card-click="openListing"
         @load-more="listings.loadMore"
     />

@@ -18,6 +18,7 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    favoritesOnly: boolean;
     selectedKey: string | null;
 }
 
@@ -25,6 +26,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
+    toggleFavorites: [];
     cardClick: [item: Listing];
     cardHover: [item: Listing];
     cardLeave: [];
@@ -68,7 +70,8 @@ function listingKey(item: Listing): string {
 <template>
     <aside class="listings-side-panel">
         <ListingsSortToolbar :sort-by="sortBy" :sort-dir="sortDir" :sort-options="sortOptions"
-            @select-sort="emit('selectSort', $event)" />
+            :favorites-only="favoritesOnly" @select-sort="emit('selectSort', $event)"
+            @toggle-favorites="emit('toggleFavorites')" />
         <div ref="bodyEl" class="listings-side-panel__body">
             <div v-if="loading && items.length === 0" class="listing-cards listing-cards--panel">
                 <ListingCardSkeleton v-for="i in skeletonCount" :key="`skeleton-panel-${i}`" variant="panel" />

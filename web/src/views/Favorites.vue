@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import {
     listFavorites,
     removeFavoritesBatch,
@@ -17,8 +16,6 @@ import {
 import EmptyState from "../components/EmptyState.vue";
 
 defineOptions({ name: "Favorites" });
-
-const router = useRouter();
 
 const items = ref<Favorite[]>([]);
 const total = ref(0);
@@ -163,15 +160,7 @@ onMounted(loadInitial);
     <v-container fluid class="pa-2 pa-sm-6">
         <v-card class="favorites-card">
             <v-card-title class="d-flex align-center">
-                <button
-                    type="button"
-                    class="favorites-back"
-                    aria-label="Back to map"
-                    @click="router.push('/listings')"
-                >
-                    <v-icon size="18">mdi-arrow-left</v-icon>
-                </button>
-                <span class="ms-2">Manage Favorites</span>
+                <span>Manage Favorites</span>
                 <span v-if="total > 0" class="favorites-count">{{ total }}</span>
                 <v-spacer />
                 <v-btn
@@ -214,8 +203,12 @@ onMounted(loadInitial);
                                     @click="setSort(col.key)"
                                 >
                                     <span>{{ col.label }}</span>
-                                    <v-icon v-if="sortBy === col.key" size="16">
-                                        {{ sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down" }}
+                                    <v-icon
+                                        size="16"
+                                        class="favorites-sort__icon"
+                                        :class="{ 'favorites-sort__icon--hidden': sortBy !== col.key }"
+                                    >
+                                        {{ sortBy === col.key && sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down" }}
                                     </v-icon>
                                 </button>
                             </th>
@@ -327,25 +320,6 @@ onMounted(loadInitial);
     margin: 0 auto;
 }
 
-.favorites-back {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
-    background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.9);
-    cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.favorites-back:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
-    border-color: rgba(var(--v-theme-on-surface), 0.32);
-}
-
 .favorites-count {
     margin-left: 10px;
     font-size: 0.8125rem;
@@ -377,10 +351,6 @@ onMounted(loadInitial);
     white-space: nowrap;
 }
 
-.favorites-table__num {
-    text-align: right;
-}
-
 .favorites-table__check {
     width: 44px;
     padding-left: 12px;
@@ -388,7 +358,6 @@ onMounted(loadInitial);
 
 .favorites-table__actions {
     width: 96px;
-    text-align: right;
     white-space: nowrap;
 }
 
@@ -405,8 +374,8 @@ onMounted(loadInitial);
     cursor: pointer;
 }
 
-.favorites-table__num .favorites-sort {
-    flex-direction: row-reverse;
+.favorites-sort__icon--hidden {
+    visibility: hidden;
 }
 
 .favorites-sort:hover {

@@ -1,7 +1,7 @@
 <template>
   <v-system-bar color="header-bar" height="48" class="header-bar">
     <button
-      v-if="onSettingsPage"
+      v-if="showBack"
       type="button"
       class="back-pill ms-2"
       aria-label="Back to map"
@@ -21,7 +21,7 @@
         <button
           type="button"
           class="user-pill"
-          :class="[onSettingsPage ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
+          :class="[showBack ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
           v-bind="menuProps"
           aria-label="User menu"
         >
@@ -87,9 +87,9 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
-withDefaults(defineProps<{ settingsActive?: boolean; onSettingsPage?: boolean }>(), {
+withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean }>(), {
   settingsActive: false,
-  onSettingsPage: false,
+  showBack: false,
 })
 const emit = defineEmits(['click:settings', 'click:back'])
 

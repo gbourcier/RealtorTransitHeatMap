@@ -205,7 +205,10 @@ function popupHtml(pin: ListingMapPin): string {
     const area = formatArea(pin.interiorAreaSqft);
     return `
         <div class="map-popup">
-            ${favButtonHtml(pin.isFavorite)}
+            <div class="map-popup__top-actions">
+                ${favButtonHtml(pin.isFavorite)}
+                <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+            </div>
             <div class="map-popup__price">${price}</div>
             ${expiredBadge}
             <div class="map-popup__address">
@@ -474,6 +477,15 @@ function wireFavButton(
             isFavorite: pin.isFavorite,
         });
     };
+    const closeBtn = el?.querySelector(
+        ".map-popup__close",
+    ) as HTMLButtonElement | null;
+    if (closeBtn) {
+        closeBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            m.closePopup();
+        };
+    }
 }
 
 function setFavorite(board: number, mls: number, value: boolean): void {
@@ -897,10 +909,16 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     font-size: 0.875rem;
 }
 
-.map-popup__fav {
+.map-popup__top-actions {
     position: absolute;
     top: -6px;
     right: -6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.map-popup__fav {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -916,6 +934,33 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__fav .mdi {
     font-size: 22px;
+}
+
+.map-popup__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.map-popup__close .mdi {
+    font-size: 20px;
+}
+
+.map-popup__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+}
+
+.map-popup__close:active {
+    transform: scale(0.9);
 }
 
 .map-popup__fav:hover {
@@ -943,7 +988,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     letter-spacing: -0.01em;
     color: rgba(var(--v-theme-on-surface), 0.98);
     margin-bottom: 10px;
-    padding-right: 32px;
+    padding-right: 72px;
 }
 
 .map-popup__expired {

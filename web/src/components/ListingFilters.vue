@@ -108,6 +108,14 @@ const sqftSlider = computed({
                         {{ state.activeFilterCount.value }} active
                     </span>
                 </div>
+                <button
+                    type="button"
+                    class="filter-modal__close"
+                    aria-label="Close filters"
+                    @click="menuOpen = false"
+                >
+                    <v-icon size="20">mdi-close</v-icon>
+                </button>
             </header>
 
             <section class="filter-modal__section">
@@ -401,6 +409,30 @@ const sqftSlider = computed({
     color: rgb(var(--v-theme-primary));
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+.filter-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: transparent;
+    border: 0;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.filter-modal__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.filter-modal__close:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
 }
 
 .filter-modal__section {
