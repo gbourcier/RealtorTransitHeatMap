@@ -534,15 +534,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .listings-map-legend__swatch--fast {
-    background-color: rgb(var(--v-theme-success));
+    background-color: rgb(var(--v-theme-commute-fast));
 }
 
 .listings-map-legend__swatch--mid {
-    background-color: rgb(var(--v-theme-warning));
+    background-color: rgb(var(--v-theme-commute-mid));
 }
 
 .listings-map-legend__swatch--slow {
-    background-color: rgb(var(--v-theme-error));
+    background-color: rgb(var(--v-theme-commute-slow));
 }
 
 @media (max-width: 959.98px) {
@@ -611,15 +611,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-pin--fast {
-    --pin-ring: rgba(var(--v-theme-success), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-fast), 0.9);
 }
 
 .price-pin--mid {
-    --pin-ring: rgba(var(--v-theme-warning), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-mid), 0.9);
 }
 
 .price-pin--slow {
-    --pin-ring: rgba(var(--v-theme-error), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-slow), 0.9);
 }
 
 .price-pin--unknown {
@@ -689,15 +689,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-cluster--fast {
-    --cluster-ring: rgba(var(--v-theme-success), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-fast), 0.85);
 }
 
 .price-cluster--mid {
-    --cluster-ring: rgba(var(--v-theme-warning), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-mid), 0.85);
 }
 
 .price-cluster--slow {
-    --cluster-ring: rgba(var(--v-theme-error), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-slow), 0.85);
 }
 
 .price-cluster--unknown {
@@ -911,15 +911,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .map-popup__commute--fast {
-    --commute-accent: var(--v-theme-success);
+    --commute-accent: var(--v-theme-commute-fast);
 }
 
 .map-popup__commute--mid {
-    --commute-accent: var(--v-theme-warning);
+    --commute-accent: var(--v-theme-commute-mid);
 }
 
 .map-popup__commute--slow {
-    --commute-accent: var(--v-theme-error);
+    --commute-accent: var(--v-theme-commute-slow);
 }
 
 .map-popup__commute-dot {

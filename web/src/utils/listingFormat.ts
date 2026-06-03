@@ -46,9 +46,9 @@ export function formatCommute(seconds: number | null): string {
 export function commuteColor(seconds: number | null): string {
     if (seconds == null) return "rgba(var(--v-theme-on-surface), 0.35)";
     const minutes = seconds / 60;
-    if (minutes < 30) return "rgb(var(--v-theme-success))";
-    if (minutes <= 60) return "rgb(var(--v-theme-warning))";
-    return "rgb(var(--v-theme-error))";
+    if (minutes < 30) return "rgb(var(--v-theme-commute-fast))";
+    if (minutes <= 60) return "rgb(var(--v-theme-commute-mid))";
+    return "rgb(var(--v-theme-commute-slow))";
 }
 
 export function commuteMapUrl(address: string | null): string | null {

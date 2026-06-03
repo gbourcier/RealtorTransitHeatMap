@@ -52,14 +52,14 @@
 }
 
 .mobile-legend__dot--fast {
-    background-color: rgb(var(--v-theme-success));
+    background-color: rgb(var(--v-theme-commute-fast));
 }
 
 .mobile-legend__dot--mid {
-    background-color: rgb(var(--v-theme-warning));
+    background-color: rgb(var(--v-theme-commute-mid));
 }
 
 .mobile-legend__dot--slow {
-    background-color: rgb(var(--v-theme-error));
+    background-color: rgb(var(--v-theme-commute-slow));
 }
 </style>
