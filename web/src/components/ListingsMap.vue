@@ -16,14 +16,19 @@ const props = defineProps<{
     minBedrooms: number | null;
     minBathrooms: number | null;
     minInteriorAreaSqft: number | null;
+    favoritesOnly: boolean;
+    includeExpired: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: "update:count", n: number): void;
     (e: "update:loading", v: boolean): void;
     (e: "pin-click", payload: { board: number; mls: number }): void;
+    (e: "toggle-favorite", payload: { board: number; mls: number; isFavorite: boolean }): void;
     (e: "error", message: string): void;
 }>();
+
+let forceRefit = false;
 
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
@@ -59,7 +64,13 @@ function commuteTier(seconds: number | null): "fast" | "mid" | "slow" | "unknown
     return "slow";
 }
 
-type MarkerData = { price: number | null; commuteSec: number | null };
+type MarkerData = {
+    board: number;
+    mls: number;
+    price: number | null;
+    commuteSec: number | null;
+    isFavorite: boolean;
+};
 
 function median(nums: number[]): number | null {
     if (nums.length === 0) return null;
@@ -159,12 +170,22 @@ function formatBath(count: number): string {
     return Number.isInteger(count) ? `${count}` : count.toFixed(1);
 }
 
+function favButtonHtml(isFavorite: boolean): string {
+    const icon = isFavorite ? "mdi-heart" : "mdi-heart-outline";
+    const cls = isFavorite ? " map-popup__fav--active" : "";
+    const label = isFavorite ? "Remove from favorites" : "Add to favorites";
+    return `<button type="button" class="map-popup__fav${cls}" aria-pressed="${isFavorite}" aria-label="${label}"><i class="mdi ${icon}" aria-hidden="true"></i></button>`;
+}
+
 function popupHtml(pin: ListingMapPin): string {
     const { street, locality } = parseAddress(pin.address);
     const streetEsc = escapeHtml(street);
     const localityEsc = escapeHtml(locality);
     const price = escapeHtml(formatPrice(pin.currentPrice));
     const tier = commuteTier(pin.commuteSecondsDowntown);
+    const expiredBadge = pin.isAvailable
+        ? ""
+        : `<div class="map-popup__expired">Expired listing</div>`;
     const commuteMin =
         pin.commuteSecondsDowntown != null
             ? Math.round(pin.commuteSecondsDowntown / 60).toString()
@@ -184,7 +205,12 @@ function popupHtml(pin: ListingMapPin): string {
     const area = formatArea(pin.interiorAreaSqft);
     return `
         <div class="map-popup">
+            <div class="map-popup__top-actions">
+                ${favButtonHtml(pin.isFavorite)}
+                <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+            </div>
             <div class="map-popup__price">${price}</div>
+            ${expiredBadge}
             <div class="map-popup__address">
                 <div class="map-popup__street">${streetEsc}</div>
                 ${localityLine}
@@ -234,6 +260,8 @@ async function load() {
             ...(props.minInteriorAreaSqft != null && {
                 minInteriorAreaSqft: props.minInteriorAreaSqft,
             }),
+            ...(props.favoritesOnly && { favoritesOnly: true }),
+            ...(props.includeExpired && { includeExpired: true }),
         });
         clearHighlight();
         cluster.value.clearLayers();
@@ -245,23 +273,28 @@ async function load() {
                 riseOnHover: true,
             }) as L.Marker & { _data?: MarkerData };
             m._data = {
+                board: pin.board,
+                mls: pin.mls,
                 price: pin.currentPrice,
                 commuteSec: pin.commuteSecondsDowntown,
+                isFavorite: pin.isFavorite,
             };
             m.bindPopup(popupHtml(pin), { closeButton: false });
             m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
+            m.on("popupopen", () => wireFavButton(m, pin));
             markers.push(m);
             markersByKey.set(listingKey(pin.board, pin.mls), m);
         }
         cluster.value.addLayers(markers);
         emit("update:count", markers.length);
-        if (markers.length > 0 && !hasFitBounds) {
+        if (markers.length > 0 && (!hasFitBounds || forceRefit)) {
             const bounds = L.latLngBounds(
                 markers.map((m) => m.getLatLng()),
             );
             map.value.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
             hasFitBounds = true;
         }
+        forceRefit = false;
     } catch (e: any) {
         emit(
             "error",
@@ -407,6 +440,13 @@ onBeforeUnmount(() => {
 });
 
 watch(
+    () => props.favoritesOnly,
+    (v) => {
+        if (v) forceRefit = true;
+    },
+);
+
+watch(
     () => [
         props.maxPrice,
         props.maxCommuteSec,
@@ -414,11 +454,58 @@ watch(
         props.minBedrooms,
         props.minBathrooms,
         props.minInteriorAreaSqft,
+        props.favoritesOnly,
+        props.includeExpired,
     ],
     () => load(),
 );
 
 watch(loading, (v) => emit("update:loading", v));
+
+function wireFavButton(
+    m: L.Marker & { _data?: MarkerData },
+    pin: ListingMapPin,
+): void {
+    const el = m.getPopup()?.getElement();
+    const btn = el?.querySelector(".map-popup__fav") as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.onclick = (ev) => {
+        ev.stopPropagation();
+        emit("toggle-favorite", {
+            board: pin.board,
+            mls: pin.mls,
+            isFavorite: pin.isFavorite,
+        });
+    };
+    const closeBtn = el?.querySelector(
+        ".map-popup__close",
+    ) as HTMLButtonElement | null;
+    if (closeBtn) {
+        closeBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            m.closePopup();
+        };
+    }
+}
+
+function setFavorite(board: number, mls: number, value: boolean): void {
+    const m = markersByKey.get(listingKey(board, mls)) as
+        | (L.Marker & { _data?: MarkerData })
+        | undefined;
+    if (!m) return;
+    if (m._data) m._data.isFavorite = value;
+    const el = m.getPopup()?.getElement();
+    const btn = el?.querySelector(".map-popup__fav") as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.classList.toggle("map-popup__fav--active", value);
+    btn.setAttribute("aria-pressed", String(value));
+    btn.setAttribute(
+        "aria-label",
+        value ? "Remove from favorites" : "Add to favorites",
+    );
+    const icon = btn.querySelector("i");
+    if (icon) icon.className = `mdi ${value ? "mdi-heart" : "mdi-heart-outline"}`;
+}
 
 function focusListing(board: number, mls: number): boolean {
     const marker = markersByKey.get(listingKey(board, mls));
@@ -449,7 +536,7 @@ function clearHighlight(): void {
     }
 }
 
-defineExpose({ focusListing, highlightListing, clearHighlight });
+defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 </script>
 
 <template>
@@ -816,9 +903,82 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .map-popup {
+    position: relative;
     min-width: 240px;
     max-width: 280px;
     font-size: 0.875rem;
+}
+
+.map-popup__top-actions {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.map-popup__fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.map-popup__fav .mdi {
+    font-size: 22px;
+}
+
+.map-popup__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.map-popup__close .mdi {
+    font-size: 20px;
+}
+
+.map-popup__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+}
+
+.map-popup__close:active {
+    transform: scale(0.9);
+}
+
+.map-popup__fav:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+}
+
+.map-popup__fav:active {
+    transform: scale(0.9);
+}
+
+.map-popup__fav--active {
+    color: rgb(var(--v-theme-accent));
+}
+
+.map-popup__fav--active:hover {
+    color: rgb(var(--v-theme-accent));
+    background-color: rgba(var(--v-theme-accent), 0.12);
 }
 
 .map-popup__price {
@@ -828,6 +988,19 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
     letter-spacing: -0.01em;
     color: rgba(var(--v-theme-on-surface), 0.98);
     margin-bottom: 10px;
+    padding-right: 72px;
+}
+
+.map-popup__expired {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(var(--v-theme-warning), 0.16);
+    color: rgb(var(--v-theme-warning));
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .map-popup__address {

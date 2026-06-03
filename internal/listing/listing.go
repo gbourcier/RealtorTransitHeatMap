@@ -1,10 +1,14 @@
 package listing
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Listing struct {
-	Board                  int            `gorm:"column:board;primaryKey"`
-	MLS                    int            `gorm:"column:mls;primaryKey"`
+	Board                  int `gorm:"column:board;primaryKey"`
+	MLS                    int `gorm:"column:mls;primaryKey"`
 	Latitude               float64
 	Longitude              float64
 	Address                string
@@ -46,18 +50,21 @@ type Sort struct {
 }
 
 type Where struct {
-	ShowUnavailable    bool
-	MaxPrice           *float64
-	MaxCommuteSec      *int
-	NewSince           *time.Time
-	MinBedrooms        *int
-	MinBathrooms       *int
+	ShowUnavailable     bool
+	FavoritesOnly       bool
+	UserID              uuid.UUID
+	MaxPrice            *float64
+	MaxCommuteSec       *int
+	NewSince            *time.Time
+	MinBedrooms         *int
+	MinBathrooms        *int
 	MinInteriorAreaSqft *float64
 }
 
 type ListingRow struct {
 	Listing
 	CurrentPrice *float64
+	IsFavorite   bool `gorm:"column:is_favorite"`
 }
 
 type MapPinRow struct {
@@ -73,6 +80,8 @@ type MapPinRow struct {
 	CommuteSecondsDowntown *int      `gorm:"column:commute_seconds_downtown"`
 	FirstSeenAt            time.Time `gorm:"column:first_seen_at"`
 	CurrentPrice           *float64  `gorm:"column:current_price"`
+	IsAvailable            bool      `gorm:"column:is_available"`
+	IsFavorite             bool      `gorm:"column:is_favorite"`
 }
 
 type PendingCommute struct {

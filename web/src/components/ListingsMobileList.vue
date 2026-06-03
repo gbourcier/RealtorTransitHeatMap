@@ -6,6 +6,7 @@ import { useInfiniteScroll } from "../composables/useInfiniteScroll";
 import ListingCard from "./ListingCard.vue";
 import ListingCardSkeleton from "./ListingCardSkeleton.vue";
 import ListingsSortToolbar from "./ListingsSortToolbar.vue";
+import EmptyState from "./EmptyState.vue";
 
 interface Props {
     items: Listing[];
@@ -14,12 +15,14 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    favoritesOnly: boolean;
 }
 
 defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
+    toggleFavorites: [];
     cardClick: [item: Listing];
     loadMore: [];
 }>();
@@ -35,8 +38,10 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
             :sort-by="sortBy"
             :sort-dir="sortDir"
             :sort-options="sortOptions"
+            :favorites-only="favoritesOnly"
             mobile
             @select-sort="emit('selectSort', $event)"
+            @toggle-favorites="emit('toggleFavorites')"
         />
 
         <div
@@ -70,9 +75,7 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
             </div>
         </template>
 
-        <div v-else class="text-medium-emphasis text-center py-8">
-            No listings found.
-        </div>
+        <EmptyState v-else />
     </div>
 </template>
 

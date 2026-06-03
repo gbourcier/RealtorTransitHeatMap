@@ -108,6 +108,14 @@ const sqftSlider = computed({
                         {{ state.activeFilterCount.value }} active
                     </span>
                 </div>
+                <button
+                    type="button"
+                    class="filter-modal__close"
+                    aria-label="Close filters"
+                    @click="menuOpen = false"
+                >
+                    <v-icon size="20">mdi-close</v-icon>
+                </button>
             </header>
 
             <section class="filter-modal__section">
@@ -257,6 +265,37 @@ const sqftSlider = computed({
                 </div>
             </section>
 
+            <section class="filter-modal__section">
+                <div class="filter-modal__toggle-row">
+                    <div class="filter-modal__toggle-text">
+                        <span class="filter-modal__section-title">Show favorites</span>
+                        <span class="filter-modal__toggle-hint">Only listings you saved</span>
+                    </div>
+                    <v-switch
+                        :model-value="state.favoritesOnly.value"
+                        color="primary"
+                        density="compact"
+                        hide-details
+                        inset
+                        @update:model-value="(v) => (state.favoritesOnly.value = !!v)"
+                    />
+                </div>
+                <div class="filter-modal__toggle-row">
+                    <div class="filter-modal__toggle-text">
+                        <span class="filter-modal__section-title">Include expired</span>
+                        <span class="filter-modal__toggle-hint">Show delisted listings</span>
+                    </div>
+                    <v-switch
+                        :model-value="state.includeExpired.value"
+                        color="primary"
+                        density="compact"
+                        hide-details
+                        inset
+                        @update:model-value="(v) => (state.includeExpired.value = !!v)"
+                    />
+                </div>
+            </section>
+
             <footer class="filter-modal__footer">
                 <button
                     type="button"
@@ -370,6 +409,30 @@ const sqftSlider = computed({
     color: rgb(var(--v-theme-primary));
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+.filter-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: transparent;
+    border: 0;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.filter-modal__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.filter-modal__close:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
 }
 
 .filter-modal__section {
@@ -490,6 +553,29 @@ const sqftSlider = computed({
     background-color: rgba(var(--v-theme-primary), 0.18);
     color: rgb(var(--v-theme-primary));
     font-weight: 600;
+}
+
+.filter-modal__toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+}
+
+.filter-modal__toggle-row + .filter-modal__toggle-row {
+    margin-top: 4px;
+}
+
+.filter-modal__toggle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filter-modal__toggle-hint {
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-on-surface), 0.55);
 }
 
 .filter-modal__footer {

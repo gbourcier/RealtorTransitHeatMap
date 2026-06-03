@@ -1,7 +1,7 @@
 <template>
   <v-system-bar color="header-bar" height="48" class="header-bar">
     <button
-      v-if="onSettingsPage"
+      v-if="showBack"
       type="button"
       class="back-pill ms-2"
       aria-label="Back to map"
@@ -21,7 +21,7 @@
         <button
           type="button"
           class="user-pill"
-          :class="[onSettingsPage ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
+          :class="[showBack ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
           v-bind="menuProps"
           aria-label="User menu"
         >
@@ -38,6 +38,18 @@
             <span class="user-menu__role">{{ authStore.isAdmin ? 'Admin' : 'User' }}</span>
           </div>
         </header>
+        <div class="user-menu__items">
+          <button
+            type="button"
+            role="menuitem"
+            class="user-menu__item"
+            :class="{ 'user-menu__item--active': favoritesActive }"
+            @click="onFavorites"
+          >
+            <v-icon size="18" class="user-menu__item-icon">mdi-heart-outline</v-icon>
+            <span class="user-menu__item-label">Manage Favorites</span>
+          </button>
+        </div>
         <div class="user-menu__items">
           <button
             v-if="authStore.isAdmin"
@@ -71,19 +83,26 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
-withDefaults(defineProps<{ settingsActive?: boolean; onSettingsPage?: boolean }>(), {
+withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean }>(), {
   settingsActive: false,
-  onSettingsPage: false,
+  showBack: false,
 })
 const emit = defineEmits(['click:settings', 'click:back'])
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const menuOpen = ref(false)
+
+const favoritesActive = computed(() => route.name === 'favorites')
+
+function onFavorites() {
+  router.push('/favorites')
+}
 
 async function onLogout() {
   await authStore.logout()

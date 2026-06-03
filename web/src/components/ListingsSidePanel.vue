@@ -6,6 +6,7 @@ import { useInfiniteScroll } from "../composables/useInfiniteScroll";
 import ListingCard from "./ListingCard.vue";
 import ListingCardSkeleton from "./ListingCardSkeleton.vue";
 import ListingsSortToolbar from "./ListingsSortToolbar.vue";
+import EmptyState from "./EmptyState.vue";
 
 const SKELETON_ROW_HEIGHT = 156;
 const SKELETON_LIST_PADDING = 20;
@@ -17,6 +18,7 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    favoritesOnly: boolean;
     selectedKey: string | null;
 }
 
@@ -24,6 +26,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
+    toggleFavorites: [];
     cardClick: [item: Listing];
     cardHover: [item: Listing];
     cardLeave: [];
@@ -67,7 +70,8 @@ function listingKey(item: Listing): string {
 <template>
     <aside class="listings-side-panel">
         <ListingsSortToolbar :sort-by="sortBy" :sort-dir="sortDir" :sort-options="sortOptions"
-            @select-sort="emit('selectSort', $event)" />
+            :favorites-only="favoritesOnly" @select-sort="emit('selectSort', $event)"
+            @toggle-favorites="emit('toggleFavorites')" />
         <div ref="bodyEl" class="listings-side-panel__body">
             <div v-if="loading && items.length === 0" class="listing-cards listing-cards--panel">
                 <ListingCardSkeleton v-for="i in skeletonCount" :key="`skeleton-panel-${i}`" variant="panel" />
@@ -81,9 +85,7 @@ function listingKey(item: Listing): string {
                 </div>
             </template>
 
-            <div v-else class="text-medium-emphasis text-center py-8">
-                No listings found.
-            </div>
+            <EmptyState v-else />
 
             <div v-if="hasMore && items.length > 0" ref="sentinelEl" class="listings-side-panel__sentinel">
                 <v-progress-circular v-if="loading" indeterminate size="20" width="2" />

@@ -3,7 +3,7 @@
     <template v-if="!isPublicRoute">
       <default-system-bar
         :settings-active="isSettingsActive"
-        :on-settings-page="isSettingsRoute"
+        :show-back="showBack"
         @click:settings="onToggleSettings"
         @click:back="onBackToMap"
       />
@@ -35,6 +35,7 @@ const isPublicRoute = computed(() => route.meta?.public === true)
 const isSettingsRoute = computed(() => route.meta?.settings === true)
 const settingsDrawer = shallowRef<boolean | null>(false)
 const isSettingsActive = computed(() => isSettingsRoute.value || !!settingsDrawer.value)
+const showBack = computed(() => isSettingsRoute.value || route.name === 'favorites')
 
 watch(isSettingsRoute, (active) => {
   if (active) settingsDrawer.value = false

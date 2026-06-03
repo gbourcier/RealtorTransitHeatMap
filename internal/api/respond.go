@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/favorite"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
@@ -196,6 +197,8 @@ type ListingResponse struct {
 	BedroomCount           int      `json:"bedroomCount"`
 	BathroomCount          int      `json:"bathroomCount"`
 	InteriorAreaSqft       float64  `json:"interiorAreaSqft"`
+	IsAvailable            bool     `json:"isAvailable"`
+	IsFavorite             bool     `json:"isFavorite"`
 }
 
 type ListingMapPinResponse struct {
@@ -211,6 +214,8 @@ type ListingMapPinResponse struct {
 	BedroomCount           int      `json:"bedroomCount"`
 	BathroomCount          int      `json:"bathroomCount"`
 	InteriorAreaSqft       float64  `json:"interiorAreaSqft"`
+	IsAvailable            bool     `json:"isAvailable"`
+	IsFavorite             bool     `json:"isFavorite"`
 }
 
 func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
@@ -227,6 +232,44 @@ func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
 		BedroomCount:           row.BedroomCount,
 		BathroomCount:          row.BathroomCount,
 		InteriorAreaSqft:       row.InteriorAreaSqft,
+		IsAvailable:            row.IsAvailable,
+		IsFavorite:             row.IsFavorite,
+	}
+}
+
+type FavoriteResponse struct {
+	Board                  int      `json:"board"`
+	MLS                    int      `json:"mls"`
+	Latitude               float64  `json:"latitude"`
+	Longitude              float64  `json:"longitude"`
+	Address                string   `json:"address"`
+	CurrentPrice           *float64 `json:"currentPrice"`
+	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
+	FirstSeenAt            int64    `json:"firstSeenAt"`
+	FavoritedAt            int64    `json:"favoritedAt"`
+	Slug                   string   `json:"slug"`
+	BedroomCount           int      `json:"bedroomCount"`
+	BathroomCount          int      `json:"bathroomCount"`
+	InteriorAreaSqft       float64  `json:"interiorAreaSqft"`
+	IsAvailable            bool     `json:"isAvailable"`
+}
+
+func favoriteFromRow(row *favorite.Row) FavoriteResponse {
+	return FavoriteResponse{
+		Board:                  row.Board,
+		MLS:                    row.MLS,
+		Latitude:               row.Latitude,
+		Longitude:              row.Longitude,
+		Address:                row.Address,
+		CurrentPrice:           row.CurrentPrice,
+		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
+		FirstSeenAt:            row.FirstSeenAt.Unix(),
+		FavoritedAt:            row.FavoritedAt.Unix(),
+		Slug:                   "https://www.realtor.ca" + row.Slug,
+		BedroomCount:           row.BedroomCount,
+		BathroomCount:          row.BathroomCount,
+		InteriorAreaSqft:       row.InteriorAreaSqft,
+		IsAvailable:            row.IsAvailable,
 	}
 }
 
@@ -260,6 +303,8 @@ func listingFromRow(row *listing.ListingRow) ListingResponse {
 		BedroomCount:           row.BedroomCount,
 		BathroomCount:          row.BathroomCount,
 		InteriorAreaSqft:       row.InteriorAreaSqft,
+		IsAvailable:            row.IsAvailable,
+		IsFavorite:             row.IsFavorite,
 	}
 }
 

@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed, inject } from "vue";
 import type { Listing } from "../api/listings";
+import { favoritesKey } from "../composables/useFavorites";
 import {
     formatPrice,
     formatDate,
@@ -24,8 +26,24 @@ const emit = defineEmits<{
     leave: [];
 }>();
 
+const favorites = inject(favoritesKey, null);
+
+const isFavorite = computed(() =>
+    favorites
+        ? favorites.isFavorite(props.item.board, props.item.mls, props.item.isFavorite)
+        : props.item.isFavorite,
+);
+
 function onActivate() {
     emit("click", props.item);
+}
+
+function onToggleFavorite() {
+    favorites?.toggle({
+        board: props.item.board,
+        mls: props.item.mls,
+        isFavorite: props.item.isFavorite,
+    });
 }
 </script>
 
@@ -47,8 +65,28 @@ function onActivate() {
         @focus="variant === 'panel' && emit('hover', item)"
         @blur="variant === 'panel' && emit('leave')"
     >
+        <button
+            v-if="favorites"
+            type="button"
+            class="listing-card__fav"
+            :class="{ 'listing-card__fav--active': isFavorite }"
+            :aria-pressed="isFavorite"
+            :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+            @click.stop="onToggleFavorite"
+            @keydown.enter.stop="onToggleFavorite"
+            @keydown.space.stop.prevent="onToggleFavorite"
+        >
+            <v-icon size="20">{{ isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+        </button>
         <div class="listing-card__top">
             <span class="listing-card__price">{{ formatPrice(item.currentPrice) }}</span>
+            <v-chip
+                v-if="!item.isAvailable"
+                size="x-small"
+                color="warning"
+                variant="tonal"
+                class="listing-card__expired"
+            >expired</v-chip>
             <v-chip
                 v-if="isNew(item.firstSeenAt)"
                 size="x-small"
@@ -146,8 +184,54 @@ function onActivate() {
 }
 
 .listing-card--mobile .listing-card__new {
-    top: 16px;
-    right: 16px;
+    top: 18px;
+    right: 58px;
+}
+
+.listing-card--mobile .listing-card__fav {
+    top: 12px;
+    right: 12px;
+}
+
+.listing-card__fav {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.5);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.listing-card__fav:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.85);
+}
+
+.listing-card__fav:active {
+    transform: scale(0.9);
+}
+
+.listing-card__fav:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
+}
+
+.listing-card__fav--active {
+    color: rgb(var(--v-theme-accent));
+}
+
+.listing-card__fav--active:hover {
+    color: rgb(var(--v-theme-accent));
+    background-color: rgba(var(--v-theme-accent), 0.12);
 }
 
 .listing-card__top {
@@ -155,7 +239,7 @@ function onActivate() {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
-    padding-right: 56px;
+    padding-right: 88px;
 }
 
 .listing-card__price {
@@ -167,7 +251,11 @@ function onActivate() {
 .listing-card__new {
     position: absolute;
     top: 12px;
-    right: 12px;
+    right: 50px;
+    margin-left: 0;
+}
+
+.listing-card__expired {
     margin-left: 0;
 }
 
