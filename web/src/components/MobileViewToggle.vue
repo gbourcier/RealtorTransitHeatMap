@@ -75,7 +75,7 @@ const emit = defineEmits<{
 }
 
 .mobile-view-toggle__btn:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 

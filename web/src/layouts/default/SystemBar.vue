@@ -128,20 +128,20 @@ async function onLogout() {
   width: 28px;
   padding: 0;
   border-radius: 999px;
-  border: 1px solid rgba(var(--v-theme-secondary), 0.7);
+  border: 1px solid rgba(var(--v-theme-primary), 0.7);
   background: transparent;
-  color: rgb(var(--v-theme-secondary));
+  color: rgb(var(--v-theme-primary));
   cursor: pointer;
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .back-pill:hover {
-  background-color: rgba(var(--v-theme-secondary), 0.08);
-  border-color: rgb(var(--v-theme-secondary));
+  background-color: rgba(var(--v-theme-primary), 0.08);
+  border-color: rgb(var(--v-theme-primary));
 }
 
 .back-pill:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-secondary));
+  outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 2px;
 }
 
@@ -177,7 +177,7 @@ async function onLogout() {
 }
 
 .user-pill:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-secondary));
+  outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 2px;
 }
 
@@ -257,16 +257,16 @@ async function onLogout() {
 }
 
 .user-menu__item:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-secondary));
+  outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: -2px;
 }
 
 .user-menu__item--active {
-  color: rgb(var(--v-theme-secondary));
+  color: rgb(var(--v-theme-primary));
 }
 
 .user-menu__item--active:hover {
-  background-color: rgba(var(--v-theme-secondary), 0.08);
+  background-color: rgba(var(--v-theme-primary), 0.08);
 }
 
 .user-menu__item-icon {

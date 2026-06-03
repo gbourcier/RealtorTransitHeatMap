@@ -19,7 +19,7 @@
         :title="item.title"
         :prepend-icon="item.icon"
         :subtitle="item.subtitle"
-        color="secondary"
+        color="primary"
         rounded="lg"
       />
     </v-list>

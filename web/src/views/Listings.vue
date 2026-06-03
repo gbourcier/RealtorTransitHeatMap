@@ -125,7 +125,7 @@ onMounted(() => {
             aria-live="polite"
             aria-label="Loading map listings"
         >
-            <v-progress-circular indeterminate size="72" width="5" color="secondary" />
+            <v-progress-circular indeterminate size="72" width="5" color="primary" />
         </div>
         <ListingsSidePanel
             v-if="mdAndUp && drawerOpen"

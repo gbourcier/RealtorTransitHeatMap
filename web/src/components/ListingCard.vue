@@ -109,7 +109,7 @@ function onActivate() {
 }
 
 .listing-card:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 
@@ -120,9 +120,9 @@ function onActivate() {
 
 .listing-card--selected,
 .listing-card--selected:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.12);
-    border-color: rgba(var(--v-theme-secondary), 0.55);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-secondary), 0.45);
+    background-color: rgba(var(--v-theme-primary), 0.12);
+    border-color: rgba(var(--v-theme-primary), 0.55);
+    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-primary), 0.45);
 }
 
 .listing-card--mobile {
@@ -222,7 +222,7 @@ function onActivate() {
 }
 
 .listing-card__commute--link:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 
