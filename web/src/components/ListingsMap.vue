@@ -361,7 +361,7 @@ onMounted(() => {
         spiderfyOnMaxZoom: true,
         chunkedLoading: true,
         maxClusterRadius: 80,
-        disableClusteringAtZoom: 16,
+        disableClusteringAtZoom: 15,
         iconCreateFunction: clusterIcon,
     });
     loadStops();
