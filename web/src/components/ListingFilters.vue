@@ -131,7 +131,7 @@ const sqftSlider = computed({
                     :ticks="priceTicks"
                     show-ticks="always"
                     tick-size="3"
-                    color="secondary"
+                    color="primary"
                     track-color="rgba(var(--v-theme-on-surface), 0.16)"
                     hide-details
                     density="compact"
@@ -160,7 +160,7 @@ const sqftSlider = computed({
                     :ticks="commuteTicks"
                     show-ticks="always"
                     tick-size="3"
-                    color="secondary"
+                    color="primary"
                     track-color="rgba(var(--v-theme-on-surface), 0.16)"
                     hide-details
                     density="compact"
@@ -189,7 +189,7 @@ const sqftSlider = computed({
                     :ticks="sqftTicks"
                     show-ticks="always"
                     tick-size="3"
-                    color="secondary"
+                    color="primary"
                     track-color="rgba(var(--v-theme-on-surface), 0.16)"
                     hide-details
                     density="compact"
@@ -300,18 +300,18 @@ const sqftSlider = computed({
 }
 
 .filter-pill:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 
 .filter-pill--active {
-    border-color: rgba(var(--v-theme-secondary), 0.7);
-    color: rgb(var(--v-theme-secondary));
+    border-color: rgba(var(--v-theme-primary), 0.7);
+    color: rgb(var(--v-theme-primary));
 }
 
 .filter-pill--active:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.08);
-    border-color: rgb(var(--v-theme-secondary));
+    background-color: rgba(var(--v-theme-primary), 0.08);
+    border-color: rgb(var(--v-theme-primary));
 }
 
 .filter-pill--open {
@@ -366,8 +366,8 @@ const sqftSlider = computed({
     height: 22px;
     padding: 0 9px;
     border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-secondary), 0.55);
-    color: rgb(var(--v-theme-secondary));
+    border: 1px solid rgba(var(--v-theme-primary), 0.55);
+    color: rgb(var(--v-theme-primary));
     font-size: 0.75rem;
     font-weight: 500;
 }
@@ -403,7 +403,7 @@ const sqftSlider = computed({
     background: transparent;
     border: 0;
     padding: 2px 4px;
-    color: rgb(var(--v-theme-secondary));
+    color: rgb(var(--v-theme-primary));
     font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
@@ -415,7 +415,7 @@ const sqftSlider = computed({
 }
 
 .filter-modal__section-clear:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 
@@ -425,7 +425,7 @@ const sqftSlider = computed({
 }
 
 .filter-slider :deep(.v-slider-thumb__label) {
-    background-color: rgb(var(--v-theme-secondary));
+    background-color: rgb(var(--v-theme-primary));
 }
 
 .filter-slider :deep(.v-slider__tick-label) {
@@ -481,14 +481,14 @@ const sqftSlider = computed({
 }
 
 .filter-segmented__btn:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: -2px;
 }
 
 .filter-segmented__btn--active,
 .filter-segmented__btn--active:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.18);
-    color: rgb(var(--v-theme-secondary));
+    background-color: rgba(var(--v-theme-primary), 0.18);
+    color: rgb(var(--v-theme-primary));
     font-weight: 600;
 }
 
@@ -529,8 +529,8 @@ const sqftSlider = computed({
     height: 38px;
     padding: 0 16px;
     border-radius: 999px;
-    background-color: rgb(var(--v-theme-secondary));
-    color: rgba(var(--v-theme-on-secondary), 0.87);
+    background-color: rgb(var(--v-theme-primary));
+    color: rgba(var(--v-theme-on-primary), 0.87);
     border: 0;
     font-size: 0.9375rem;
     font-weight: 600;
@@ -543,7 +543,7 @@ const sqftSlider = computed({
 }
 
 .filter-modal__apply:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-secondary));
+    outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 </style>

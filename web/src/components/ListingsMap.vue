@@ -534,15 +534,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .listings-map-legend__swatch--fast {
-    background-color: rgb(var(--v-theme-success));
+    background-color: rgb(var(--v-theme-commute-fast));
 }
 
 .listings-map-legend__swatch--mid {
-    background-color: rgb(var(--v-theme-warning));
+    background-color: rgb(var(--v-theme-commute-mid));
 }
 
 .listings-map-legend__swatch--slow {
-    background-color: rgb(var(--v-theme-error));
+    background-color: rgb(var(--v-theme-commute-slow));
 }
 
 @media (max-width: 959.98px) {
@@ -611,15 +611,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-pin--fast {
-    --pin-ring: rgba(var(--v-theme-success), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-fast), 0.9);
 }
 
 .price-pin--mid {
-    --pin-ring: rgba(var(--v-theme-warning), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-mid), 0.9);
 }
 
 .price-pin--slow {
-    --pin-ring: rgba(var(--v-theme-error), 0.9);
+    --pin-ring: rgba(var(--v-theme-commute-slow), 0.9);
 }
 
 .price-pin--unknown {
@@ -677,7 +677,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-pin.price-pin--highlighted .price-pin__label::before {
-    border-color: rgb(var(--v-theme-secondary));
+    border-color: rgb(var(--v-theme-primary));
     border-width: 2px;
     inset: -3px;
 }
@@ -689,15 +689,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .price-cluster--fast {
-    --cluster-ring: rgba(var(--v-theme-success), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-fast), 0.85);
 }
 
 .price-cluster--mid {
-    --cluster-ring: rgba(var(--v-theme-warning), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-mid), 0.85);
 }
 
 .price-cluster--slow {
-    --cluster-ring: rgba(var(--v-theme-error), 0.85);
+    --cluster-ring: rgba(var(--v-theme-commute-slow), 0.85);
 }
 
 .price-cluster--unknown {
@@ -774,7 +774,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 .marker-cluster.price-pin--highlighted>div,
 .price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
-        0 0 0 3px rgb(var(--v-theme-secondary)),
+        0 0 0 3px rgb(var(--v-theme-primary)),
         0 6px 14px rgba(var(--v-theme-shadow), 0.6);
     transform: scale(1.12);
     transition: transform 120ms ease, box-shadow 120ms ease;
@@ -911,15 +911,15 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .map-popup__commute--fast {
-    --commute-accent: var(--v-theme-success);
+    --commute-accent: var(--v-theme-commute-fast);
 }
 
 .map-popup__commute--mid {
-    --commute-accent: var(--v-theme-warning);
+    --commute-accent: var(--v-theme-commute-mid);
 }
 
 .map-popup__commute--slow {
-    --commute-accent: var(--v-theme-error);
+    --commute-accent: var(--v-theme-commute-slow);
 }
 
 .map-popup__commute-dot {
@@ -966,7 +966,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight });
 }
 
 .map-popup__btn--primary {
-    background-color: rgb(var(--v-theme-secondary));
+    background-color: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
 }
 
 .map-popup__btn--primary:hover {
