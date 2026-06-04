@@ -118,183 +118,190 @@ const sqftSlider = computed({
                 </button>
             </header>
 
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Max price</span>
-                    <span class="filter-modal__section-value">
-                        {{ state.maxPrice.value == null ? "Any" : formatCompactPrice(state.maxPrice.value) }}
-                    </span>
-                    <button
-                        v-if="state.maxPrice.value != null"
-                        type="button"
-                        class="filter-modal__section-clear"
-                        @click="state.maxPrice.value = null"
-                    >Clear</button>
-                </div>
-                <v-slider
-                    v-model="priceSlider"
-                    :min="PRICE_MIN"
-                    :max="PRICE_NO_MAX"
-                    :step="PRICE_STEP"
-                    :ticks="priceTicks"
-                    show-ticks="always"
-                    tick-size="3"
-                    color="primary"
-                    track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                    hide-details
-                    density="compact"
-                    class="filter-slider"
-                />
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Max commute</span>
-                    <span class="filter-modal__section-value">
-                        {{ state.maxCommuteSec.value == null ? "Any" : `${Math.round(state.maxCommuteSec.value / 60)} min` }}
-                    </span>
-                    <button
-                        v-if="state.maxCommuteSec.value != null"
-                        type="button"
-                        class="filter-modal__section-clear"
-                        @click="state.maxCommuteSec.value = null"
-                    >Clear</button>
-                </div>
-                <v-slider
-                    v-model="commuteSliderMin"
-                    :min="COMMUTE_MIN"
-                    :max="COMMUTE_NO_MAX"
-                    :step="COMMUTE_STEP"
-                    :ticks="commuteTicks"
-                    show-ticks="always"
-                    tick-size="3"
-                    color="primary"
-                    track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                    hide-details
-                    density="compact"
-                    class="filter-slider"
-                />
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Min interior space</span>
-                    <span class="filter-modal__section-value">
-                        {{ state.minInteriorAreaSqft.value == null ? "Any" : `${state.minInteriorAreaSqft.value.toLocaleString()} sqft` }}
-                    </span>
-                    <button
-                        v-if="state.minInteriorAreaSqft.value != null"
-                        type="button"
-                        class="filter-modal__section-clear"
-                        @click="state.minInteriorAreaSqft.value = null"
-                    >Clear</button>
-                </div>
-                <v-slider
-                    v-model="sqftSlider"
-                    :min="SQFT_MIN"
-                    :max="SQFT_MAX"
-                    :step="SQFT_STEP"
-                    :ticks="sqftTicks"
-                    show-ticks="always"
-                    tick-size="3"
-                    color="primary"
-                    track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                    hide-details
-                    density="compact"
-                    class="filter-slider"
-                />
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Bedrooms</span>
-                </div>
-                <div class="filter-segmented" role="radiogroup" aria-label="Minimum bedrooms">
-                    <button
-                        v-for="b in bedroomOptions"
-                        :key="b"
-                        type="button"
-                        class="filter-segmented__btn"
-                        :class="{ 'filter-segmented__btn--active': state.minBedrooms.value === b }"
-                        role="radio"
-                        :aria-checked="state.minBedrooms.value === b"
-                        @click="state.minBedrooms.value = b"
-                    >
-                        {{ b }}+
-                    </button>
-                </div>
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Bathrooms</span>
-                </div>
-                <div class="filter-segmented" role="radiogroup" aria-label="Minimum bathrooms">
-                    <button
-                        v-for="b in bathroomOptions"
-                        :key="b"
-                        type="button"
-                        class="filter-segmented__btn"
-                        :class="{ 'filter-segmented__btn--active': state.minBathrooms.value === b }"
-                        role="radio"
-                        :aria-checked="state.minBathrooms.value === b"
-                        @click="state.minBathrooms.value = b"
-                    >
-                        {{ b }}+
-                    </button>
-                </div>
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__section-head">
-                    <span class="filter-modal__section-title">Recency</span>
-                </div>
-                <div class="filter-segmented" role="radiogroup" aria-label="Listing recency">
-                    <button
-                        v-for="opt in recencyOptions"
-                        :key="opt.label"
-                        type="button"
-                        class="filter-segmented__btn"
-                        :class="{ 'filter-segmented__btn--active': state.newWithinDays.value === opt.days }"
-                        role="radio"
-                        :aria-checked="state.newWithinDays.value === opt.days"
-                        @click="state.newWithinDays.value = opt.days"
-                    >
-                        {{ opt.label }}
-                    </button>
-                </div>
-            </section>
-
-            <section class="filter-modal__section">
-                <div class="filter-modal__toggle-row">
-                    <div class="filter-modal__toggle-text">
-                        <span class="filter-modal__section-title">Show favorites</span>
-                        <span class="filter-modal__toggle-hint">Only listings you saved</span>
+            <div class="filter-modal__body">
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Max price</span>
+                        <span class="filter-modal__section-value">
+                            {{ state.maxPrice.value == null ? "Any" : formatCompactPrice(state.maxPrice.value) }}
+                        </span>
+                        <button
+                            v-if="state.maxPrice.value != null"
+                            type="button"
+                            class="filter-modal__section-clear"
+                            @click="state.maxPrice.value = null"
+                        >Clear</button>
                     </div>
-                    <v-switch
-                        :model-value="state.favoritesOnly.value"
+                    <v-slider
+                        v-model="priceSlider"
+                        :min="PRICE_MIN"
+                        :max="PRICE_NO_MAX"
+                        :step="PRICE_STEP"
+                        :ticks="priceTicks"
+                        show-ticks="always"
+                        tick-size="3"
                         color="primary"
-                        density="compact"
+                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
                         hide-details
-                        inset
-                        @update:model-value="(v) => (state.favoritesOnly.value = !!v)"
+                        density="compact"
+                        class="filter-slider"
                     />
-                </div>
-                <div class="filter-modal__toggle-row">
-                    <div class="filter-modal__toggle-text">
-                        <span class="filter-modal__section-title">Include expired</span>
-                        <span class="filter-modal__toggle-hint">Show delisted listings</span>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Max commute</span>
+                        <span class="filter-modal__section-value">
+                            {{ state.maxCommuteSec.value == null ? "Any" : `${Math.round(state.maxCommuteSec.value / 60)} min` }}
+                        </span>
+                        <button
+                            v-if="state.maxCommuteSec.value != null"
+                            type="button"
+                            class="filter-modal__section-clear"
+                            @click="state.maxCommuteSec.value = null"
+                        >Clear</button>
                     </div>
-                    <v-switch
-                        :model-value="state.includeExpired.value"
+                    <v-slider
+                        v-model="commuteSliderMin"
+                        :min="COMMUTE_MIN"
+                        :max="COMMUTE_NO_MAX"
+                        :step="COMMUTE_STEP"
+                        :ticks="commuteTicks"
+                        show-ticks="always"
+                        tick-size="3"
                         color="primary"
-                        density="compact"
+                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
                         hide-details
-                        inset
-                        @update:model-value="(v) => (state.includeExpired.value = !!v)"
+                        density="compact"
+                        class="filter-slider"
                     />
-                </div>
-            </section>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Min interior space</span>
+                        <span class="filter-modal__section-value">
+                            {{ state.minInteriorAreaSqft.value == null ? "Any" : `${state.minInteriorAreaSqft.value.toLocaleString()} sqft` }}
+                        </span>
+                        <button
+                            v-if="state.minInteriorAreaSqft.value != null"
+                            type="button"
+                            class="filter-modal__section-clear"
+                            @click="state.minInteriorAreaSqft.value = null"
+                        >Clear</button>
+                    </div>
+                    <v-slider
+                        v-model="sqftSlider"
+                        :min="SQFT_MIN"
+                        :max="SQFT_MAX"
+                        :step="SQFT_STEP"
+                        :ticks="sqftTicks"
+                        show-ticks="always"
+                        tick-size="3"
+                        color="primary"
+                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
+                        hide-details
+                        density="compact"
+                        class="filter-slider"
+                    />
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Bedrooms</span>
+                    </div>
+                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bedrooms">
+                        <button
+                            v-for="b in bedroomOptions"
+                            :key="b"
+                            type="button"
+                            class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': state.minBedrooms.value === b }"
+                            role="radio"
+                            :aria-checked="state.minBedrooms.value === b"
+                            @click="state.minBedrooms.value = b"
+                        >
+                            {{ b }}+
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Bathrooms</span>
+                    </div>
+                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bathrooms">
+                        <button
+                            v-for="b in bathroomOptions"
+                            :key="b"
+                            type="button"
+                            class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': state.minBathrooms.value === b }"
+                            role="radio"
+                            :aria-checked="state.minBathrooms.value === b"
+                            @click="state.minBathrooms.value = b"
+                        >
+                            {{ b }}+
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__section-head">
+                        <span class="filter-modal__section-title">Recency</span>
+                    </div>
+                    <div class="filter-segmented" role="radiogroup" aria-label="Listing recency">
+                        <button
+                            v-for="opt in recencyOptions"
+                            :key="opt.label"
+                            type="button"
+                            class="filter-segmented__btn"
+                            :class="{ 'filter-segmented__btn--active': state.newWithinDays.value === opt.days }"
+                            role="radio"
+                            :aria-checked="state.newWithinDays.value === opt.days"
+                            @click="state.newWithinDays.value = opt.days"
+                        >
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__toggle-row">
+                        <div class="filter-modal__toggle-text">
+                            <span class="filter-modal__section-title">Show favorites</span>
+                            <span class="filter-modal__toggle-hint">Only listings you saved</span>
+                        </div>
+                        <v-switch
+                            class="filter-toggle"
+                            :model-value="state.favoritesOnly.value"
+                            color="primary"
+                            density="compact"
+                            hide-details
+                            inset
+                            @update:model-value="(v) => (state.favoritesOnly.value = !!v)"
+                        />
+                    </div>
+                </section>
+
+                <section class="filter-modal__section">
+                    <div class="filter-modal__toggle-row">
+                        <div class="filter-modal__toggle-text">
+                            <span class="filter-modal__section-title">Include expired</span>
+                            <span class="filter-modal__toggle-hint">Show delisted listings</span>
+                        </div>
+                        <v-switch
+                            class="filter-toggle"
+                            :model-value="state.includeExpired.value"
+                            color="primary"
+                            density="compact"
+                            hide-details
+                            inset
+                            @update:model-value="(v) => (state.includeExpired.value = !!v)"
+                        />
+                    </div>
+                </section>
+            </div>
 
             <footer class="filter-modal__footer">
                 <button
@@ -372,7 +379,10 @@ const sqftSlider = computed({
 }
 
 .filter-modal {
-    width: min(95vw, 420px);
+    display: flex;
+    flex-direction: column;
+    width: min(94vw, 360px);
+    max-height: min(88vh, 720px);
     border-radius: 16px;
     background-color: rgb(var(--v-theme-surface));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
@@ -382,10 +392,18 @@ const sqftSlider = computed({
 }
 
 .filter-modal__header {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px 6px;
+    padding: 12px 14px 4px;
+}
+
+.filter-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .filter-modal__title-row {
@@ -395,7 +413,7 @@ const sqftSlider = computed({
 }
 
 .filter-modal__title {
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -436,7 +454,7 @@ const sqftSlider = computed({
 }
 
 .filter-modal__section {
-    padding: 12px 16px;
+    padding: 9px 14px;
 }
 
 .filter-modal__section + .filter-modal__section {
@@ -447,11 +465,11 @@ const sqftSlider = computed({
     display: flex;
     align-items: baseline;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 7px;
 }
 
 .filter-modal__section-title {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 
@@ -491,21 +509,12 @@ const sqftSlider = computed({
     background-color: rgb(var(--v-theme-primary));
 }
 
-.filter-slider :deep(.v-slider__tick-label) {
+.filter-slider :deep(.v-slider-track__tick-label) {
     font-size: 0.6875rem;
+    font-weight: 400;
     color: rgba(var(--v-theme-on-surface), 0.5);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
-}
-
-.filter-slider :deep(.v-slider__tick:first-child .v-slider__tick-label) {
-    transform: translateX(0);
-    text-align: left;
-}
-
-.filter-slider :deep(.v-slider__tick:last-child .v-slider__tick-label) {
-    transform: translateX(-100%);
-    text-align: right;
 }
 
 .filter-segmented {
@@ -521,7 +530,7 @@ const sqftSlider = computed({
 .filter-segmented__btn {
     flex: 1 1 0;
     min-width: 0;
-    height: 36px;
+    height: 32px;
     padding: 0 8px;
     background: transparent;
     border: 0;
@@ -560,11 +569,25 @@ const sqftSlider = computed({
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 40px;
+    min-height: 34px;
 }
 
-.filter-modal__toggle-row + .filter-modal__toggle-row {
-    margin-top: 4px;
+.filter-toggle {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.filter-toggle :deep(.v-selection-control) {
+    min-height: 0;
+}
+
+.filter-toggle :deep(.v-switch__track) {
+    opacity: 1;
+    background-color: rgba(var(--v-theme-on-surface), 0.16);
+}
+
+.filter-toggle :deep(.v-selection-control--dirty .v-switch__track) {
+    background-color: rgb(var(--v-theme-primary));
 }
 
 .filter-modal__toggle-text {
@@ -579,16 +602,17 @@ const sqftSlider = computed({
 }
 
 .filter-modal__footer {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 16px 14px;
+    padding: 10px 14px 12px;
     border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .filter-modal__reset {
     flex: 0 0 auto;
-    height: 38px;
+    height: 34px;
     padding: 0 16px;
     border-radius: 999px;
     background: transparent;
@@ -612,13 +636,13 @@ const sqftSlider = computed({
 
 .filter-modal__apply {
     flex: 1 1 auto;
-    height: 38px;
+    height: 34px;
     padding: 0 16px;
     border-radius: 999px;
     background-color: rgb(var(--v-theme-primary));
     color: rgba(var(--v-theme-on-primary), 0.87);
     border: 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: filter 120ms ease;

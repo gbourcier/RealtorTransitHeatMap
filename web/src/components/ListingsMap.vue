@@ -6,6 +6,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { latLngToCell, cellToBoundary } from "h3-js";
+import { useDisplay } from "vuetify";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
 import { listTransitStops } from "../api/transit";
 
@@ -29,6 +30,8 @@ const emit = defineEmits<{
 }>();
 
 let forceRefit = false;
+
+const { mobile } = useDisplay();
 
 const mapEl = ref<HTMLElement | null>(null);
 const map = shallowRef<L.Map | null>(null);
@@ -393,7 +396,7 @@ onMounted(() => {
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         chunkedLoading: true,
-        maxClusterRadius: 80,
+        maxClusterRadius: mobile.value ? 50 : 65,
         disableClusteringAtZoom: 15,
         iconCreateFunction: clusterIcon,
     });
