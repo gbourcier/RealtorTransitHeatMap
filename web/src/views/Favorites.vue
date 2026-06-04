@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useDisplay } from "vuetify";
 import {
     listFavorites,
     removeFavoritesBatch,
@@ -16,6 +17,8 @@ import {
 import EmptyState from "../components/EmptyState.vue";
 
 defineOptions({ name: "Favorites" });
+
+const { mobile } = useDisplay();
 
 const items = ref<Favorite[]>([]);
 const total = ref(0);
@@ -51,6 +54,10 @@ const columns: { key: FavoriteSortBy; label: string; numeric: boolean }[] = [
     { key: "favorited_date", label: "Favorited", numeric: false },
     { key: "listing_posted_date", label: "Listed", numeric: false },
 ];
+
+const activeSortLabel = computed(
+    () => columns.find((c) => c.key === sortBy.value)?.label ?? "",
+);
 
 function rowKey(f: Favorite): string {
     return `${f.board}-${f.mls}`;
@@ -177,8 +184,122 @@ onMounted(loadInitial);
 
             <v-divider />
 
+            <div
+                v-if="mobile && (items.length > 0 || loading)"
+                class="favorites-mobile-bar"
+            >
+                <v-checkbox-btn
+                    :model-value="allLoadedSelected"
+                    density="compact"
+                    hide-details
+                    label="Select all"
+                    class="favorites-mobile-bar__check"
+                    @update:model-value="toggleAll"
+                />
+                <v-spacer />
+                <v-menu>
+                    <template #activator="{ props }">
+                        <v-btn
+                            v-bind="props"
+                            variant="tonal"
+                            size="small"
+                            :prepend-icon="sortDir === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
+                            append-icon="mdi-menu-down"
+                        >
+                            {{ activeSortLabel }}
+                        </v-btn>
+                    </template>
+                    <v-list density="compact">
+                        <v-list-item
+                            v-for="col in columns"
+                            :key="col.key"
+                            :active="sortBy === col.key"
+                            @click="setSort(col.key)"
+                        >
+                            <v-list-item-title>{{ col.label }}</v-list-item-title>
+                            <template #append>
+                                <v-icon v-if="sortBy === col.key" size="16">
+                                    {{ sortDir === "asc" ? "mdi-arrow-up" : "mdi-arrow-down" }}
+                                </v-icon>
+                            </template>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
+            </div>
+
             <div ref="bodyEl" class="favorites-body">
-                <table v-if="items.length > 0 || loading" class="favorites-table">
+                <div v-if="mobile && (items.length > 0 || loading)" class="favorites-cards">
+                    <div
+                        v-for="f in items"
+                        :key="rowKey(f)"
+                        class="favorites-card-item"
+                        :class="{ 'favorites-card-item--selected': selected.has(rowKey(f)) }"
+                    >
+                        <v-checkbox-btn
+                            :model-value="selected.has(rowKey(f))"
+                            density="compact"
+                            hide-details
+                            class="favorites-card-item__check"
+                            @update:model-value="toggleRow(f)"
+                        />
+                        <div class="favorites-card-item__info">
+                            <div class="favorites-card-item__top">
+                                <div class="favorites-card-item__title">
+                                    <div class="favorites-listing__street">
+                                        {{ parseAddress(f.address).street }}
+                                        <v-chip
+                                            v-if="!f.isAvailable"
+                                            size="x-small"
+                                            color="warning"
+                                            variant="tonal"
+                                            class="ms-1"
+                                        >expired</v-chip>
+                                    </div>
+                                    <div
+                                        v-if="parseAddress(f.address).locality"
+                                        class="favorites-listing__locality"
+                                    >
+                                        {{ parseAddress(f.address).locality }}
+                                    </div>
+                                </div>
+                                <div class="favorites-card-item__figures">
+                                    <div class="favorites-table__price">
+                                        {{ formatPrice(f.currentPrice) }}
+                                    </div>
+                                    <div class="favorites-card-item__commute">
+                                        {{ formatCommute(f.commuteSecondsDowntown) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="favorites-card-item__foot">
+                                <span class="favorites-card-item__dates">
+                                    Favorited {{ formatDate(f.favoritedAt) }} · Listed
+                                    {{ formatDate(f.firstSeenAt) }}
+                                </span>
+                                <div class="favorites-card-item__actions">
+                                    <v-btn
+                                        icon="mdi-open-in-new"
+                                        variant="text"
+                                        size="small"
+                                        aria-label="View listing"
+                                        @click="openListing(f)"
+                                    />
+                                    <v-btn
+                                        icon="mdi-map-marker-outline"
+                                        variant="text"
+                                        size="small"
+                                        aria-label="View on Google Maps"
+                                        :href="mapsUrl(f)"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table v-else-if="items.length > 0 || loading" class="favorites-table">
                     <thead>
                         <tr>
                             <th class="favorites-table__check">
@@ -416,5 +537,90 @@ onMounted(loadInitial);
     justify-content: center;
     min-height: 36px;
     padding: 8px 0;
+}
+
+.favorites-mobile-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+}
+
+.favorites-mobile-bar__check {
+    flex: 0 0 auto;
+}
+
+.favorites-mobile-bar__check :deep(.v-label) {
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.favorites-cards {
+    display: flex;
+    flex-direction: column;
+}
+
+.favorites-card-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 12px 6px;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.favorites-card-item--selected {
+    background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+.favorites-card-item__check {
+    flex: 0 0 auto;
+    margin-top: 1px;
+}
+
+.favorites-card-item__info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.favorites-card-item__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.favorites-card-item__title {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.favorites-card-item__figures {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+.favorites-card-item__commute {
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.favorites-card-item__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.favorites-card-item__dates {
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+}
+
+.favorites-card-item__actions {
+    flex: 0 0 auto;
+    display: flex;
+    margin-right: -6px;
 }
 </style>
