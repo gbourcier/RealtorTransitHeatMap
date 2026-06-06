@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -76,6 +77,14 @@ func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+func (r *Repository) TouchLastSeen(ctx context.Context, id uuid.UUID, throttle time.Duration) error {
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&User{}).
+		Where("id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)", id, now.Add(-throttle)).
+		UpdateColumn("last_seen_at", now).Error
 }
 
 func (r *Repository) CountAdmins(ctx context.Context) (int64, error) {

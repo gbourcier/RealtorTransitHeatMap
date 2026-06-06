@@ -20,7 +20,7 @@
         <v-list-item
           v-for="u in users"
           :key="u.id"
-          :subtitle="u.role"
+          :subtitle="formatLastSeen(u.lastSeenAt)"
           :class="{ 'text-disabled': !u.isActive }"
         >
           <template #title>
@@ -42,6 +42,15 @@
               variant="tonal"
             >
               admin
+            </v-chip>
+            <v-chip
+              v-if="isDormant(u)"
+              size="x-small"
+              class="ms-1"
+              color="error"
+              variant="tonal"
+            >
+              dormant
             </v-chip>
           </template>
 
@@ -150,6 +159,25 @@ const roleOptions = [
   { title: 'User', value: 'user' },
   { title: 'Admin', value: 'admin' },
 ]
+
+const dormantDays = 30
+
+function formatLastSeen(unix: number | null): string {
+  if (!unix) return 'Never signed in'
+  const mins = Math.floor((Date.now() - unix * 1000) / 60000)
+  if (mins < 1) return 'Active just now'
+  if (mins < 60) return `Last seen ${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `Last seen ${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `Last seen ${days}d ago`
+  const months = Math.floor(days / 30)
+  return `Last seen ${months}mo ago`
+}
+
+function isDormant(u: User): boolean {
+  return u.lastSeenAt != null && Date.now() - u.lastSeenAt * 1000 > dormantDays * 86400000
+}
 
 const dialog = reactive({
   open: false,

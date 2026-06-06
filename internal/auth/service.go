@@ -110,6 +110,12 @@ func (svc *Service) Logout(ctx context.Context, token string) error {
 	return svc.sessions.delete(ctx, hashToken(token))
 }
 
+func (svc *Service) MarkSeen(ctx context.Context, id uuid.UUID) {
+	if err := svc.users.TouchLastSeen(ctx, id, lastSeenThrottle); err != nil {
+		slog.Warn("touch last_seen", "err", err)
+	}
+}
+
 func (svc *Service) PurgeExpiredSessions(ctx context.Context) (int64, error) {
 	return svc.sessions.deleteExpired(ctx, time.Now())
 }

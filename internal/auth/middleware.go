@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/user"
@@ -29,6 +30,7 @@ func NewGuard(svc *Service) *Guard {
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
+			go svc.MarkSeen(context.WithoutCancel(r.Context()), u.ID)
 			next.ServeHTTP(w, withUser(r, u))
 		})
 	}

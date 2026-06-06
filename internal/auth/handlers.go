@@ -23,6 +23,8 @@ const (
 	loginMaxAttempts = 10
 	loginWindow      = 15 * time.Minute
 	loginLockout     = 15 * time.Minute
+
+	lastSeenThrottle = 15 * time.Minute
 )
 
 type Handlers struct {
@@ -62,22 +64,29 @@ type loginRequest struct {
 }
 
 type userResponse struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Role      string `json:"role"`
-	IsActive  bool   `json:"isActive"`
-	CreatedAt int64  `json:"createdAt"`
-	UpdatedAt int64  `json:"updatedAt"`
+	ID         string `json:"id"`
+	Username   string `json:"username"`
+	Role       string `json:"role"`
+	IsActive   bool   `json:"isActive"`
+	LastSeenAt *int64 `json:"lastSeenAt"`
+	CreatedAt  int64  `json:"createdAt"`
+	UpdatedAt  int64  `json:"updatedAt"`
 }
 
 func toUserResponse(u *user.User) userResponse {
+	var lastSeen *int64
+	if u.LastSeenAt != nil {
+		v := u.LastSeenAt.Unix()
+		lastSeen = &v
+	}
 	return userResponse{
-		ID:        u.ID.String(),
-		Username:  u.Username,
-		Role:      u.Role,
-		IsActive:  u.IsActive,
-		CreatedAt: u.CreatedAt.Unix(),
-		UpdatedAt: u.UpdatedAt.Unix(),
+		ID:         u.ID.String(),
+		Username:   u.Username,
+		Role:       u.Role,
+		IsActive:   u.IsActive,
+		LastSeenAt: lastSeen,
+		CreatedAt:  u.CreatedAt.Unix(),
+		UpdatedAt:  u.UpdatedAt.Unix(),
 	}
 }
 
