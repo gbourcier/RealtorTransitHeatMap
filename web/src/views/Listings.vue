@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, provide, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, provide, watch } from "vue";
 
 defineOptions({ name: "Listings" });
 import { useDisplay } from "vuetify";
@@ -20,6 +20,10 @@ const { mdAndUp } = useDisplay();
 const viewMode = ref<"list" | "map">("map");
 const drawerOpen = ref(true);
 const teleportReady = ref(false);
+const headerVisible = ref(true);
+
+onActivated(() => (headerVisible.value = true));
+onDeactivated(() => (headerVisible.value = false));
 
 const filters = useListingFilters();
 const listings = useListings(filters);
@@ -119,13 +123,15 @@ onBeforeUnmount(() => {
 
 <template>
     <Teleport to="#header-filters-slot" :disabled="!teleportReady">
-        <ListingsCountPill :total="listings.total.value" />
-        <ListingFilters :state="filters" :total="listings.total.value" />
+        <template v-if="headerVisible">
+            <ListingsCountPill :total="listings.total.value" />
+            <ListingFilters :state="filters" :total="listings.total.value" />
+        </template>
     </Teleport>
 
     <Teleport to="#header-actions-slot" :disabled="!teleportReady">
         <v-btn
-            v-if="mdAndUp"
+            v-if="headerVisible && mdAndUp"
             icon
             variant="text"
             size="x-small"
