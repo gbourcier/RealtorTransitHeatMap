@@ -5,6 +5,7 @@ export interface User {
   username: string
   role: 'admin' | 'user'
   isActive: boolean
+  lastSeenAt: number | null
   createdAt: number
   updatedAt: number
 }

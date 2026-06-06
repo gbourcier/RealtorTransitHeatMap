@@ -15,13 +15,14 @@ const (
 )
 
 type User struct {
-	ID           uuid.UUID `gorm:"column:id;type:uuid;primaryKey"`
-	Username     string    `gorm:"column:username;not null;uniqueIndex"`
-	PasswordHash string    `gorm:"column:password_hash;not null"`
-	Role         string    `gorm:"column:role;not null;default:user"`
-	IsActive     bool      `gorm:"column:is_active;not null;default:true"`
-	CreatedAt    time.Time `gorm:"column:created_at"`
-	UpdatedAt    time.Time `gorm:"column:updated_at"`
+	ID           uuid.UUID  `gorm:"column:id;type:uuid;primaryKey"`
+	Username     string     `gorm:"column:username;not null;uniqueIndex"`
+	PasswordHash string     `gorm:"column:password_hash;not null"`
+	Role         string     `gorm:"column:role;not null;default:user"`
+	IsActive     bool       `gorm:"column:is_active;not null;default:true"`
+	LastSeenAt   *time.Time `gorm:"column:last_seen_at"`
+	CreatedAt    time.Time  `gorm:"column:created_at"`
+	UpdatedAt    time.Time  `gorm:"column:updated_at"`
 }
 
 func (User) TableName() string { return "users" }
