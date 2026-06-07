@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, provide, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, nextTick, provide, watch } from "vue";
 
 defineOptions({ name: "Listings" });
 import { useDisplay } from "vuetify";
@@ -34,9 +34,40 @@ const filtersPanelRef = ref<{ rootEl: HTMLElement | null } | null>(null);
 const saveModalOpen = ref(false);
 const teleportReady = ref(false);
 const headerVisible = ref(true);
+let headerTeleportFrame: number | null = null;
 
-onActivated(() => (headerVisible.value = true));
-onDeactivated(() => (headerVisible.value = false));
+function cancelHeaderTeleportSync(): void {
+    if (headerTeleportFrame === null) return;
+    window.cancelAnimationFrame(headerTeleportFrame);
+    headerTeleportFrame = null;
+}
+
+function syncHeaderTeleportTargets(): void {
+    cancelHeaderTeleportSync();
+    const ready =
+        !!document.getElementById("header-filters-slot") &&
+        !!document.getElementById("header-actions-slot");
+
+    teleportReady.value = ready;
+    if (!ready && headerVisible.value) {
+        headerTeleportFrame = window.requestAnimationFrame(syncHeaderTeleportTargets);
+    }
+}
+
+async function refreshHeaderTeleportTargets(): Promise<void> {
+    await nextTick();
+    syncHeaderTeleportTargets();
+}
+
+onActivated(() => {
+    headerVisible.value = true;
+    void refreshHeaderTeleportTargets();
+});
+onDeactivated(() => {
+    headerVisible.value = false;
+    teleportReady.value = false;
+    cancelHeaderTeleportSync();
+});
 
 const filters = useListingFilters();
 const savedFiltersStore = useSavedFiltersStore();
@@ -158,7 +189,7 @@ function updatePanelWidth(width: number): void {
 }
 
 onMounted(() => {
-    teleportReady.value = true;
+    void refreshHeaderTeleportTargets();
     listings.loadInitial();
     window.addEventListener("beforeunload", flushFavorites);
     window.addEventListener("listings:toggle-panel", toggleResultsPanel);
@@ -167,6 +198,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    cancelHeaderTeleportSync();
     reloadListings.cancel();
     window.removeEventListener("beforeunload", flushFavorites);
     window.removeEventListener("listings:toggle-panel", toggleResultsPanel);
@@ -177,7 +209,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Teleport to="#header-filters-slot" :disabled="!teleportReady">
+    <Teleport v-if="teleportReady" to="#header-filters-slot">
         <template v-if="headerVisible">
             <ListingsCountPill :total="listings.total.value" :loading="listings.loading.value || mapLoading" />
             <ViewSelector :views="views" :filters="filters" @save="openSaveFromHeader" />
@@ -209,7 +241,7 @@ onBeforeUnmount(() => {
         :views="views"
     />
 
-    <Teleport to="#header-actions-slot" :disabled="!teleportReady">
+    <Teleport v-if="teleportReady" to="#header-actions-slot">
         <button
             v-if="headerVisible && mdAndUp"
             type="button"
