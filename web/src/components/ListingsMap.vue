@@ -9,6 +9,7 @@ import { latLngToCell, cellToBoundary } from "h3-js";
 import { useDisplay } from "vuetify";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
 import { listTransitStops } from "../api/transit";
+import { debounce } from "../utils/debounce";
 
 const props = defineProps<{
     maxPrice: number | null;
@@ -429,6 +430,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    debouncedLoad.cancel();
     if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
@@ -449,6 +451,8 @@ watch(
     },
 );
 
+const debouncedLoad = debounce(() => load(), 250);
+
 watch(
     () => [
         props.maxPrice,
@@ -460,7 +464,7 @@ watch(
         props.favoritesOnly,
         props.includeExpired,
     ],
-    () => load(),
+    debouncedLoad,
 );
 
 watch(loading, (v) => emit("update:loading", v));

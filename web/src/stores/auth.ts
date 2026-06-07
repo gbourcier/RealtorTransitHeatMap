@@ -1,27 +1,33 @@
 import { defineStore } from 'pinia'
-import { shallowRef, computed } from 'vue'
+import { shallowRef, ref, computed } from 'vue'
 import { login as apiLogin, logout as apiLogout, me as apiMe } from '../api/auth'
-import type { User } from '../api/auth'
+import type { CurrentUser } from '../api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = shallowRef<User | null>(null)
+  const user = shallowRef<CurrentUser | null>(null)
+  const defaultFilterId = ref<string | null>(null)
   const initialized = shallowRef(false)
 
   const isLoggedIn = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.role === 'admin')
 
+  function applyUser(u: CurrentUser | null) {
+    user.value = u
+    defaultFilterId.value = u?.preferences.defaultFilterId ?? null
+  }
+
   async function fetchMe() {
     try {
-      user.value = await apiMe()
+      applyUser(await apiMe())
     } catch {
-      user.value = null
+      applyUser(null)
     } finally {
       initialized.value = true
     }
   }
 
   async function login(username: string, password: string) {
-    user.value = await apiLogin(username, password)
+    applyUser(await apiLogin(username, password))
     initialized.value = true
   }
 
@@ -29,9 +35,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await apiLogout()
     } finally {
-      user.value = null
+      applyUser(null)
     }
   }
 
-  return { user, initialized, isLoggedIn, isAdmin, fetchMe, login, logout }
+  function setDefaultFilterId(id: string | null) {
+    defaultFilterId.value = id
+  }
+
+  return { user, defaultFilterId, initialized, isLoggedIn, isAdmin, fetchMe, login, logout, setDefaultFilterId }
 })

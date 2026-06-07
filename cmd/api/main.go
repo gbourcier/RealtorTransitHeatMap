@@ -18,7 +18,9 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/favorite"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/preference"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/realtor"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/savedfilter"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scrape"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
@@ -57,12 +59,13 @@ func run() error {
 	defer sqlDB.Close()
 
 	users := user.NewRepository(gormDB)
+	preferences := preference.NewRepository(gormDB)
 	authSvc := auth.NewService(gormDB, users, cfg.Auth)
 	if err := authSvc.Bootstrap(ctx); err != nil {
 		return err
 	}
 	authGuard := auth.NewGuard(authSvc)
-	authHandlers := auth.NewHandlers(authSvc, cfg.Auth)
+	authHandlers := auth.NewHandlers(authSvc, preferences, cfg.Auth)
 	userHandlers := auth.NewUserHandlers(users, authSvc)
 
 	go func() {
@@ -83,6 +86,7 @@ func run() error {
 	realtorClient := realtor.NewClient(cfg.Realtor)
 	listings := listing.NewRepository(gormDB)
 	favorites := favorite.NewRepository(gormDB)
+	savedFilters := savedfilter.NewRepository(gormDB)
 	scrapeRuns := scraperun.NewRepository(gormDB)
 	refreshRuns := refresh.NewRepository(gormDB)
 	schedules := schedule.NewRepository(gormDB)
@@ -108,7 +112,7 @@ func run() error {
 		return err
 	}
 
-	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, dispatcher, listings, favorites, commuteComputer, stops)
+	srv := api.NewServer(cfg.HTTP.Addr, web.Dist(), authGuard, authHandlers, userHandlers, scrapeWorker, refreshWorker, schedules, scheduler, dispatcher, listings, favorites, savedFilters, preferences, commuteComputer, stops)
 
 	serverErr := make(chan error, 1)
 	go func() {

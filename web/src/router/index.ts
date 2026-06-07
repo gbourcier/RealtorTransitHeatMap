@@ -6,6 +6,7 @@ import Login from '../views/Login.vue'
 import Users from '../views/Users.vue'
 import Favorites from '../views/Favorites.vue'
 import { useAuthStore } from '../stores/auth'
+import { useSavedFiltersStore } from '../stores/savedFilters'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -31,5 +32,9 @@ router.beforeEach(async (to) => {
     return
   }
   if (!authStore.isLoggedIn) return '/login'
+  const savedFiltersStore = useSavedFiltersStore()
+  if (!savedFiltersStore.initialized) {
+    await savedFiltersStore.fetchList()
+  }
   if (to.meta.admin && !authStore.isAdmin) return '/listings'
 })

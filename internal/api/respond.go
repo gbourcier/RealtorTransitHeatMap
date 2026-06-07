@@ -8,6 +8,7 @@ import (
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/favorite"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/savedfilter"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/schedule"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/scraperun"
 )
@@ -337,5 +338,37 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 		},
 		Status:         mapStatus(l.IsAvailable),
 		PriceHistories: histories,
+	}
+}
+
+type SavedFilterResponse struct {
+	ID                  string   `json:"id"`
+	Name                string   `json:"name"`
+	MaxPrice            *float64 `json:"maxPrice"`
+	MaxCommuteSec       *int     `json:"maxCommuteSec"`
+	NewWithinDays       *int     `json:"newWithinDays"`
+	MinBedrooms         *int     `json:"minBedrooms"`
+	MinBathrooms        *int     `json:"minBathrooms"`
+	MinInteriorAreaSqft *float64 `json:"minInteriorAreaSqft"`
+	FavoritesOnly       bool     `json:"favoritesOnly"`
+	IncludeExpired      bool     `json:"includeExpired"`
+	CreatedAt           int64    `json:"createdAt"`
+	UpdatedAt           int64    `json:"updatedAt"`
+}
+
+func savedFilterFromModel(sf *savedfilter.SavedFilter) SavedFilterResponse {
+	return SavedFilterResponse{
+		ID:                  sf.ID.String(),
+		Name:                sf.Name,
+		MaxPrice:            sf.MaxPrice,
+		MaxCommuteSec:       sf.MaxCommuteSec,
+		NewWithinDays:       sf.NewWithinDays,
+		MinBedrooms:         sf.MinBedrooms,
+		MinBathrooms:        sf.MinBathrooms,
+		MinInteriorAreaSqft: sf.MinInteriorAreaSqft,
+		FavoritesOnly:       sf.FavoritesOnly,
+		IncludeExpired:      sf.IncludeExpired,
+		CreatedAt:           sf.CreatedAt.Unix(),
+		UpdatedAt:           sf.UpdatedAt.Unix(),
 	}
 }

@@ -86,6 +86,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useSavedFiltersStore } from '../../stores/savedFilters'
 
 withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean }>(), {
   settingsActive: false,
@@ -94,6 +95,7 @@ withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean }>(), {
 const emit = defineEmits(['click:settings', 'click:back'])
 
 const authStore = useAuthStore()
+const savedFiltersStore = useSavedFiltersStore()
 const router = useRouter()
 const route = useRoute()
 const menuOpen = ref(false)
@@ -106,6 +108,7 @@ function onFavorites() {
 
 async function onLogout() {
   await authStore.logout()
+  savedFiltersStore.reset()
   router.push('/login')
 }
 </script>

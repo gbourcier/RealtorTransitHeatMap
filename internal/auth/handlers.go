@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,7 +13,12 @@ import (
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/user"
+	"github.com/google/uuid"
 )
+
+type PreferenceLookup interface {
+	DefaultFilterID(ctx context.Context, userID uuid.UUID) (*uuid.UUID, error)
+}
 
 const (
 	minPasswordLength = 8
@@ -29,15 +35,44 @@ const (
 
 type Handlers struct {
 	svc     *Service
+	prefs   PreferenceLookup
 	cfg     config.AuthConfig
 	limiter *rateLimiter
 }
 
-func NewHandlers(svc *Service, cfg config.AuthConfig) *Handlers {
+func NewHandlers(svc *Service, prefs PreferenceLookup, cfg config.AuthConfig) *Handlers {
 	return &Handlers{
 		svc:     svc,
+		prefs:   prefs,
 		cfg:     cfg,
 		limiter: newRateLimiter(loginMaxAttempts, loginWindow, loginLockout),
+	}
+}
+
+type mePreferences struct {
+	DefaultFilterID *string `json:"defaultFilterId"`
+}
+
+type meResponse struct {
+	ID          string        `json:"id"`
+	Username    string        `json:"username"`
+	Role        string        `json:"role"`
+	Preferences mePreferences `json:"preferences"`
+}
+
+func (h *Handlers) toMeResponse(ctx context.Context, u *user.User) meResponse {
+	var defaultFilterID *string
+	if id, err := h.prefs.DefaultFilterID(ctx, u.ID); err != nil {
+		slog.Error("load default filter failed", "err", err)
+	} else if id != nil {
+		s := id.String()
+		defaultFilterID = &s
+	}
+	return meResponse{
+		ID:          u.ID.String(),
+		Username:    u.Username,
+		Role:        u.Role,
+		Preferences: mePreferences{DefaultFilterID: defaultFilterID},
 	}
 }
 
@@ -157,7 +192,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		Secure:   h.cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
-	writeJSON(w, http.StatusOK, toUserResponse(u))
+	writeJSON(w, http.StatusOK, h.toMeResponse(r.Context(), u))
 }
 
 func (h *Handlers) Logout(w http.ResponseWriter, r *http.Request) {
@@ -175,5 +210,5 @@ func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	writeJSON(w, http.StatusOK, toUserResponse(u))
+	writeJSON(w, http.StatusOK, h.toMeResponse(r.Context(), u))
 }
