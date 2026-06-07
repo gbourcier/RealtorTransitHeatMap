@@ -20,15 +20,25 @@ const emit = defineEmits<{
 }>();
 
 const PRICE_MIN = 300_000;
-const PRICE_MAX = 2_000_000;
+const PRICE_MAX = 1_000_000;
 const PRICE_STEP = 25_000;
 const PRICE_NO_MAX = PRICE_MAX + PRICE_STEP;
-const priceTicks = ["$300k", "$1M", "Any"];
+const priceTicks = [
+    { at: 300_000, label: "$300k" },
+    { at: 500_000, label: "$500k" },
+    { at: 700_000, label: "$700k" },
+    { at: 900_000, label: "$900k" },
+    { at: PRICE_NO_MAX, label: "Any" },
+];
 
 const COMMUTE_MAX = 60;
 const COMMUTE_STEP = 5;
 const COMMUTE_NO_MAX = COMMUTE_MAX + COMMUTE_STEP;
-const commuteTicks = ["0m", "30m", "Any"];
+const commuteTicks = [
+    { at: 0, label: "0m" },
+    { at: 30, label: "30m" },
+    { at: COMMUTE_NO_MAX, label: "Any" },
+];
 
 const bedOptions = [
     { value: null, label: "Any" },

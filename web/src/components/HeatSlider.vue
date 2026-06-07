@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 
+interface Tick {
+    at: number;
+    label: string;
+}
+
 interface Props {
     min: number;
     max: number;
     step?: number;
     modelValue: number;
     heat?: boolean;
-    ticks?: string[];
+    ticks?: Tick[];
     ariaLabel?: string;
 }
 
@@ -26,6 +31,11 @@ const fillPct = computed(() => {
     const ratio = (props.modelValue - props.min) / (props.max - props.min);
     return Math.max(0, Math.min(1, ratio)) * 100;
 });
+
+function tickPct(at: number): number {
+    const ratio = (at - props.min) / (props.max - props.min);
+    return Math.max(0, Math.min(1, ratio)) * 100;
+}
 
 function valueFromClientX(clientX: number): number {
     const el = railRef.value;
@@ -107,7 +117,11 @@ function onKeydown(e: KeyboardEvent): void {
             />
         </div>
         <div v-if="ticks.length" class="sld__ticks">
-            <span v-for="(t, i) in ticks" :key="i">{{ t }}</span>
+            <span
+                v-for="(t, i) in ticks"
+                :key="i"
+                :style="{ left: tickPct(t.at) + '%', transform: `translateX(-${tickPct(t.at)}%)` }"
+            >{{ t.label }}</span>
         </div>
     </div>
 </template>
@@ -183,11 +197,17 @@ function onKeydown(e: KeyboardEvent): void {
 }
 
 .sld__ticks {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    height: 0.85rem;
     margin-top: 9px;
     font-size: 0.6875rem;
     color: rgba(var(--v-theme-on-surface), 0.42);
     font-variant-numeric: tabular-nums;
+}
+
+.sld__ticks span {
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
 }
 </style>
