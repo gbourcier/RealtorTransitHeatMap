@@ -96,14 +96,20 @@ function clusterIcon(c: L.MarkerCluster): L.DivIcon {
     const count = c.getChildCount();
     const sizeClass = count >= 100 ? "lg" : count >= 10 ? "md" : "sm";
     const mobileClass = mobile.value ? " price-cluster--mobile" : "";
+    const iconSize =
+        sizeClass === "lg"
+            ? L.point(66, mobile.value ? 40 : 38)
+            : sizeClass === "md"
+                ? L.point(58, mobile.value ? 40 : 36)
+                : L.point(mobile.value ? 60 : 52, mobile.value ? 38 : 34);
     const listingLabel = count === 1 ? "listing" : "listings";
     const html = mobile.value
         ? `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span><span class="price-cluster__label">${listingLabel}</span></div>`
-        : `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span></div>`;
+        : `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span><span class="price-cluster__label">listings</span></div>`;
     return L.divIcon({
         className: `price-cluster price-cluster--${tier} price-cluster--${sizeClass}${mobileClass}`,
         html,
-        iconSize: mobile.value ? L.point(58, 48) : L.point(40, 40),
+        iconSize,
     });
 }
 
@@ -809,10 +815,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background-color: rgba(var(--v-theme-popup-overlay), 0.82);
+    width: 48px;
+    height: 30px;
+    border-radius: 999px;
+    background-color: rgba(var(--v-theme-popup-overlay), 0.88);
     color: rgb(var(--v-theme-on-surface));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -827,31 +833,29 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 .price-cluster__inner::before {
     content: "";
     position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    border: 2px solid var(--cluster-ring);
+    inset: -2px;
+    border-radius: 999px;
+    border: 1.5px solid var(--cluster-ring);
     pointer-events: none;
 }
 
 .price-cluster--md .price-cluster__inner {
-    width: 42px;
-    height: 42px;
+    width: 54px;
+    height: 32px;
 }
 
 .price-cluster--lg .price-cluster__inner {
-    width: 52px;
-    height: 52px;
+    width: 62px;
+    height: 34px;
 }
 
 .price-cluster--mobile .price-cluster__inner {
-    width: 52px;
-    height: 42px;
-    border-radius: 14px;
+    width: 56px;
+    height: 34px;
 }
 
 .price-cluster--mobile .price-cluster__inner::before {
-    inset: -4px;
-    border-radius: 16px;
+    inset: -2px;
 }
 
 .price-cluster:hover .price-cluster__inner {
@@ -864,33 +868,33 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .price-cluster__count {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1;
     color: rgba(var(--v-theme-on-surface), 0.96);
 }
 
 .price-cluster__label {
-    margin-top: 2px;
-    font-size: 8px;
-    font-weight: 700;
+    margin-top: 1px;
+    font-size: 7px;
+    font-weight: 600;
     letter-spacing: 0;
     line-height: 1;
-    color: rgba(var(--v-theme-on-surface), 0.58);
+    color: rgba(var(--v-theme-on-surface), 0.64);
 }
 
 .price-cluster--md .price-cluster__count {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .price-cluster--lg .price-cluster__count {
-    font-size: 15px;
+    font-size: 13px;
 }
 
 .price-cluster--mobile.price-cluster--md .price-cluster__inner,
 .price-cluster--mobile.price-cluster--lg .price-cluster__inner {
-    width: 58px;
-    height: 46px;
+    width: 62px;
+    height: 36px;
 }
 
 .price-cluster--mobile .price-cluster__count,
