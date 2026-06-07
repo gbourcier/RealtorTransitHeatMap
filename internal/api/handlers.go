@@ -47,7 +47,7 @@ func (h *handlers) listScrapes(w http.ResponseWriter, r *http.Request) {
 	runs, total, err := h.scrapes.ListRuns(r.Context(), where, scraperun.Page{Limit: limit, Offset: offset})
 	if err != nil {
 		slog.Error("listScrapes failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list scrape runs")
 		return
 	}
 	out := make([]ScrapeRunResponse, len(runs))
@@ -75,7 +75,7 @@ func (h *handlers) getScrape(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("getScrape failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to get scrape run")
 		return
 	}
 	writeJSON(w, http.StatusOK, scrapeRunFromModel(run))

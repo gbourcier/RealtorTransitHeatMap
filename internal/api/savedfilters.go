@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -90,7 +89,7 @@ func (h *savedFilterHandlers) list(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.svc.List(r.Context(), userID)
 	if err != nil {
 		slog.Error("listSavedFilters failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list saved filters")
 		return
 	}
 	out := make([]SavedFilterResponse, len(rows))
@@ -106,8 +105,7 @@ func (h *savedFilterHandlers) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req savedFilterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	name, msg := req.validate()
@@ -123,7 +121,7 @@ func (h *savedFilterHandlers) create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("createSavedFilter failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to create saved filter")
 		return
 	}
 	writeJSON(w, http.StatusCreated, savedFilterFromModel(&sf))
@@ -140,8 +138,7 @@ func (h *savedFilterHandlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req savedFilterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	name, msg := req.validate()
@@ -157,14 +154,14 @@ func (h *savedFilterHandlers) update(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusConflict, "a saved filter with that name already exists")
 		default:
 			slog.Error("updateSavedFilter failed", "err", err)
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, http.StatusInternalServerError, "failed to update saved filter")
 		}
 		return
 	}
 	updated, err := h.svc.GetByID(r.Context(), userID, id)
 	if err != nil {
 		slog.Error("updateSavedFilter reload failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to update saved filter")
 		return
 	}
 	writeJSON(w, http.StatusOK, savedFilterFromModel(updated))
@@ -182,7 +179,7 @@ func (h *savedFilterHandlers) delete(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.svc.Delete(r.Context(), userID, id); err != nil {
 		slog.Error("deleteSavedFilter failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to delete saved filter")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

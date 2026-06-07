@@ -127,7 +127,7 @@ func (h *listingHandlers) list(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("listListings failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list listings")
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *listingHandlers) mapList(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.svc.ListListingsForMap(r.Context(), where)
 	if err != nil {
 		slog.Error("listListingsForMap failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list map listings")
 		return
 	}
 
@@ -183,7 +183,7 @@ func (h *listingHandlers) get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("getListing failed", "err", err, "board", board, "mls", mls)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to get listing")
 		return
 	}
 	writeJSON(w, http.StatusOK, listingDetailFromModel(l))

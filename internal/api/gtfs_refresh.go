@@ -29,7 +29,7 @@ func (h *gtfsRefreshHandlers) start(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("startGtfsRefresh failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to start gtfs refresh")
 		return
 	}
 	writeJSON(w, http.StatusAccepted, StartGtfsRefreshResponse{RunID: id.String()})
@@ -62,7 +62,7 @@ func (h *gtfsRefreshHandlers) list(w http.ResponseWriter, r *http.Request) {
 	runs, total, err := h.svc.ListRuns(r.Context(), where, refresh.Page{Limit: limit, Offset: offset})
 	if err != nil {
 		slog.Error("listGtfsRefreshRuns failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list gtfs refresh runs")
 		return
 	}
 	out := make([]GtfsRefreshRunResponse, len(runs))
@@ -90,7 +90,7 @@ func (h *gtfsRefreshHandlers) get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("getGtfsRefreshRun failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to get gtfs refresh run")
 		return
 	}
 	writeJSON(w, http.StatusOK, gtfsRefreshRunFromModel(run))

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -61,7 +60,7 @@ func (h *scheduleHandlers) list(w http.ResponseWriter, r *http.Request) {
 	items, total, err := h.repo.List(r.Context(), where, schedule.Page{Limit: limit, Offset: offset})
 	if err != nil {
 		slog.Error("schedules list failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list schedules")
 		return
 	}
 	out := make([]ScheduleResponse, len(items))
@@ -89,7 +88,7 @@ func (h *scheduleHandlers) get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("schedules get failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to get schedule")
 		return
 	}
 	writeJSON(w, http.StatusOK, scheduleFromModel(s))
@@ -97,8 +96,7 @@ func (h *scheduleHandlers) get(w http.ResponseWriter, r *http.Request) {
 
 func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 	var req CreateScheduleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	if req.Name == "" {
@@ -138,7 +136,7 @@ func (h *scheduleHandlers) create(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.repo.Create(r.Context(), s); err != nil {
 		slog.Error("schedules create failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to create schedule")
 		return
 	}
 	if err := h.reloader.Reload(r.Context()); err != nil {
@@ -154,8 +152,7 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req UpdateScheduleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	if req.CronExpr != nil {
@@ -196,7 +193,7 @@ func (h *scheduleHandlers) update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("schedules update failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to update schedule")
 		return
 	}
 	if err := h.reloader.Reload(r.Context()); err != nil {
@@ -218,7 +215,7 @@ func (h *scheduleHandlers) run(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("schedules run get failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to run schedule")
 		return
 	}
 	runID, err := h.dispatcher.Dispatch(*s)
@@ -228,7 +225,7 @@ func (h *scheduleHandlers) run(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("schedules run dispatch failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to run schedule")
 		return
 	}
 	writeJSON(w, http.StatusAccepted, RunScheduleResponse{RunID: runID.String()})
@@ -246,7 +243,7 @@ func (h *scheduleHandlers) delete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("schedules delete failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to delete schedule")
 		return
 	}
 	if err := h.reloader.Reload(r.Context()); err != nil {
