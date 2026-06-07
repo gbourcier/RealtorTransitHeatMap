@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
 import { formatCompactPrice } from "../utils/listingFormat";
@@ -17,6 +17,8 @@ const emit = defineEmits<{
     error: [message: string];
     save: [];
 }>();
+const rootEl = ref<HTMLElement | null>(null);
+defineExpose({ rootEl });
 
 const PRICE_MIN = 300_000;
 const PRICE_MAX = 1_000_000;
@@ -94,8 +96,7 @@ async function onUpdate(): Promise<void> {
 </script>
 
 <template>
-    <div class="filter-drawer" role="dialog" aria-label="Filters">
-        <div class="fp__grip" aria-hidden="true" />
+    <div ref="rootEl" class="filter-drawer" role="dialog" aria-label="Filters">
         <header class="fp__head">
             <span class="fp__title">Filters</span>
             <span v-if="state.activeFilterCount.value > 0" class="fp__badge">
@@ -231,15 +232,6 @@ async function onUpdate(): Promise<void> {
                 </button>
             </section>
 
-            <div v-if="total === 0" class="fp__empty-hint">
-                <span class="fp__empty-icon">
-                    <v-icon size="20">mdi-magnify</v-icon>
-                </span>
-                <span>
-                    <strong>No listings match</strong>
-                    <small>Try widening the commute time or raising the max price.</small>
-                </span>
-            </div>
         </div>
 
         <footer class="fp__foot">
@@ -273,10 +265,6 @@ async function onUpdate(): Promise<void> {
     box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85);
     color: #f4f1e8;
     font-family: Inter, system-ui, sans-serif;
-}
-
-.fp__grip {
-    display: none;
 }
 
 .fp__head {
@@ -591,44 +579,6 @@ async function onUpdate(): Promise<void> {
     color: #172006;
 }
 
-.fp__empty-hint {
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    padding: 14px 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 92, 138, 0.3);
-    background: rgba(255, 92, 138, 0.08);
-}
-
-.fp__empty-icon {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    flex: 0 0 auto;
-    border-radius: 10px;
-    background: rgba(255, 92, 138, 0.14);
-    color: #ff5c8a;
-}
-
-.fp__empty-hint strong,
-.fp__empty-hint small {
-    display: block;
-}
-
-.fp__empty-hint strong {
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.fp__empty-hint small {
-    margin-top: 3px;
-    color: rgba(244, 241, 232, 0.52);
-    font-size: 13.5px;
-    line-height: 1.5;
-}
-
 .fp__foot {
     flex: 0 0 auto;
     display: flex;
@@ -677,23 +627,13 @@ async function onUpdate(): Promise<void> {
 @media (max-width: 899px) {
     .filter-drawer {
         top: auto;
-        right: 0;
+        right: 11px;
         bottom: 0;
-        left: 0;
-        width: 100%;
+        left: 11px;
+        width: auto;
         max-height: 88dvh;
         border-radius: 22px 22px 0 0;
         animation: filter-sheet-up 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
-    }
-
-    .fp__grip {
-        display: block;
-        width: 38px;
-        height: 4px;
-        margin: 8px auto 0;
-        border-radius: 3px;
-        background: rgba(244, 241, 232, 0.22);
-        flex: 0 0 auto;
     }
 
     .fp__applied {
@@ -702,6 +642,32 @@ async function onUpdate(): Promise<void> {
 
     .fp__applied__actions {
         display: none;
+    }
+
+    .fp__foot {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 9px;
+        padding: 12px;
+    }
+
+    .fp__reset,
+    .fp__save,
+    .fp__apply {
+        justify-content: center;
+        min-width: 0;
+        width: 100%;
+        height: 44px;
+    }
+
+    .fp__reset,
+    .fp__save {
+        padding: 0 12px;
+    }
+
+    .fp__apply {
+        grid-column: 1 / -1;
+        padding: 0 16px;
     }
 }
 

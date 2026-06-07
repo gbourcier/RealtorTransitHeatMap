@@ -5,6 +5,7 @@
         :settings-active="isSettingsActive"
         :show-back="showBack"
         :show-panel-toggle="route.name === 'listings'"
+        @click:brand="settingsDrawer = false"
         @click:settings="onToggleSettings"
         @click:back="onBackToMap"
         @click:panel-toggle="onToggleListingsPanel"

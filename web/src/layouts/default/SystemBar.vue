@@ -15,7 +15,7 @@
       <v-icon size="18" class="back-pill__icon">mdi-arrow-left</v-icon>
     </button>
 
-    <RouterLink to="/listings" class="brand" aria-label="HouseMap">
+    <RouterLink to="/listings" class="brand" aria-label="HouseMap" @click="emit('click:brand')">
       <span class="brand__tile">
         <img src="/brand/sona-logo.svg" alt="" class="brand__logo" />
       </span>
@@ -29,9 +29,10 @@
 
     <v-menu
       v-model="menuOpen"
-      location="bottom end"
+      :location="mobile ? 'bottom center' : 'bottom end'"
       offset="10"
-      transition="scale-transition"
+      :transition="mobile ? 'mobile-sheet-transition' : 'scale-transition'"
+      :content-class="mobile ? 'mobile-sheet-menu mobile-sheet-menu--user' : undefined"
       :close-on-content-click="true"
     >
       <template #activator="{ props: menuProps }">
@@ -117,6 +118,7 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
+import { useDisplay } from 'vuetify'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSavedFiltersStore } from '../../stores/savedFilters'
@@ -126,12 +128,13 @@ withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean; showPan
   showBack: false,
   showPanelToggle: false,
 })
-const emit = defineEmits(['click:settings', 'click:back', 'click:panel-toggle'])
+const emit = defineEmits(['click:settings', 'click:back', 'click:panel-toggle', 'click:brand'])
 
 const authStore = useAuthStore()
 const savedFiltersStore = useSavedFiltersStore()
 const router = useRouter()
 const route = useRoute()
+const { mobile } = useDisplay()
 const menuOpen = ref(false)
 
 const favoritesActive = computed(() => route.name === 'favorites')
@@ -403,6 +406,28 @@ async function onLogout() {
 }
 
 @media (max-width: 899px) {
+  :global(.mobile-sheet-menu.v-overlay__content) {
+    position: fixed !important;
+    top: auto !important;
+    right: 11px !important;
+    bottom: 0 !important;
+    left: 11px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  :global(.mobile-sheet-transition-enter-active),
+  :global(.mobile-sheet-transition-leave-active) {
+    transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+  }
+
+  :global(.mobile-sheet-transition-enter-from),
+  :global(.mobile-sheet-transition-leave-to) {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
   .header-bar.v-system-bar {
     height: 58px !important;
   }
@@ -461,7 +486,10 @@ async function onLogout() {
   }
 
   .user-menu {
-    width: min(360px, calc(100vw - 22px));
+    width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    border-radius: 22px 22px 0 0;
   }
 
   .user-menu__item--mobile-only {

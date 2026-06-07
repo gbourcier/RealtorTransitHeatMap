@@ -49,19 +49,20 @@ export function useListings(filters: ListingFiltersState): ListingsState {
         items.value.length === 0 ? true : items.value.length < total.value,
     );
 
-    function loadMore(gen: number = loadGen): Promise<void> {
+    function loadPage(gen: number, replace: boolean): Promise<void> {
         if (gen !== loadGen) return Promise.resolve();
-        if (inFlight) return inFlight.then(() => loadMore(gen));
-        if (items.value.length > 0 && items.value.length >= total.value) {
+        if (inFlight) return inFlight.then(() => loadPage(gen, replace));
+        if (!replace && items.value.length > 0 && items.value.length >= total.value) {
             return Promise.resolve();
         }
         loading.value = true;
         error.value = null;
         inFlight = (async () => {
             try {
+                const offset = replace ? 0 : items.value.length;
                 const res = await listListings({
                     limit,
-                    offset: items.value.length,
+                    offset,
                     sortBy: sortBy.value,
                     sortDir: sortDir.value,
                     ...(filters.maxPrice.value != null && { maxPrice: filters.maxPrice.value }),
@@ -74,7 +75,7 @@ export function useListings(filters: ListingFiltersState): ListingsState {
                     ...(filters.includeExpired.value && { includeExpired: true }),
                 });
                 if (gen !== loadGen) return;
-                items.value = [...items.value, ...res.items];
+                items.value = replace ? res.items : [...items.value, ...res.items];
                 total.value = res.total;
             } catch (e: any) {
                 if (gen === loadGen) {
@@ -89,11 +90,13 @@ export function useListings(filters: ListingFiltersState): ListingsState {
         return inFlight;
     }
 
+    function loadMore(gen: number = loadGen): Promise<void> {
+        return loadPage(gen, false);
+    }
+
     async function loadInitial(): Promise<void> {
         const gen = ++loadGen;
-        items.value = [];
-        total.value = 0;
-        await loadMore(gen);
+        await loadPage(gen, true);
     }
 
     function selectSort(opt: SortOption) {

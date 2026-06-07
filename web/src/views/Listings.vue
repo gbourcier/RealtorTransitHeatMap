@@ -30,6 +30,7 @@ const viewMode = ref<"list" | "map">("map");
 const drawerOpen = ref(true);
 const panelWidth = ref(readStoredPanelWidth());
 const filtersOpen = ref(false);
+const filtersPanelRef = ref<{ rootEl: HTMLElement | null } | null>(null);
 const saveModalOpen = ref(false);
 const teleportReady = ref(false);
 const headerVisible = ref(true);
@@ -70,6 +71,18 @@ function flushFavorites(): void {
 
 function onVisibilityChange(): void {
     if (document.visibilityState === "hidden") flushFavorites();
+}
+
+function onDocumentPointerDown(event: PointerEvent): void {
+    if (!filtersOpen.value || !headerVisible.value) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest(".filters-btn")) return;
+
+    const panelEl = filtersPanelRef.value?.rootEl;
+    if (panelEl?.contains(target)) return;
+
+    filtersOpen.value = false;
 }
 
 function toggleResultsPanel(): void {
@@ -149,6 +162,7 @@ onMounted(() => {
     listings.loadInitial();
     window.addEventListener("beforeunload", flushFavorites);
     window.addEventListener("listings:toggle-panel", toggleResultsPanel);
+    document.addEventListener("pointerdown", onDocumentPointerDown);
     document.addEventListener("visibilitychange", onVisibilityChange);
 });
 
@@ -156,6 +170,7 @@ onBeforeUnmount(() => {
     reloadListings.cancel();
     window.removeEventListener("beforeunload", flushFavorites);
     window.removeEventListener("listings:toggle-panel", toggleResultsPanel);
+    document.removeEventListener("pointerdown", onDocumentPointerDown);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     flushFavorites();
 });
@@ -176,6 +191,7 @@ onBeforeUnmount(() => {
 
     <Transition name="filter-drawer">
         <ListingFilters
+            ref="filtersPanelRef"
             v-if="filtersOpen && headerVisible"
             :state="filters"
             :views="views"

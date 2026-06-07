@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useDisplay } from "vuetify";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
 import type { SavedFilter } from "../api/savedFilters";
@@ -12,6 +13,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{ save: [] }>();
 
+const { mobile } = useDisplay();
 const menuOpen = ref(false);
 
 const favActive = computed(() => props.filters.favoritesOnly.value);
@@ -77,10 +79,11 @@ async function onDelete(id: string): Promise<void> {
 <template>
     <v-menu
         v-model="menuOpen"
-        location="bottom end"
+        :location="mobile ? 'bottom center' : 'bottom end'"
         offset="10"
         :close-on-content-click="false"
-        transition="scale-transition"
+        :transition="mobile ? 'mobile-sheet-transition' : 'scale-transition'"
+        :content-class="mobile ? 'mobile-sheet-menu mobile-sheet-menu--views' : undefined"
     >
         <template #activator="{ props: activatorProps }">
             <button
@@ -457,6 +460,28 @@ async function onDelete(id: string): Promise<void> {
 }
 
 @media (max-width: 899px) {
+    :global(.mobile-sheet-menu.v-overlay__content) {
+        position: fixed !important;
+        top: auto !important;
+        right: 11px !important;
+        bottom: 0 !important;
+        left: 11px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+
+    :global(.mobile-sheet-transition-enter-active),
+    :global(.mobile-sheet-transition-leave-active) {
+        transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+    }
+
+    :global(.mobile-sheet-transition-enter-from),
+    :global(.mobile-sheet-transition-leave-to) {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
     .viewsel {
         width: auto;
         min-width: 58px;
@@ -483,6 +508,17 @@ async function onDelete(id: string): Promise<void> {
         column-gap: 8px;
         width: 38px;
         transform: translate(-50%, -50%);
+    }
+
+    .view-menu {
+        width: 100%;
+        max-height: 88dvh;
+        overflow-y: auto;
+        border-radius: 22px 22px 0 0;
+    }
+
+    .view-menu__del {
+        opacity: 1;
     }
 }
 </style>
