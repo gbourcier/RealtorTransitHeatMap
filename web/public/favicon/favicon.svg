@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Sona — RealtorTransitHeatMap">
+  <g stroke="#15233D" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    
+    <path d="M128 50 L128 32" fill="none"></path>
+    <circle cx="128" cy="26" r="8" fill="#FF6B3D"></circle>
+    
+    <path d="M82 116 C82 74 100 50 128 50 C156 50 174 74 174 116 C174 150 158 170 128 170 C98 170 82 150 82 116 Z" fill="#FFCB45"></path>
+    
+    <circle cx="128" cy="172" r="68" fill="#2F80ED"></circle>
+    <circle cx="128" cy="172" r="45" fill="#19B5A6"></circle>
+    <circle cx="128" cy="172" r="22" fill="#FF6B3D"></circle>
+    
+    <path d="M90 112 C82 128 84 146 99 152" fill="none"></path>
+    <path d="M166 112 C174 128 172 146 157 152" fill="none"></path>
+    
+    <circle cx="112" cy="82" r="6" fill="#15233D" stroke="none"></circle>
+    <circle cx="144" cy="82" r="6" fill="#15233D" stroke="none"></circle>
+    <path d="M114 96 Q128 107 142 96" fill="none"></path>
+  </g>
+</svg>
