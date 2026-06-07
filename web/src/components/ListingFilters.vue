@@ -1,53 +1,66 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
+import type { SavedViewsState } from "../composables/useSavedViews";
 import { formatCompactPrice } from "../utils/listingFormat";
+import HeatSlider from "./HeatSlider.vue";
 
 interface Props {
     state: ListingFiltersState;
+    views: SavedViewsState;
     total: number;
+    saveOpen: boolean;
 }
 
 const props = defineProps<Props>();
-
-const bedroomOptions = [1, 2, 3, 4];
-const bathroomOptions = [1, 2, 3];
-const recencyOptions: { label: string; days: number | null }[] = [
-    { label: "All time", days: null },
-    { label: "Today", days: 1 },
-    { label: "This week", days: 7 },
-];
+const emit = defineEmits<{
+    close: [];
+    error: [message: string];
+    "update:saveOpen": [value: boolean];
+}>();
 
 const PRICE_MIN = 300_000;
 const PRICE_MAX = 2_000_000;
 const PRICE_STEP = 25_000;
 const PRICE_NO_MAX = PRICE_MAX + PRICE_STEP;
-const priceTicks: Record<number, string> = {
-    [PRICE_MIN]: "300k",
-    1_000_000: "1M",
-    [PRICE_NO_MAX]: "Any",
-};
+const priceTicks = ["$300k", "$1M", "Any"];
 
-const COMMUTE_MIN = 0;
 const COMMUTE_MAX = 60;
 const COMMUTE_STEP = 5;
 const COMMUTE_NO_MAX = COMMUTE_MAX + COMMUTE_STEP;
-const commuteTicks: Record<number, string> = {
-    [COMMUTE_MIN]: "0m",
-    30: "30m",
-    [COMMUTE_NO_MAX]: "Any",
-};
+const commuteTicks = ["0m", "30m", "Any"];
 
-const SQFT_MIN = 0;
-const SQFT_MAX = 2500;
-const SQFT_STEP = 100;
-const sqftTicks: Record<number, string> = {
-    [SQFT_MIN]: "Any",
-    1000: "1k",
-    [SQFT_MAX]: "2.5k",
-};
+const bedOptions = [
+    { value: null, label: "Any" },
+    { value: 1, label: "1+" },
+    { value: 2, label: "2+" },
+    { value: 3, label: "3+" },
+    { value: 4, label: "4+" },
+];
+const bathOptions = [
+    { value: null, label: "Any" },
+    { value: 1, label: "1+" },
+    { value: 2, label: "2+" },
+    { value: 3, label: "3+" },
+];
+const recencyOptions = [
+    { value: null, label: "Any time" },
+    { value: 1, label: "Today" },
+    { value: 7, label: "This week" },
+];
 
-const menuOpen = ref(false);
+const commuteMin = computed(() =>
+    props.state.maxCommuteSec.value == null
+        ? null
+        : Math.round(props.state.maxCommuteSec.value / 60),
+);
+
+const commuteSlider = computed({
+    get: () => commuteMin.value ?? COMMUTE_NO_MAX,
+    set: (v: number) => {
+        props.state.maxCommuteSec.value = v >= COMMUTE_NO_MAX ? null : v * 60;
+    },
+});
 
 const priceSlider = computed({
     get: () => props.state.maxPrice.value ?? PRICE_NO_MAX,
@@ -56,604 +69,755 @@ const priceSlider = computed({
     },
 });
 
-const commuteSliderMin = computed({
-    get: () =>
-        props.state.maxCommuteSec.value == null
-            ? COMMUTE_NO_MAX
-            : Math.round(props.state.maxCommuteSec.value / 60),
-    set: (v: number) => {
-        props.state.maxCommuteSec.value = v >= COMMUTE_NO_MAX ? null : v * 60;
-    },
+const priceLabel = computed(() =>
+    props.state.maxPrice.value == null
+        ? "Any"
+        : `≤ ${formatCompactPrice(props.state.maxPrice.value)}`,
+);
+
+const saveOpenLocal = computed({
+    get: () => props.saveOpen,
+    set: (v: boolean) => emit("update:saveOpen", v),
 });
 
-const sqftSlider = computed({
-    get: () => props.state.minInteriorAreaSqft.value ?? SQFT_MIN,
-    set: (v: number) => {
-        props.state.minInteriorAreaSqft.value = v <= SQFT_MIN ? null : v;
-    },
+const name = ref("");
+const saving = ref(false);
+const saveError = ref<string | null>(null);
+const nameInput = ref<HTMLInputElement | null>(null);
+
+const suggested = computed(() => {
+    const parts: string[] = [];
+    if (props.state.maxCommuteSec.value != null) {
+        parts.push(`≤${Math.round(props.state.maxCommuteSec.value / 60)}m`);
+    }
+    if (props.state.maxPrice.value != null) {
+        parts.push(`under ${formatCompactPrice(props.state.maxPrice.value)}`);
+    }
+    if (props.state.minBedrooms.value != null) {
+        parts.push(`${props.state.minBedrooms.value}+ bd`);
+    }
+    return parts.join(" · ") || "My filter";
 });
+
+watch(
+    saveOpenLocal,
+    (open) => {
+        if (!open) return;
+        name.value = suggested.value;
+        saveError.value = null;
+        nextTick(() => nameInput.value?.focus());
+    },
+    { immediate: true },
+);
+
+function openSave(): void {
+    saveOpenLocal.value = true;
+}
+
+async function commitSave(): Promise<void> {
+    const trimmed = name.value.trim();
+    if (!trimmed || saving.value) return;
+    saving.value = true;
+    saveError.value = null;
+    try {
+        await props.views.saveAsNew(trimmed);
+        saveOpenLocal.value = false;
+    } catch (e: any) {
+        saveError.value =
+            e?.response?.status === 409
+                ? "A saved filter with that name already exists."
+                : "Failed to save filter.";
+    } finally {
+        saving.value = false;
+    }
+}
+
+async function onUpdate(): Promise<void> {
+    try {
+        await props.views.updateActive();
+    } catch {
+        emit("error", "Failed to update saved view.");
+    }
+}
 </script>
 
 <template>
-    <v-menu
-        v-model="menuOpen"
-        :close-on-content-click="false"
-        location="bottom end"
-        offset="18"
-        transition="scale-transition"
-    >
-        <template #activator="{ props: activatorProps }">
-            <button
-                v-bind="activatorProps"
-                type="button"
-                class="filter-pill"
-                :class="{
-                    'filter-pill--active': state.activeFilterCount.value > 0,
-                    'filter-pill--open': menuOpen,
-                }"
-            >
-                <v-icon size="14" class="filter-pill__icon">mdi-tune-variant</v-icon>
-                <span class="filter-pill__label">Filters</span>
-                <template v-if="state.activeFilterCount.value > 0">
-                    <span class="filter-pill__dot" aria-hidden="true">•</span>
-                    <span class="filter-pill__count">{{ state.activeFilterCount.value }}</span>
-                </template>
+    <div class="filter-drawer" role="dialog" aria-label="Filters">
+        <header class="fp__head">
+            <span class="fp__title">Filters</span>
+            <span v-if="state.activeFilterCount.value > 0" class="fp__badge">
+                {{ state.activeFilterCount.value }} active
+            </span>
+            <button class="fp__x" aria-label="Close filters" @click="emit('close')">
+                <v-icon size="20">mdi-close</v-icon>
             </button>
-        </template>
-        <div class="filter-modal" role="dialog" aria-label="Filters">
-            <header class="filter-modal__header">
-                <div class="filter-modal__title-row">
-                    <span class="filter-modal__title">Filters</span>
-                    <span v-if="state.activeFilterCount.value > 0" class="filter-modal__active-badge">
-                        {{ state.activeFilterCount.value }} active
+        </header>
+
+        <div v-if="views.active.value" class="fp__applied">
+            <v-icon size="15" class="fp__applied__check">mdi-check</v-icon>
+            <span class="fp__applied__text">
+                <span class="fp__applied__name">{{ views.active.value.name }}</span>
+                <span
+                    class="fp__applied__state"
+                    :class="{ 'fp__applied__state--dirty': views.dirty.value }"
+                >
+                    {{ views.dirty.value ? "· edited" : "· saved view" }}
+                </span>
+            </span>
+            <span v-if="views.dirty.value" class="fp__applied__actions">
+                <button
+                    class="fp__applied__btn fp__applied__btn--ghost"
+                    @click="openSave"
+                >Save as new</button>
+                <button
+                    class="fp__applied__btn fp__applied__btn--primary"
+                    @click="onUpdate"
+                >Update</button>
+            </span>
+        </div>
+
+        <div class="fp__body">
+            <div class="hero">
+                <div class="hero__top">
+                    <span class="hero__kicker">Commute to downtown</span>
+                    <span class="hero__read">
+                        <template v-if="commuteMin == null">Any</template>
+                        <template v-else>{{ commuteMin }}<small>min</small></template>
                     </span>
                 </div>
-                <button
-                    type="button"
-                    class="filter-modal__close"
-                    aria-label="Close filters"
-                    @click="menuOpen = false"
-                >
-                    <v-icon size="20">mdi-close</v-icon>
-                </button>
-            </header>
-
-            <div class="filter-modal__body">
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Max price</span>
-                        <span class="filter-modal__section-value">
-                            {{ state.maxPrice.value == null ? "Any" : formatCompactPrice(state.maxPrice.value) }}
-                        </span>
-                        <button
-                            v-if="state.maxPrice.value != null"
-                            type="button"
-                            class="filter-modal__section-clear"
-                            @click="state.maxPrice.value = null"
-                        >Clear</button>
-                    </div>
-                    <v-slider
-                        v-model="priceSlider"
-                        :min="PRICE_MIN"
-                        :max="PRICE_NO_MAX"
-                        :step="PRICE_STEP"
-                        :ticks="priceTicks"
-                        show-ticks="always"
-                        tick-size="3"
-                        color="primary"
-                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                        hide-details
-                        density="compact"
-                        class="filter-slider"
-                    />
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Max commute</span>
-                        <span class="filter-modal__section-value">
-                            {{ state.maxCommuteSec.value == null ? "Any" : `${Math.round(state.maxCommuteSec.value / 60)} min` }}
-                        </span>
-                        <button
-                            v-if="state.maxCommuteSec.value != null"
-                            type="button"
-                            class="filter-modal__section-clear"
-                            @click="state.maxCommuteSec.value = null"
-                        >Clear</button>
-                    </div>
-                    <v-slider
-                        v-model="commuteSliderMin"
-                        :min="COMMUTE_MIN"
-                        :max="COMMUTE_NO_MAX"
-                        :step="COMMUTE_STEP"
-                        :ticks="commuteTicks"
-                        show-ticks="always"
-                        tick-size="3"
-                        color="primary"
-                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                        hide-details
-                        density="compact"
-                        class="filter-slider"
-                    />
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Min interior space</span>
-                        <span class="filter-modal__section-value">
-                            {{ state.minInteriorAreaSqft.value == null ? "Any" : `${state.minInteriorAreaSqft.value.toLocaleString()} sqft` }}
-                        </span>
-                        <button
-                            v-if="state.minInteriorAreaSqft.value != null"
-                            type="button"
-                            class="filter-modal__section-clear"
-                            @click="state.minInteriorAreaSqft.value = null"
-                        >Clear</button>
-                    </div>
-                    <v-slider
-                        v-model="sqftSlider"
-                        :min="SQFT_MIN"
-                        :max="SQFT_MAX"
-                        :step="SQFT_STEP"
-                        :ticks="sqftTicks"
-                        show-ticks="always"
-                        tick-size="3"
-                        color="primary"
-                        track-color="rgba(var(--v-theme-on-surface), 0.16)"
-                        hide-details
-                        density="compact"
-                        class="filter-slider"
-                    />
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Bedrooms</span>
-                    </div>
-                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bedrooms">
-                        <button
-                            v-for="b in bedroomOptions"
-                            :key="b"
-                            type="button"
-                            class="filter-segmented__btn"
-                            :class="{ 'filter-segmented__btn--active': state.minBedrooms.value === b }"
-                            role="radio"
-                            :aria-checked="state.minBedrooms.value === b"
-                            @click="state.minBedrooms.value = b"
-                        >
-                            {{ b }}+
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Bathrooms</span>
-                    </div>
-                    <div class="filter-segmented" role="radiogroup" aria-label="Minimum bathrooms">
-                        <button
-                            v-for="b in bathroomOptions"
-                            :key="b"
-                            type="button"
-                            class="filter-segmented__btn"
-                            :class="{ 'filter-segmented__btn--active': state.minBathrooms.value === b }"
-                            role="radio"
-                            :aria-checked="state.minBathrooms.value === b"
-                            @click="state.minBathrooms.value = b"
-                        >
-                            {{ b }}+
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__section-head">
-                        <span class="filter-modal__section-title">Recency</span>
-                    </div>
-                    <div class="filter-segmented" role="radiogroup" aria-label="Listing recency">
-                        <button
-                            v-for="opt in recencyOptions"
-                            :key="opt.label"
-                            type="button"
-                            class="filter-segmented__btn"
-                            :class="{ 'filter-segmented__btn--active': state.newWithinDays.value === opt.days }"
-                            role="radio"
-                            :aria-checked="state.newWithinDays.value === opt.days"
-                            @click="state.newWithinDays.value = opt.days"
-                        >
-                            {{ opt.label }}
-                        </button>
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__toggle-row">
-                        <div class="filter-modal__toggle-text">
-                            <span class="filter-modal__section-title">Show favorites</span>
-                            <span class="filter-modal__toggle-hint">Only listings you saved</span>
-                        </div>
-                        <v-switch
-                            class="filter-toggle"
-                            :model-value="state.favoritesOnly.value"
-                            color="primary"
-                            density="compact"
-                            hide-details
-                            inset
-                            @update:model-value="(v) => (state.favoritesOnly.value = !!v)"
-                        />
-                    </div>
-                </section>
-
-                <section class="filter-modal__section">
-                    <div class="filter-modal__toggle-row">
-                        <div class="filter-modal__toggle-text">
-                            <span class="filter-modal__section-title">Include expired</span>
-                            <span class="filter-modal__toggle-hint">Show delisted listings</span>
-                        </div>
-                        <v-switch
-                            class="filter-toggle"
-                            :model-value="state.includeExpired.value"
-                            color="primary"
-                            density="compact"
-                            hide-details
-                            inset
-                            @update:model-value="(v) => (state.includeExpired.value = !!v)"
-                        />
-                    </div>
-                </section>
+                <HeatSlider
+                    v-model="commuteSlider"
+                    :min="0"
+                    :max="COMMUTE_NO_MAX"
+                    :step="COMMUTE_STEP"
+                    :ticks="commuteTicks"
+                    heat
+                    aria-label="Maximum commute to downtown"
+                />
+                <div class="hero__counts">
+                    <span class="hero__total">
+                        {{ total.toLocaleString() }}<small>in reach</small>
+                    </span>
+                </div>
             </div>
 
-            <footer class="filter-modal__footer">
-                <button
-                    type="button"
-                    class="filter-modal__reset"
-                    :disabled="state.activeFilterCount.value === 0"
-                    @click="state.clearAll()"
-                >Reset</button>
-                <button
-                    type="button"
-                    class="filter-modal__apply"
-                    @click="menuOpen = false"
-                >
-                    Show {{ total.toLocaleString() }} listing{{ total === 1 ? "" : "s" }}
-                </button>
-            </footer>
+            <section class="fp__sec">
+                <div class="fp__sec-head">
+                    <span class="fp__label">Max price</span>
+                    <span class="fp__val" :class="{ 'fp__val--set': state.maxPrice.value != null }">
+                        {{ priceLabel }}
+                    </span>
+                </div>
+                <HeatSlider
+                    v-model="priceSlider"
+                    :min="PRICE_MIN"
+                    :max="PRICE_NO_MAX"
+                    :step="PRICE_STEP"
+                    :ticks="priceTicks"
+                    aria-label="Maximum price"
+                />
+            </section>
+
+            <section class="fp__sec">
+                <div class="fp__sec-head"><span class="fp__label">Bedrooms</span></div>
+                <div class="chips" role="radiogroup" aria-label="Minimum bedrooms">
+                    <button
+                        v-for="opt in bedOptions"
+                        :key="String(opt.value)"
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': state.minBedrooms.value === opt.value }"
+                        role="radio"
+                        :aria-checked="state.minBedrooms.value === opt.value"
+                        @click="state.minBedrooms.value = opt.value"
+                    >{{ opt.label }}</button>
+                </div>
+                <div class="fp__sec-head fp__sec-head--inset">
+                    <span class="fp__label">Bathrooms</span>
+                </div>
+                <div class="chips" role="radiogroup" aria-label="Minimum bathrooms">
+                    <button
+                        v-for="opt in bathOptions"
+                        :key="String(opt.value)"
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': state.minBathrooms.value === opt.value }"
+                        role="radio"
+                        :aria-checked="state.minBathrooms.value === opt.value"
+                        @click="state.minBathrooms.value = opt.value"
+                    >{{ opt.label }}</button>
+                </div>
+            </section>
+
+            <section class="fp__sec">
+                <div class="fp__sec-head"><span class="fp__label">Freshness</span></div>
+                <div class="chips">
+                    <button
+                        v-for="opt in recencyOptions"
+                        :key="String(opt.value)"
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': state.newWithinDays.value === opt.value }"
+                        @click="state.newWithinDays.value = opt.value"
+                    >{{ opt.label }}</button>
+                    <span class="chips__sep" />
+                    <button
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': state.includeExpired.value }"
+                        :aria-pressed="state.includeExpired.value"
+                        @click="state.includeExpired.value = !state.includeExpired.value"
+                    >
+                        <v-icon v-if="state.includeExpired.value" size="13">mdi-check</v-icon>
+                        Include expired
+                    </button>
+                </div>
+            </section>
         </div>
-    </v-menu>
+
+        <footer class="fp__foot">
+            <button class="fp__reset" @click="views.resetFilters()">Reset</button>
+            <button class="fp__save" @click="openSave">
+                <v-icon size="16">mdi-bookmark-outline</v-icon>
+                Save
+            </button>
+            <button class="fp__apply" @click="emit('close')">
+                Show <b>{{ total.toLocaleString() }}</b> listing{{ total === 1 ? "" : "s" }}
+            </button>
+        </footer>
+
+        <div v-if="saveOpenLocal" class="fp__modal" @click="saveOpenLocal = false">
+            <div class="fp__modal-card" @click.stop>
+                <div class="fp__modal-title">Save these filters as a view</div>
+                <div class="fp__modal-sub">
+                    It'll appear in the header view menu for one-tap recall.
+                </div>
+                <input
+                    ref="nameInput"
+                    v-model="name"
+                    class="fp__modal-input"
+                    placeholder="e.g. Downtown commute"
+                    maxlength="60"
+                    @keydown.enter="commitSave"
+                />
+                <p v-if="saveError" class="fp__modal-error">{{ saveError }}</p>
+                <div class="fp__modal-actions">
+                    <button class="fp__modal-cancel" @click="saveOpenLocal = false">Cancel</button>
+                    <button
+                        class="fp__modal-ok"
+                        :disabled="!name.trim() || saving"
+                        @click="commitSave"
+                    >Save view</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-.filter-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
-    background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.88);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: normal;
-    cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
-}
-
-.filter-pill:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.05);
-    border-color: rgba(var(--v-theme-on-surface), 0.32);
-}
-
-.filter-pill:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
-}
-
-.filter-pill--active {
-    border-color: rgba(var(--v-theme-primary), 0.7);
-    color: rgb(var(--v-theme-primary));
-}
-
-.filter-pill--active:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
-    border-color: rgb(var(--v-theme-primary));
-}
-
-.filter-pill--open {
-    background-color: rgba(var(--v-theme-on-surface), 0.12);
-    border-color: rgba(var(--v-theme-on-surface), 0.4);
-}
-
-.filter-pill__icon {
-    opacity: 0.9;
-}
-
-.filter-pill__dot {
-    opacity: 0.7;
-    margin-left: 2px;
-}
-
-.filter-pill__count {
-    font-weight: 600;
-}
-
-.filter-modal {
+.filter-drawer {
+    position: fixed;
+    top: 62px;
+    right: 14px;
+    max-height: calc(100dvh - 76px);
+    width: min(404px, calc(100vw - 28px));
+    z-index: 1005;
     display: flex;
     flex-direction: column;
-    width: min(94vw, 360px);
-    max-height: min(88vh, 720px);
-    border-radius: 16px;
-    background-color: rgb(var(--v-theme-surface));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    box-shadow: 0 16px 40px rgba(var(--v-theme-shadow), 0.5);
-    color: rgba(var(--v-theme-on-surface), 0.92);
     overflow: hidden;
+    border-radius: 18px;
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.07);
+    box-shadow: 0 26px 72px rgba(var(--v-theme-shadow), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.92);
 }
 
-.filter-modal__header {
+.fp__head {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px 4px;
+    gap: 10px;
+    padding: 18px 20px 12px;
 }
 
-.filter-modal__body {
+.fp__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.fp__badge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: rgb(var(--v-theme-primary));
+    border: 1px solid rgba(var(--v-theme-primary), 0.5);
+    background: rgba(var(--v-theme-primary), 0.07);
+}
+
+.fp__x {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.fp__x:hover {
+    background: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+.fp__x:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: -2px;
+}
+
+.fp__applied {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 14px 0;
+    padding: 10px 14px;
+    border-radius: 13px;
+    background: rgba(var(--v-theme-primary), 0.09);
+    border: 1px solid rgba(var(--v-theme-primary), 0.32);
+}
+
+.fp__applied__check {
+    flex: 0 0 auto;
+    color: rgb(var(--v-theme-primary));
+}
+
+.fp__applied__text {
+    min-width: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.fp__applied__name {
+    font-size: 0.84375rem;
+    font-weight: 700;
+    color: rgb(var(--v-theme-primary));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fp__applied__state {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+.fp__applied__state--dirty {
+    color: rgb(var(--v-theme-warning));
+}
+
+.fp__applied__actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+}
+
+.fp__applied__btn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: filter 120ms ease, background-color 120ms ease;
+}
+
+.fp__applied__btn--primary {
+    background: rgb(var(--v-theme-primary));
+    border: 0;
+    color: rgb(var(--v-theme-on-primary));
+}
+
+.fp__applied__btn--primary:hover {
+    filter: brightness(1.06);
+}
+
+.fp__applied__btn--ghost {
+    background: transparent;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+    color: rgba(var(--v-theme-on-surface), 0.85);
+}
+
+.fp__applied__btn--ghost:hover {
+    background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.fp__body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.filter-modal__title-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
+.fp__body::-webkit-scrollbar {
+    width: 10px;
 }
 
-.filter-modal__title {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.filter-modal__active-badge {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding: 0 9px;
+.fp__body::-webkit-scrollbar-thumb {
+    background: rgba(var(--v-theme-on-surface), 0.14);
     border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-primary), 0.55);
+    border: 3px solid rgb(var(--v-theme-surface));
+}
+
+.hero {
+    margin: 6px 14px 0;
+    padding: 18px 16px;
+    border-radius: 16px;
+    background: rgb(var(--v-theme-map-bg));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.07);
+}
+
+.hero__top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.hero__kicker {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
     color: rgb(var(--v-theme-primary));
-    font-size: 0.75rem;
+}
+
+.hero__read {
+    font-size: 2.75rem;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -1.5px;
+    color: rgba(var(--v-theme-on-surface), 0.96);
+    font-variant-numeric: tabular-nums;
+}
+
+.hero__read small {
+    font-size: 1rem;
     font-weight: 500;
+    margin-left: 5px;
+    color: rgba(var(--v-theme-on-surface), 0.5);
+    letter-spacing: 0;
 }
 
-.filter-modal__close {
+.hero__counts {
+    display: flex;
+    margin-top: 16px;
+}
+
+.hero__total {
+    margin-left: auto;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    background: transparent;
-    border: 0;
-    color: rgba(var(--v-theme-on-surface), 0.6);
-    cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    color: rgb(var(--v-theme-primary));
+    font-variant-numeric: tabular-nums;
 }
 
-.filter-modal__close:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.95);
+.hero__total small {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.5);
 }
 
-.filter-modal__close:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+.fp__sec {
+    padding: 16px 20px;
 }
 
-.filter-modal__section {
-    padding: 9px 14px;
-}
-
-.filter-modal__section + .filter-modal__section {
+.fp__sec + .fp__sec {
     border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.filter-modal__section-head {
+.fp__sec-head {
     display: flex;
     align-items: baseline;
     gap: 8px;
-    margin-bottom: 7px;
+    margin-bottom: 12px;
 }
 
-.filter-modal__section-title {
+.fp__sec-head--inset {
+    margin-top: 16px;
+}
+
+.fp__label {
     font-size: 0.875rem;
     font-weight: 600;
 }
 
-.filter-modal__section-value {
+.fp__val {
     margin-left: auto;
     font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.65);
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.62);
     font-variant-numeric: tabular-nums;
 }
 
-.filter-modal__section-clear {
-    background: transparent;
-    border: 0;
-    padding: 2px 4px;
+.fp__val--set {
     color: rgb(var(--v-theme-primary));
-    font-size: 0.75rem;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chips__sep {
+    flex-basis: 100%;
+    height: 4px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.82);
+    white-space: nowrap;
+    font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
-    border-radius: 4px;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
-.filter-modal__section-clear:hover {
-    text-decoration: underline;
+.chip:hover {
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    border-color: rgba(var(--v-theme-on-surface), 0.3);
 }
 
-.filter-modal__section-clear:focus-visible {
+.chip:focus-visible {
     outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
 }
 
-.filter-slider {
-    margin-top: 2px;
-    padding-inline: 4px;
-}
-
-.filter-slider :deep(.v-slider-thumb__label) {
-    background-color: rgb(var(--v-theme-primary));
-}
-
-.filter-slider :deep(.v-slider-track__tick-label) {
-    font-size: 0.6875rem;
-    font-weight: 400;
-    color: rgba(var(--v-theme-on-surface), 0.5);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-}
-
-.filter-segmented {
-    display: flex;
-    align-items: stretch;
-    width: 100%;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
-    border-radius: 999px;
-    overflow: hidden;
-    background-color: transparent;
-}
-
-.filter-segmented__btn {
-    flex: 1 1 0;
-    min-width: 0;
-    height: 32px;
-    padding: 0 8px;
-    background: transparent;
-    border: 0;
-    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-    color: rgba(var(--v-theme-on-surface), 0.82);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    letter-spacing: normal;
-    cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease;
-}
-
-.filter-segmented__btn:first-child {
-    border-left: 0;
-}
-
-.filter-segmented__btn:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.05);
-    color: rgba(var(--v-theme-on-surface), 0.95);
-}
-
-.filter-segmented__btn:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: -2px;
-}
-
-.filter-segmented__btn--active,
-.filter-segmented__btn--active:hover {
-    background-color: rgba(var(--v-theme-primary), 0.18);
+.chip--on,
+.chip--on:hover {
+    background: rgba(var(--v-theme-primary), 0.16);
+    border-color: rgba(var(--v-theme-primary), 0.55);
     color: rgb(var(--v-theme-primary));
-    font-weight: 600;
+    font-weight: 700;
 }
 
-.filter-modal__toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 34px;
-}
-
-.filter-toggle {
-    flex: 0 0 auto;
-    margin: 0;
-}
-
-.filter-toggle :deep(.v-selection-control) {
-    min-height: 0;
-}
-
-.filter-toggle :deep(.v-switch__track) {
-    opacity: 1;
-    background-color: rgba(var(--v-theme-on-surface), 0.16);
-}
-
-.filter-toggle :deep(.v-selection-control--dirty .v-switch__track) {
-    background-color: rgb(var(--v-theme-primary));
-}
-
-.filter-modal__toggle-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.filter-modal__toggle-hint {
-    font-size: 0.75rem;
-    color: rgba(var(--v-theme-on-surface), 0.55);
-}
-
-.filter-modal__footer {
+.fp__foot {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px 12px;
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+    gap: 10px;
+    padding: 14px 20px 16px;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.07);
 }
 
-.filter-modal__reset {
+.fp__reset {
     flex: 0 0 auto;
-    height: 34px;
-    padding: 0 16px;
+    height: 44px;
+    padding: 0 18px;
     border-radius: 999px;
     background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
     color: rgba(var(--v-theme-on-surface), 0.9);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease;
 }
 
-.filter-modal__reset:hover:not(:disabled) {
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
+.fp__reset:hover {
+    background: rgba(var(--v-theme-on-surface), 0.06);
     border-color: rgba(var(--v-theme-on-surface), 0.32);
 }
 
-.filter-modal__reset:disabled {
-    opacity: 0.45;
-    cursor: default;
-}
-
-.filter-modal__apply {
-    flex: 1 1 auto;
-    height: 34px;
-    padding: 0 16px;
+.fp__save {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 15px;
     border-radius: 999px;
-    background-color: rgb(var(--v-theme-primary));
-    color: rgba(var(--v-theme-on-primary), 0.87);
-    border: 0;
+    background: transparent;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
+    color: rgba(var(--v-theme-on-surface), 0.9);
     font-size: 0.875rem;
     font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.fp__save:hover {
+    background: rgba(var(--v-theme-on-surface), 0.06);
+    border-color: rgba(var(--v-theme-on-surface), 0.32);
+}
+
+.fp__reset:focus-visible,
+.fp__save:focus-visible,
+.fp__apply:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
+}
+
+.fp__apply {
+    flex: 1 1 auto;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    border: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: -0.1px;
     cursor: pointer;
     transition: filter 120ms ease;
 }
 
-.filter-modal__apply:hover {
+.fp__apply:hover {
     filter: brightness(1.06);
 }
 
-.filter-modal__apply:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+.fp__modal {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(var(--v-theme-map-bg), 0.62);
+    backdrop-filter: blur(3px);
+}
+
+.fp__modal-card {
+    width: 100%;
+    max-width: 320px;
+    padding: 22px;
+    border-radius: 16px;
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+    box-shadow: 0 18px 50px rgba(var(--v-theme-shadow), 0.55);
+}
+
+.fp__modal-title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+.fp__modal-sub {
+    font-size: 0.8125rem;
+    color: rgba(var(--v-theme-on-surface), 0.55);
+    margin: 5px 0 16px;
+}
+
+.fp__modal-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    border-radius: 10px;
+    background: rgba(var(--v-theme-on-surface), 0.06);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+    color: rgba(var(--v-theme-on-surface), 0.95);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.fp__modal-input::placeholder {
+    color: rgba(var(--v-theme-on-surface), 0.4);
+}
+
+.fp__modal-input:focus {
+    border-color: rgb(var(--v-theme-primary));
+    background: rgba(var(--v-theme-on-surface), 0.09);
+}
+
+.fp__modal-error {
+    margin: 8px 0 0;
+    font-size: 0.75rem;
+    color: rgb(var(--v-theme-error));
+}
+
+.fp__modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.fp__modal-cancel {
+    flex: 1 1 0;
+    height: 42px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
+    color: rgba(var(--v-theme-on-surface), 0.9);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.fp__modal-cancel:hover {
+    background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.fp__modal-ok {
+    flex: 1 1 0;
+    height: 42px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: rgb(var(--v-theme-primary));
+    border: 0;
+    color: rgb(var(--v-theme-on-primary));
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: filter 120ms ease, opacity 120ms ease;
+}
+
+.fp__modal-ok:hover:not(:disabled) {
+    filter: brightness(1.06);
+}
+
+.fp__modal-ok:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+@media (max-width: 600px) {
+    .filter-drawer {
+        top: 58px;
+        left: 12px;
+        right: 12px;
+        max-height: calc(100dvh - 70px);
+        width: auto;
+    }
 }
 </style>

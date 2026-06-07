@@ -6,19 +6,26 @@ import { useDisplay } from "vuetify";
 import type { Listing } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 import ListingFilters from "../components/ListingFilters.vue";
+import ViewSelector from "../components/ViewSelector.vue";
+import FiltersButton from "../components/FiltersButton.vue";
 import ListingsCountPill from "../components/ListingsCountPill.vue";
 import ListingsSidePanel from "../components/ListingsSidePanel.vue";
 import ListingsMobileList from "../components/ListingsMobileList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import MobileViewToggle from "../components/MobileViewToggle.vue";
 import { useListingFilters } from "../composables/useListingFilters";
+import { useSavedViews } from "../composables/useSavedViews";
 import { useListings } from "../composables/useListings";
 import { useFavorites, favoritesKey } from "../composables/useFavorites";
 import { useBodyScrollLock } from "../composables/useBodyScrollLock";
+import { useSavedFiltersStore } from "../stores/savedFilters";
+import { debounce } from "../utils/debounce";
 
 const { mdAndUp } = useDisplay();
 const viewMode = ref<"list" | "map">("map");
 const drawerOpen = ref(true);
+const filtersOpen = ref(false);
+const saveModalOpen = ref(false);
 const teleportReady = ref(false);
 const headerVisible = ref(true);
 
@@ -26,6 +33,19 @@ onActivated(() => (headerVisible.value = true));
 onDeactivated(() => (headerVisible.value = false));
 
 const filters = useListingFilters();
+const savedFiltersStore = useSavedFiltersStore();
+const views = useSavedViews(filters);
+if (savedFiltersStore.defaultFilter) {
+    views.applySaved(savedFiltersStore.defaultFilter);
+}
+function onToggleFavorites(): void {
+    if (filters.favoritesOnly.value) views.selectAll();
+    else views.selectFavourites();
+}
+function openSaveFromHeader(): void {
+    filtersOpen.value = true;
+    saveModalOpen.value = true;
+}
 const listings = useListings(filters);
 const favorites = useFavorites();
 provide(favoritesKey, favorites);
@@ -71,6 +91,8 @@ favorites.onError(showError);
 
 useBodyScrollLock();
 
+const reloadListings = debounce(() => listings.loadInitial(), 250);
+
 watch(
     () => [
         filters.maxPrice.value,
@@ -82,7 +104,7 @@ watch(
         filters.favoritesOnly.value,
         filters.includeExpired.value,
     ],
-    () => listings.loadInitial(),
+    reloadListings,
 );
 
 function listingKey(item: Listing): string {
@@ -115,6 +137,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    reloadListings.cancel();
     window.removeEventListener("beforeunload", flushFavorites);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     flushFavorites();
@@ -125,9 +148,26 @@ onBeforeUnmount(() => {
     <Teleport to="#header-filters-slot" :disabled="!teleportReady">
         <template v-if="headerVisible">
             <ListingsCountPill :total="listings.total.value" />
-            <ListingFilters :state="filters" :total="listings.total.value" />
+            <ViewSelector :views="views" :filters="filters" @save="openSaveFromHeader" />
+            <FiltersButton
+                :open="filtersOpen"
+                :count="filters.activeFilterCount.value"
+                @toggle="filtersOpen = !filtersOpen"
+            />
         </template>
     </Teleport>
+
+    <Transition name="filter-drawer">
+        <ListingFilters
+            v-if="filtersOpen && headerVisible"
+            :state="filters"
+            :views="views"
+            :total="listings.total.value"
+            v-model:save-open="saveModalOpen"
+            @close="filtersOpen = false"
+            @error="showError"
+        />
+    </Transition>
 
     <Teleport to="#header-actions-slot" :disabled="!teleportReady">
         <v-btn
@@ -183,7 +223,7 @@ onBeforeUnmount(() => {
             :favorites-only="filters.favoritesOnly.value"
             :selected-key="selectedKey"
             @select-sort="listings.selectSort"
-            @toggle-favorites="filters.favoritesOnly.value = !filters.favoritesOnly.value"
+            @toggle-favorites="onToggleFavorites"
             @card-click="focusListingOnMap"
             @card-hover="highlightListingOnMap"
             @card-leave="clearMapHighlight"
@@ -265,5 +305,16 @@ onBeforeUnmount(() => {
 
 .map-fullbleed--with-panel .map-fullbleed__loading {
     right: 360px;
+}
+
+.filter-drawer-enter-active,
+.filter-drawer-leave-active {
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.filter-drawer-enter-from,
+.filter-drawer-leave-to {
+    opacity: 0;
+    transform: translateX(12px);
 }
 </style>

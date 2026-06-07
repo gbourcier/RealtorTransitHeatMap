@@ -10,8 +10,15 @@ export interface User {
   updatedAt: number
 }
 
-export async function login(username: string, password: string): Promise<User> {
-  const { data } = await api.post<User>('/api/auth/login', { username, password })
+export interface CurrentUser {
+  id: string
+  username: string
+  role: 'admin' | 'user'
+  preferences: { defaultFilterId: string | null }
+}
+
+export async function login(username: string, password: string): Promise<CurrentUser> {
+  const { data } = await api.post<CurrentUser>('/api/auth/login', { username, password })
   return data
 }
 
@@ -19,7 +26,7 @@ export async function logout(): Promise<void> {
   await api.post('/api/auth/logout')
 }
 
-export async function me(): Promise<User> {
-  const { data } = await api.get<User>('/api/auth/me')
+export async function me(): Promise<CurrentUser> {
+  const { data } = await api.get<CurrentUser>('/api/auth/me')
   return data
 }
