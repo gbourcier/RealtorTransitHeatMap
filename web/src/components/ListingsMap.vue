@@ -303,8 +303,8 @@ async function load() {
         emit(
             "error",
             e?.response?.data?.error ??
-                e?.message ??
-                "failed to load map listings",
+            e?.message ??
+            "failed to load map listings",
         );
     } finally {
         loading.value = false;
@@ -586,8 +586,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .listings-map-legend {
     position: absolute;
-    bottom: 12px;
-    right: 12px;
+    bottom: 16px;
+    right: 8px;
     z-index: 500;
     display: flex;
     flex-direction: column;
