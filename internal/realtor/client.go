@@ -227,13 +227,17 @@ func decodeObservations(results []listingResult) []listing.Observation {
 }
 
 func parseBuildingType(raw string) listing.BuildingType {
-	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "duplex":
-		return listing.BuildingTypeDuplex
-	case "triplex":
-		return listing.BuildingTypeTriplex
-	case "fourplex":
+	s := strings.ToLower(strings.TrimSpace(raw))
+	compact := strings.NewReplacer(" ", "", "-", "", "/", "", "_", "").Replace(s)
+	switch {
+	case strings.Contains(compact, "fourplex") || strings.Contains(compact, "quadruplex"):
 		return listing.BuildingTypeFourplex
+	case strings.Contains(compact, "triplex"):
+		return listing.BuildingTypeTriplex
+	case strings.Contains(compact, "duplex"):
+		return listing.BuildingTypeDuplex
+	case strings.Contains(compact, "apartment") || strings.Contains(compact, "condo"):
+		return listing.BuildingTypeApartment
 	default:
 		return listing.BuildingTypeHouse
 	}

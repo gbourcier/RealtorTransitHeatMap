@@ -24,13 +24,14 @@ func NewRepository(db *gorm.DB) *Repository {
 // The returned row's StartedAt is the canonical run start time. Pass a
 // non-nil scheduleID when the run is triggered by a schedule; pass nil
 // for manual triggers.
-func (r *Repository) Start(ctx context.Context, source string, scheduleID *uuid.UUID) (*ScrapeRun, error) {
+func (r *Repository) Start(ctx context.Context, source string, scheduleID *uuid.UUID, scheduleName *string) (*ScrapeRun, error) {
 	run := &ScrapeRun{
-		ID:         uuid.New(),
-		Source:     source,
-		Status:     StatusRunning,
-		StartedAt:  time.Now(),
-		ScheduleID: scheduleID,
+		ID:           uuid.New(),
+		Source:       source,
+		Status:       StatusRunning,
+		StartedAt:    time.Now(),
+		ScheduleID:   scheduleID,
+		ScheduleName: scheduleName,
 	}
 	if err := r.db.WithContext(ctx).Create(run).Error; err != nil {
 		return nil, err

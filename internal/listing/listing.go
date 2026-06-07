@@ -9,10 +9,11 @@ import (
 type BuildingType int
 
 const (
-	BuildingTypeHouse BuildingType = iota
-	BuildingTypeDuplex
-	BuildingTypeTriplex
-	BuildingTypeFourplex
+	BuildingTypeHouse     BuildingType = 1
+	BuildingTypeDuplex    BuildingType = 2
+	BuildingTypeTriplex   BuildingType = 3
+	BuildingTypeApartment BuildingType = 17
+	BuildingTypeFourplex  BuildingType = 19
 )
 
 type Listing struct {

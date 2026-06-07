@@ -116,12 +116,14 @@ function clusterIcon(c: L.MarkerCluster): L.DivIcon {
 function pricePillIcon(
     price: number | null,
     commuteSec: number | null,
+    buildingType: number,
 ): L.DivIcon {
     const label = formatCompactPrice(price);
     const tier = commuteTier(commuteSec);
+    const icon = buildingType === 1 ? "mdi-home" : "mdi-domain";
     return L.divIcon({
         className: `price-pin price-pin--${tier}`,
-        html: `<span class="price-pin__label">${label}</span>`,
+        html: `<span class="price-pin__label"><i class="mdi ${icon} price-pin__type" aria-hidden="true"></i><span>${label}</span></span>`,
         iconSize: undefined as unknown as L.PointExpression,
         iconAnchor: [0, 0],
     });
@@ -284,7 +286,11 @@ async function load() {
         const markers: L.Marker[] = [];
         for (const pin of pins) {
             const m = L.marker([pin.latitude, pin.longitude], {
-                icon: pricePillIcon(pin.currentPrice, pin.commuteSecondsDowntown),
+                icon: pricePillIcon(
+                    pin.currentPrice,
+                    pin.commuteSecondsDowntown,
+                    pin.buildingType,
+                ),
                 riseOnHover: true,
             }) as L.Marker & { _data?: MarkerData };
             m._data = {
@@ -733,9 +739,12 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .price-pin__label {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     transform: translate(-50%, -50%);
-    padding: 4px 11px;
+    padding: 4px 10px 4px 9px;
     border-radius: 999px;
     background: rgba(var(--v-theme-popup-overlay), 0.88);
     color: rgb(var(--v-theme-on-surface));
@@ -753,6 +762,17 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
         inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.08);
     cursor: pointer;
     transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.price-pin__type {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    min-width: 14px;
+    font-size: 13px;
+    line-height: 1;
+    color: rgba(var(--v-theme-on-surface), 0.72);
 }
 
 .price-pin__label::before {

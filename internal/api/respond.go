@@ -29,6 +29,7 @@ type ScrapeRunResponse struct {
 	ErrorKind    string  `json:"errorKind,omitempty"`
 	ErrorMessage string  `json:"errorMessage,omitempty"`
 	ScheduleID   *string `json:"scheduleId,omitempty"`
+	ScheduleName *string `json:"scheduleName,omitempty"`
 }
 
 type errorResponse struct {
@@ -195,6 +196,7 @@ func scrapeRunFromModel(r *scraperun.ScrapeRun) ScrapeRunResponse {
 		s := r.ScheduleID.String()
 		out.ScheduleID = &s
 	}
+	out.ScheduleName = r.ScheduleName
 	return out
 }
 

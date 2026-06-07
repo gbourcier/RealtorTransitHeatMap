@@ -650,6 +650,9 @@ components:
         newCount:
           type: integer
           nullable: true
+        staleCount:
+          type: integer
+          nullable: true
         errorKind:
           type: string
           enum: [forbidden, null_count, unknown]
@@ -660,6 +663,10 @@ components:
           format: uuid
           nullable: true
           description: Set when the run was triggered by a schedule; null for manual triggers.
+        scheduleName:
+          type: string
+          nullable: true
+          description: Name of the schedule at the time the run was started.
 
     Schedule:
       type: object

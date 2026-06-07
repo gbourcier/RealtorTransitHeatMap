@@ -32,7 +32,8 @@ type ScrapeRun struct {
 	ErrorKind    *string    `gorm:"column:error_kind"`
 	ErrorMessage *string    `gorm:"column:error_message"`
 	// ScheduleID is nil for manual triggers
-	ScheduleID *uuid.UUID `gorm:"column:schedule_id;type:uuid"`
+	ScheduleID   *uuid.UUID `gorm:"column:schedule_id;type:uuid"`
+	ScheduleName *string    `gorm:"column:schedule_name"`
 }
 
 func (ScrapeRun) TableName() string { return "scrape_runs" }

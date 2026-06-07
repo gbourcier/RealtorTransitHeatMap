@@ -144,13 +144,21 @@ func TestDecodeObservationsBuildingFields(t *testing.T) {
 
 func TestParseBuildingType(t *testing.T) {
 	cases := map[string]listing.BuildingType{
-		"":          listing.BuildingTypeHouse,
-		"House":     listing.BuildingTypeHouse,
-		"Detached":  listing.BuildingTypeHouse,
-		"Duplex":    listing.BuildingTypeDuplex,
-		"duplex":    listing.BuildingTypeDuplex,
-		" Triplex ": listing.BuildingTypeTriplex,
-		"Fourplex":  listing.BuildingTypeFourplex,
+		"":                  listing.BuildingTypeHouse,
+		"House":             listing.BuildingTypeHouse,
+		"Detached":          listing.BuildingTypeHouse,
+		"Duplex":            listing.BuildingTypeDuplex,
+		"semi-detached":     listing.BuildingTypeHouse,
+		" Triplex ":         listing.BuildingTypeTriplex,
+		"Fourplex":          listing.BuildingTypeFourplex,
+		"Four Plex":         listing.BuildingTypeFourplex,
+		"Row / Townhouse":   listing.BuildingTypeHouse,
+		"Row-Townhouse":     listing.BuildingTypeHouse,
+		"Rowhouse":          listing.BuildingTypeHouse,
+		"Apartment":         listing.BuildingTypeApartment,
+		"Apartment/Condo":   listing.BuildingTypeApartment,
+		"Condo/Apt.":        listing.BuildingTypeApartment,
+		"Duplex - detached": listing.BuildingTypeDuplex,
 	}
 	for in, want := range cases {
 		got := parseBuildingType(in)

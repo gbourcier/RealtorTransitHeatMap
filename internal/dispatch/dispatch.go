@@ -29,7 +29,7 @@ func (d *Dispatcher) IsBusy(err error) bool {
 }
 
 type ScrapeTrigger interface {
-	StartScrapeForSchedule(scheduleID uuid.UUID, params realtor.SearchParams) (uuid.UUID, error)
+	StartScrapeForSchedule(scheduleID uuid.UUID, scheduleName string, params realtor.SearchParams) (uuid.UUID, error)
 }
 
 type GtfsRefreshTrigger interface {
@@ -48,7 +48,7 @@ func New(scrape ScrapeTrigger, refresh GtfsRefreshTrigger) *Dispatcher {
 func (d *Dispatcher) Dispatch(s schedule.Schedule) (uuid.UUID, error) {
 	switch s.JobType {
 	case schedule.JobTypeScrapeRealtor:
-		return d.scrape.StartScrapeForSchedule(s.ID, searchParamsFromSchedule(s))
+		return d.scrape.StartScrapeForSchedule(s.ID, s.Name, searchParamsFromSchedule(s))
 	case schedule.JobTypeRefreshGtfs:
 		return d.refresh.StartForSchedule(s.ID)
 	default:

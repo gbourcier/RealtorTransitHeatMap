@@ -26,7 +26,7 @@ type ListingRepository interface {
 }
 
 type ScrapeRunRepository interface {
-	Start(ctx context.Context, source string, scheduleID *uuid.UUID) (*scraperun.ScrapeRun, error)
+	Start(ctx context.Context, source string, scheduleID *uuid.UUID, scheduleName *string) (*scraperun.ScrapeRun, error)
 	FinishSuccess(ctx context.Context, id uuid.UUID, totalCount, newCount int, staleCount int) (time.Time, error)
 	FinishError(ctx context.Context, id uuid.UUID, kind, message string, totalCount, newCount int, staleCount int) (time.Time, error)
 	Get(ctx context.Context, id uuid.UUID) (*scraperun.ScrapeRun, error)
@@ -60,12 +60,12 @@ func (w *Worker) Bind(rootCtx context.Context) {
 	w.rootCtx = rootCtx
 }
 
-func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID, params realtor.SearchParams) (uuid.UUID, error) {
+func (w *Worker) StartScrapeForSchedule(scheduleID uuid.UUID, scheduleName string, params realtor.SearchParams) (uuid.UUID, error) {
 	if !w.busy.CompareAndSwap(false, true) {
 		return uuid.Nil, ErrBusy
 	}
 
-	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, &scheduleID)
+	run, err := w.runs.Start(w.rootCtx, scraperun.SourceRealtor, &scheduleID, &scheduleName)
 
 	if err != nil {
 		w.busy.Store(false)
