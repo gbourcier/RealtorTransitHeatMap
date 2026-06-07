@@ -38,10 +38,6 @@ const views = useSavedViews(filters);
 if (savedFiltersStore.defaultFilter) {
     views.applySaved(savedFiltersStore.defaultFilter);
 }
-function onToggleFavorites(): void {
-    if (filters.favoritesOnly.value) views.selectAll();
-    else views.selectFavourites();
-}
 function openSaveFromHeader(): void {
     filtersOpen.value = true;
     saveModalOpen.value = true;
@@ -220,10 +216,8 @@ onBeforeUnmount(() => {
             :sort-by="listings.sortBy.value"
             :sort-dir="listings.sortDir.value"
             :sort-options="listings.sortOptions"
-            :favorites-only="filters.favoritesOnly.value"
             :selected-key="selectedKey"
             @select-sort="listings.selectSort"
-            @toggle-favorites="onToggleFavorites"
             @card-click="focusListingOnMap"
             @card-hover="highlightListingOnMap"
             @card-leave="clearMapHighlight"
@@ -239,9 +233,7 @@ onBeforeUnmount(() => {
         :sort-by="listings.sortBy.value"
         :sort-dir="listings.sortDir.value"
         :sort-options="listings.sortOptions"
-        :favorites-only="filters.favoritesOnly.value"
         @select-sort="listings.selectSort"
-        @toggle-favorites="filters.favoritesOnly.value = !filters.favoritesOnly.value"
         @card-click="openListing"
         @load-more="listings.loadMore"
     />
