@@ -1,43 +1,67 @@
 <template>
-  <v-system-bar color="header-bar" height="48" class="header-bar">
+  <v-system-bar
+    color="header-bar"
+    height="66"
+    class="header-bar"
+    :class="{ 'header-bar--with-panel': showPanelToggle }"
+  >
     <button
       v-if="showBack"
       type="button"
-      class="back-pill ms-2"
+      class="back-pill"
       aria-label="Back to map"
       @click="emit('click:back')"
     >
-      <v-icon size="16" class="back-pill__icon">mdi-arrow-left</v-icon>
+      <v-icon size="18" class="back-pill__icon">mdi-arrow-left</v-icon>
     </button>
+
+    <RouterLink to="/listings" class="brand" aria-label="HouseMap" @click="emit('click:brand')">
+      <span class="brand__tile">
+        <img src="/brand/sona-logo.svg" alt="" class="brand__logo" />
+      </span>
+      <span class="brand__word">House<span>Map</span></span>
+    </RouterLink>
+
+    <v-spacer />
+
+    <div id="header-filters-slot" class="header-bar__filters" />
+    <div class="header-bar__divider" />
 
     <v-menu
       v-model="menuOpen"
-      location="bottom start"
-      offset="18"
-      transition="scale-transition"
+      :location="mobile ? 'bottom center' : 'bottom end'"
+      offset="10"
+      :transition="mobile ? 'mobile-sheet-transition' : 'scale-transition'"
+      :content-class="mobile ? 'mobile-sheet-menu mobile-sheet-menu--user' : undefined"
       :close-on-content-click="true"
     >
       <template #activator="{ props: menuProps }">
         <button
           type="button"
           class="user-pill"
-          :class="[showBack ? 'ms-1' : 'ms-2', { 'user-pill--open': menuOpen }]"
+          :class="{ 'user-pill--open': menuOpen }"
           v-bind="menuProps"
           aria-label="User menu"
         >
-          <v-icon size="14" class="user-pill__icon">mdi-account-outline</v-icon>
+          <v-icon size="18" class="user-pill__icon">mdi-account-outline</v-icon>
           <span class="user-pill__label">{{ authStore.user?.username }}</span>
-          <v-icon size="12" class="user-pill__chevron">mdi-chevron-down</v-icon>
+          <v-icon size="15" class="user-pill__chevron">mdi-chevron-down</v-icon>
         </button>
       </template>
+
       <div class="user-menu" role="menu" aria-label="User menu">
         <header class="user-menu__header">
-          <v-icon size="22" class="user-menu__avatar">mdi-account-circle-outline</v-icon>
+          <span class="user-menu__avatar">
+            <v-icon size="22">mdi-account-outline</v-icon>
+          </span>
           <div class="user-menu__identity">
             <span class="user-menu__name">{{ authStore.user?.username }}</span>
             <span class="user-menu__role">{{ authStore.isAdmin ? 'Admin' : 'User' }}</span>
           </div>
         </header>
+
+        <div class="user-menu__sep" />
+
         <div class="user-menu__items">
           <button
             type="button"
@@ -49,8 +73,6 @@
             <v-icon size="18" class="user-menu__item-icon">mdi-heart-outline</v-icon>
             <span class="user-menu__item-label">Manage Favorites</span>
           </button>
-        </div>
-        <div class="user-menu__items">
           <button
             v-if="authStore.isAdmin"
             type="button"
@@ -62,6 +84,21 @@
             <v-icon size="18" class="user-menu__item-icon">mdi-cog-outline</v-icon>
             <span class="user-menu__item-label">Settings</span>
           </button>
+          <button
+            v-if="showPanelToggle"
+            type="button"
+            role="menuitem"
+            class="user-menu__item user-menu__item--mobile-only"
+            @click="emit('click:panel-toggle')"
+          >
+            <v-icon size="18" class="user-menu__item-icon">mdi-dock-right</v-icon>
+            <span class="user-menu__item-label">Toggle results panel</span>
+          </button>
+        </div>
+
+        <div class="user-menu__sep" />
+
+        <div class="user-menu__items">
           <button
             type="button"
             role="menuitem"
@@ -75,29 +112,29 @@
       </div>
     </v-menu>
 
-    <v-spacer />
-
-    <div id="header-filters-slot" class="header-bar__filters" />
     <div id="header-actions-slot" class="header-bar__actions" />
   </v-system-bar>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSavedFiltersStore } from '../../stores/savedFilters'
 
-withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean }>(), {
+withDefaults(defineProps<{ settingsActive?: boolean; showBack?: boolean; showPanelToggle?: boolean }>(), {
   settingsActive: false,
   showBack: false,
+  showPanelToggle: false,
 })
-const emit = defineEmits(['click:settings', 'click:back'])
+const emit = defineEmits(['click:settings', 'click:back', 'click:panel-toggle', 'click:brand'])
 
 const authStore = useAuthStore()
 const savedFiltersStore = useSavedFiltersStore()
 const router = useRouter()
 const route = useRoute()
+const { mobile } = useDisplay()
 const menuOpen = ref(false)
 
 const favoritesActive = computed(() => route.name === 'favorites')
@@ -117,119 +154,183 @@ async function onLogout() {
 .header-bar :deep(.v-system-bar__content),
 .header-bar.v-system-bar {
   padding-inline: 0;
+  overflow: visible;
+}
+
+.header-bar {
+  position: relative;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 26px -14px #000;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  flex: 0 0 auto;
+  margin-left: 20px;
+  color: #f4f1e8;
+  text-decoration: none;
+}
+
+.back-pill + .brand {
+  margin-left: 10px;
+}
+
+.brand__tile {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #fff, #eaf2fb);
+  box-shadow: inset 0 0 0 1px rgba(21, 35, 61, 0.1), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.brand__logo {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+.brand__word {
+  font-family: "Baloo 2", Inter, system-ui, sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.brand__word span {
+  color: #b6f24a;
 }
 
 .header-bar__filters {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 14px;
   min-width: 0;
+  flex: 0 0 auto;
+}
+
+.header-bar__divider {
+  width: 1px;
+  height: 26px;
+  margin-inline: 12px;
+  background: rgba(244, 241, 232, 0.12);
   flex: 0 0 auto;
 }
 
 .header-bar__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-}
-
-.header-bar__actions {
+  gap: 8px;
   margin-right: 8px;
-}
-
-.header-bar__actions:not(:empty) {
-  margin-left: 6px;
+  flex: 0 0 auto;
 }
 
 .back-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  width: 28px;
+  height: 40px;
+  width: 40px;
+  margin-left: 20px;
   padding: 0;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--v-theme-primary), 0.7);
-  background: transparent;
-  color: rgb(var(--v-theme-primary));
+  border-radius: 11px;
+  border: 1px solid rgba(244, 241, 232, 0.12);
+  background: #2a2d27;
+  color: #f4f1e8;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 60ms ease;
 }
 
 .back-pill:hover {
-  background-color: rgba(var(--v-theme-primary), 0.08);
-  border-color: rgb(var(--v-theme-primary));
+  background-color: #34382f;
+  border-color: rgba(244, 241, 232, 0.22);
+}
+
+.back-pill:active {
+  transform: translateY(1px);
 }
 
 .back-pill:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-primary));
+  outline: 2px solid #6ccff6;
   outline-offset: 2px;
-}
-
-.back-pill__icon {
-  opacity: 0.95;
 }
 
 .user-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 10px;
+  gap: 8px;
+  height: 40px;
+  margin-right: 20px;
+  padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
-  background: transparent;
-  color: rgba(var(--v-theme-on-surface), 0.88);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: normal;
+  border: 1px solid rgba(244, 241, 232, 0.12);
+  background: #2a2d27;
+  color: #f4f1e8;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 60ms ease;
 }
 
-.user-pill:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.05);
-  border-color: rgba(var(--v-theme-on-surface), 0.32);
+.header-bar--with-panel .user-pill {
+  margin-right: 8px;
 }
 
+.user-pill:hover,
 .user-pill--open {
-  background-color: rgba(var(--v-theme-on-surface), 0.12);
-  border-color: rgba(var(--v-theme-on-surface), 0.4);
+  background-color: #34382f;
+  border-color: rgba(244, 241, 232, 0.22);
+}
+
+.user-pill:active {
+  transform: translateY(1px);
 }
 
 .user-pill:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-primary));
+  outline: 2px solid #6ccff6;
   outline-offset: 2px;
 }
 
-.user-pill__icon {
-  opacity: 0.9;
-}
-
 .user-pill__chevron {
-  opacity: 0.6;
+  color: rgba(244, 241, 232, 0.52);
 }
 
 .user-menu {
-  width: 220px;
+  width: 260px;
+  padding: 8px;
   border-radius: 16px;
-  background-color: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  box-shadow: 0 16px 40px rgba(var(--v-theme-shadow), 0.5);
-  color: rgba(var(--v-theme-on-surface), 0.92);
+  background-color: #262925;
+  border: 1px solid rgba(244, 241, 232, 0.12);
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.8);
+  color: #f4f1e8;
   overflow: hidden;
+  font-family: Inter, system-ui, sans-serif;
 }
 
 .user-menu__header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 13px;
+  padding: 12px 12px 10px;
 }
 
 .user-menu__avatar {
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #2a2d27;
+  border: 1px solid rgba(244, 241, 232, 0.12);
+  color: #f4f1e8;
 }
 
 .user-menu__identity {
@@ -239,8 +340,8 @@ async function onLogout() {
 }
 
 .user-menu__name {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -248,50 +349,151 @@ async function onLogout() {
 }
 
 .user-menu__role {
-  font-size: 0.75rem;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  margin-top: 1px;
+  font-size: 13px;
+  color: rgba(244, 241, 232, 0.52);
+}
+
+.user-menu__sep {
+  height: 1px;
+  margin: 7px 6px;
+  background: rgba(244, 241, 232, 0.12);
 }
 
 .user-menu__items {
-  padding: 6px;
-  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  display: flex;
+  flex-direction: column;
 }
 
 .user-menu__item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   width: 100%;
-  padding: 9px 10px;
+  height: 46px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 11px;
   background: transparent;
-  color: rgba(var(--v-theme-on-surface), 0.88);
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: #f4f1e8;
+  font-size: 15px;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
 .user-menu__item:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.06);
+  background-color: rgba(244, 241, 232, 0.06);
 }
 
 .user-menu__item:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-primary));
+  outline: 2px solid #6ccff6;
   outline-offset: -2px;
 }
 
 .user-menu__item--active {
-  color: rgb(var(--v-theme-primary));
-}
-
-.user-menu__item--active:hover {
-  background-color: rgba(var(--v-theme-primary), 0.08);
+  color: #b6f24a;
+  background: rgba(182, 242, 74, 0.12);
 }
 
 .user-menu__item-icon {
-  opacity: 0.9;
+  color: rgba(244, 241, 232, 0.52);
+}
+
+.user-menu__item--mobile-only {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  :global(.mobile-sheet-menu.v-overlay__content) {
+    position: fixed !important;
+    top: auto !important;
+    right: 11px !important;
+    bottom: 0 !important;
+    left: 11px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  :global(.mobile-sheet-transition-enter-active),
+  :global(.mobile-sheet-transition-leave-active) {
+    transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+  }
+
+  :global(.mobile-sheet-transition-enter-from),
+  :global(.mobile-sheet-transition-leave-to) {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  .header-bar.v-system-bar {
+    height: 58px !important;
+  }
+
+  .brand {
+    margin-left: 11px;
+  }
+
+  .back-pill {
+    width: 38px;
+    height: 38px;
+    margin-left: 11px;
+  }
+
+  .back-pill + .brand {
+    margin-left: 8px;
+  }
+
+  .brand__tile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand__logo {
+    width: 31px;
+    height: 31px;
+  }
+
+  .brand__word,
+  .header-bar__actions {
+    display: none;
+  }
+
+  .header-bar__filters {
+    gap: 11px;
+  }
+
+  .header-bar__divider {
+    display: block;
+    height: 28px;
+    margin-inline: 10px;
+  }
+
+  .user-pill {
+    width: 38px;
+    height: 38px;
+    margin-left: 0;
+    margin-right: 11px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .user-pill__label,
+  .user-pill__chevron {
+    display: none;
+  }
+
+  .user-menu {
+    width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .user-menu__item--mobile-only {
+    display: flex;
+  }
 }
 </style>

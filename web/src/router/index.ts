@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Scraper from '../views/Scraper.vue'
-import Listings from '../views/Listings.vue'
-import Transit from '../views/Transit.vue'
-import Login from '../views/Login.vue'
-import Users from '../views/Users.vue'
-import Favorites from '../views/Favorites.vue'
 import { useAuthStore } from '../stores/auth'
 import { useSavedFiltersStore } from '../stores/savedFilters'
+
+const Login = () => import('../views/Login.vue')
+const Listings = () => import('../views/Listings.vue')
+const Favorites = () => import('../views/Favorites.vue')
+const Scraper = () => import('../views/Scraper.vue')
+const Transit = () => import('../views/Transit.vue')
+const Users = () => import('../views/Users.vue')
 
 export const router = createRouter({
   history: createWebHistory(),

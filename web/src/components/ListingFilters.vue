@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
 import { formatCompactPrice } from "../utils/listingFormat";
@@ -17,6 +17,8 @@ const emit = defineEmits<{
     error: [message: string];
     save: [];
 }>();
+const rootEl = ref<HTMLElement | null>(null);
+defineExpose({ rootEl });
 
 const PRICE_MIN = 300_000;
 const PRICE_MAX = 1_000_000;
@@ -94,7 +96,7 @@ async function onUpdate(): Promise<void> {
 </script>
 
 <template>
-    <div class="filter-drawer" role="dialog" aria-label="Filters">
+    <div ref="rootEl" class="filter-drawer" role="dialog" aria-label="Filters">
         <header class="fp__head">
             <span class="fp__title">Filters</span>
             <span v-if="state.activeFilterCount.value > 0" class="fp__badge">
@@ -212,19 +214,24 @@ async function onUpdate(): Promise<void> {
                         :class="{ 'chip--on': state.newWithinDays.value === opt.value }"
                         @click="state.newWithinDays.value = opt.value"
                     >{{ opt.label }}</button>
-                    <span class="chips__sep" />
-                    <button
-                        type="button"
-                        class="chip"
-                        :class="{ 'chip--on': state.includeExpired.value }"
-                        :aria-pressed="state.includeExpired.value"
-                        @click="state.includeExpired.value = !state.includeExpired.value"
-                    >
-                        <v-icon v-if="state.includeExpired.value" size="13">mdi-check</v-icon>
-                        Include expired
-                    </button>
                 </div>
             </section>
+
+            <section class="fp__sec fp__sec--compact">
+                <button
+                    type="button"
+                    class="fp__toggle"
+                    :class="{ 'fp__toggle--on': state.includeExpired.value }"
+                    :aria-pressed="state.includeExpired.value"
+                    @click="state.includeExpired.value = !state.includeExpired.value"
+                >
+                    <span class="fp__check">
+                        <v-icon v-if="state.includeExpired.value" size="14">mdi-check</v-icon>
+                    </span>
+                    Include expired
+                </button>
+            </section>
+
         </div>
 
         <footer class="fp__foot">
@@ -244,90 +251,92 @@ async function onUpdate(): Promise<void> {
 <style scoped>
 .filter-drawer {
     position: fixed;
-    top: 62px;
-    right: 14px;
-    max-height: calc(100dvh - 76px);
-    width: min(404px, calc(100vw - 28px));
+    top: 76px;
+    right: 76px;
     z-index: 1005;
     display: flex;
     flex-direction: column;
+    width: min(440px, calc(100vw - 28px));
+    max-height: 86vh;
     overflow: hidden;
     border-radius: 18px;
-    background: rgb(var(--v-theme-surface));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.07);
-    box-shadow: 0 26px 72px rgba(var(--v-theme-shadow), 0.55);
-    color: rgba(var(--v-theme-on-surface), 0.92);
+    background: #262925;
+    border: 1px solid rgba(244, 241, 232, 0.12);
+    box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85);
+    color: #f4f1e8;
+    font-family: Inter, system-ui, sans-serif;
 }
 
 .fp__head {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 18px 20px 12px;
+    gap: 12px;
+    padding: 18px 18px 14px;
 }
 
 .fp__title {
-    font-size: 1.25rem;
+    font-size: 22px;
     font-weight: 700;
-    letter-spacing: -0.2px;
 }
 
 .fp__badge {
     display: inline-flex;
     align-items: center;
-    height: 22px;
-    padding: 0 9px;
+    padding: 3px 10px;
     border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    border: 1.5px solid #b6f24a;
+    color: #b6f24a;
+    font-size: 12.5px;
+    font-weight: 700;
     white-space: nowrap;
-    color: rgb(var(--v-theme-primary));
-    border: 1px solid rgba(var(--v-theme-primary), 0.5);
-    background: rgba(var(--v-theme-primary), 0.07);
 }
 
 .fp__x {
     margin-left: auto;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    border: 1px solid rgba(244, 241, 232, 0.12);
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: #f4f1e8;
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease;
 }
 
-.fp__x:hover {
-    background: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.95);
+.fp__x:hover,
+.fp__reset:hover,
+.fp__save:hover {
+    background: #2a2d27;
 }
 
-.fp__x:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: -2px;
+.fp__x:focus-visible,
+.chip:focus-visible,
+.fp__reset:focus-visible,
+.fp__save:focus-visible,
+.fp__apply:focus-visible,
+.fp__toggle:focus-visible {
+    outline: 2px solid #6ccff6;
+    outline-offset: 2px;
 }
 
 .fp__applied {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 2px 14px 0;
-    padding: 10px 14px;
-    border-radius: 13px;
-    background: rgba(var(--v-theme-primary), 0.09);
-    border: 1px solid rgba(var(--v-theme-primary), 0.32);
+    gap: 9px;
+    margin: 0 18px 18px;
+    padding: 13px 15px;
+    border-radius: 12px;
+    background: rgba(182, 242, 74, 0.12);
+    border: 1px solid rgba(182, 242, 74, 0.3);
 }
 
-.fp__applied__check {
-    flex: 0 0 auto;
-    color: rgb(var(--v-theme-primary));
+.fp__applied__check,
+.fp__applied__name {
+    color: #b6f24a;
 }
 
 .fp__applied__text {
@@ -339,23 +348,21 @@ async function onUpdate(): Promise<void> {
 }
 
 .fp__applied__name {
-    font-size: 0.84375rem;
-    font-weight: 700;
-    color: rgb(var(--v-theme-primary));
     overflow: hidden;
+    font-size: 14.5px;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .fp__applied__state {
     flex: 0 0 auto;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.5);
+    color: rgba(244, 241, 232, 0.52);
+    font-size: 13px;
 }
 
 .fp__applied__state--dirty {
-    color: rgb(var(--v-theme-warning));
+    color: #ffb454;
 }
 
 .fp__applied__actions {
@@ -370,37 +377,32 @@ async function onUpdate(): Promise<void> {
     padding: 0 12px;
     border-radius: 999px;
     cursor: pointer;
-    font-size: 0.78125rem;
+    font-size: 12.5px;
     font-weight: 600;
     white-space: nowrap;
-    transition: filter 120ms ease, background-color 120ms ease;
 }
 
 .fp__applied__btn--primary {
-    background: rgb(var(--v-theme-primary));
+    background: #b6f24a;
     border: 0;
-    color: rgb(var(--v-theme-on-primary));
-}
-
-.fp__applied__btn--primary:hover {
-    filter: brightness(1.06);
+    color: #172006;
 }
 
 .fp__applied__btn--ghost {
     background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.22);
-    color: rgba(var(--v-theme-on-surface), 0.85);
-}
-
-.fp__applied__btn--ghost:hover {
-    background: rgba(var(--v-theme-on-surface), 0.06);
+    border: 1px solid rgba(244, 241, 232, 0.22);
+    color: #f4f1e8;
 }
 
 .fp__body {
     flex: 1 1 auto;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
     overflow-y: auto;
     overflow-x: hidden;
+    padding: 0 18px 18px;
 }
 
 .fp__body::-webkit-scrollbar {
@@ -408,79 +410,72 @@ async function onUpdate(): Promise<void> {
 }
 
 .fp__body::-webkit-scrollbar-thumb {
-    background: rgba(var(--v-theme-on-surface), 0.14);
+    background: rgba(244, 241, 232, 0.14);
     border-radius: 999px;
-    border: 3px solid rgb(var(--v-theme-surface));
+    border: 3px solid #262925;
 }
 
 .hero {
-    margin: 6px 14px 0;
-    padding: 18px 16px;
-    border-radius: 16px;
-    background: rgb(var(--v-theme-map-bg));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.07);
+    padding: 18px;
+    border-radius: 14px;
+    background: #181a17;
+    border: 1px solid rgba(244, 241, 232, 0.12);
 }
 
 .hero__top {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
     margin-bottom: 16px;
 }
 
 .hero__kicker {
-    font-size: 0.6875rem;
+    max-width: 160px;
+    color: #b6f24a;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 1.3px;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
     text-transform: uppercase;
-    color: rgb(var(--v-theme-primary));
 }
 
 .hero__read {
-    font-size: 2.75rem;
-    font-weight: 900;
+    color: #f4f1e8;
+    font-size: 42px;
+    font-weight: 800;
     line-height: 0.9;
-    letter-spacing: -1.5px;
-    color: rgba(var(--v-theme-on-surface), 0.96);
     font-variant-numeric: tabular-nums;
 }
 
 .hero__read small {
-    font-size: 1rem;
-    font-weight: 500;
-    margin-left: 5px;
-    color: rgba(var(--v-theme-on-surface), 0.5);
-    letter-spacing: 0;
+    margin-left: 4px;
+    color: rgba(244, 241, 232, 0.52);
+    font-size: 17px;
+    font-weight: 600;
 }
 
 .hero__counts {
     display: flex;
-    margin-top: 16px;
+    justify-content: flex-end;
+    margin-top: 12px;
 }
 
 .hero__total {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    font-size: 1.1875rem;
-    font-weight: 700;
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
+    font-size: 15px;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
 }
 
 .hero__total small {
-    font-size: 0.6875rem;
+    margin-left: 5px;
+    color: rgba(244, 241, 232, 0.52);
+    font-size: 13px;
     font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.5);
 }
 
 .fp__sec {
-    padding: 16px 20px;
-}
-
-.fp__sec + .fp__sec {
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+    padding: 0;
 }
 
 .fp__sec-head {
@@ -495,66 +490,93 @@ async function onUpdate(): Promise<void> {
 }
 
 .fp__label {
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
 }
 
 .fp__val {
     margin-left: auto;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.62);
+    color: rgba(244, 241, 232, 0.52);
+    font-size: 15px;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 
 .fp__val--set {
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
 }
 
 .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-}
-
-.chips__sep {
-    flex-basis: 100%;
-    height: 4px;
+    gap: 9px;
 }
 
 .chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    height: 34px;
-    padding: 0 13px;
+    justify-content: center;
+    min-width: 48px;
+    height: 40px;
+    padding: 0 16px;
     border-radius: 999px;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+    border: 1px solid rgba(244, 241, 232, 0.12);
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.82);
+    color: #f4f1e8;
     white-space: nowrap;
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .chip:hover {
-    background: rgba(var(--v-theme-on-surface), 0.05);
-    border-color: rgba(var(--v-theme-on-surface), 0.3);
-}
-
-.chip:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+    border-color: rgba(244, 241, 232, 0.22);
 }
 
 .chip--on,
 .chip--on:hover {
-    background: rgba(var(--v-theme-primary), 0.16);
-    border-color: rgba(var(--v-theme-primary), 0.55);
-    color: rgb(var(--v-theme-primary));
-    font-weight: 700;
+    background: rgba(182, 242, 74, 0.1);
+    border: 1.5px solid #b6f24a;
+    color: #b6f24a;
+}
+
+.fp__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    height: 46px;
+    padding: 0 16px 0 13px;
+    border-radius: 12px;
+    border: 1px solid rgba(244, 241, 232, 0.12);
+    background: transparent;
+    color: #f4f1e8;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fp__toggle:hover {
+    border-color: rgba(244, 241, 232, 0.22);
+}
+
+.fp__toggle--on {
+    border-color: #b6f24a;
+}
+
+.fp__check {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(244, 241, 232, 0.22);
+}
+
+.fp__toggle--on .fp__check {
+    background: #b6f24a;
+    border-color: #b6f24a;
+    color: #172006;
 }
 
 .fp__foot {
@@ -562,84 +584,96 @@ async function onUpdate(): Promise<void> {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 14px 20px 16px;
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.07);
+    padding: 14px 18px;
+    border-top: 1px solid rgba(244, 241, 232, 0.12);
+    background: #262925;
 }
 
-.fp__reset {
-    flex: 0 0 auto;
-    height: 44px;
-    padding: 0 18px;
-    border-radius: 999px;
-    background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.fp__reset:hover {
-    background: rgba(var(--v-theme-on-surface), 0.06);
-    border-color: rgba(var(--v-theme-on-surface), 0.32);
-}
-
+.fp__reset,
 .fp__save {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 44px;
-    padding: 0 15px;
+    gap: 8px;
+    height: 46px;
+    padding: 0 18px;
     border-radius: 999px;
+    border: 1px solid rgba(244, 241, 232, 0.22);
     background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-    font-size: 0.875rem;
+    color: #f4f1e8;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.fp__save:hover {
-    background: rgba(var(--v-theme-on-surface), 0.06);
-    border-color: rgba(var(--v-theme-on-surface), 0.32);
-}
-
-.fp__reset:focus-visible,
-.fp__save:focus-visible,
-.fp__apply:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
 }
 
 .fp__apply {
     flex: 1 1 auto;
-    height: 44px;
-    padding: 0 18px;
+    height: 46px;
+    padding: 0 22px;
     border-radius: 999px;
-    background: rgb(var(--v-theme-primary));
-    color: rgb(var(--v-theme-on-primary));
+    background: #b6f24a;
+    color: #172006;
     border: 0;
-    font-size: 0.9375rem;
+    font-size: 15.5px;
     font-weight: 700;
-    letter-spacing: -0.1px;
+    white-space: nowrap;
     cursor: pointer;
-    transition: filter 120ms ease;
 }
 
 .fp__apply:hover {
-    filter: brightness(1.06);
+    background: #c6fb60;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 899px) {
     .filter-drawer {
-        top: 58px;
-        left: 12px;
-        right: 12px;
-        max-height: calc(100dvh - 70px);
+        top: auto;
+        right: 11px;
+        bottom: 0;
+        left: 11px;
         width: auto;
+        max-height: 88dvh;
+        border-radius: 22px 22px 0 0;
+        animation: filter-sheet-up 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+    }
+
+    .fp__applied {
+        align-items: flex-start;
+    }
+
+    .fp__applied__actions {
+        display: none;
+    }
+
+    .fp__foot {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 9px;
+        padding: 12px;
+    }
+
+    .fp__reset,
+    .fp__save,
+    .fp__apply {
+        justify-content: center;
+        min-width: 0;
+        width: 100%;
+        height: 44px;
+    }
+
+    .fp__reset,
+    .fp__save {
+        padding: 0 12px;
+    }
+
+    .fp__apply {
+        grid-column: 1 / -1;
+        padding: 0 16px;
+    }
+}
+
+@keyframes filter-sheet-up {
+    from {
+        transform: translateY(100%);
     }
 }
 </style>

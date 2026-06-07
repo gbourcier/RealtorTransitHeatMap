@@ -32,6 +32,18 @@ export default defineConfig({
     },
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vue: ['vue', 'vue-router', 'pinia'],
+          vuetify: ['vuetify'],
+          map: ['leaflet', 'leaflet.markercluster', 'h3-js'],
+          http: ['axios'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {
