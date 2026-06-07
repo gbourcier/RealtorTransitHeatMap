@@ -15,12 +15,14 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    buildingTypes: number[];
 }
 
 defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
+    selectBuildingType: [id: number | null];
     cardClick: [item: Listing];
     loadMore: [];
 }>();
@@ -36,8 +38,10 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
             :sort-by="sortBy"
             :sort-dir="sortDir"
             :sort-options="sortOptions"
+            :building-types="buildingTypes"
             mobile
             @select-sort="emit('selectSort', $event)"
+            @select-building-type="emit('selectBuildingType', $event)"
         />
 
         <div

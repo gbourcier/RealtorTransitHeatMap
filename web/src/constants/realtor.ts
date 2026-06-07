@@ -12,6 +12,13 @@ export const BUILDING_TYPES: BuildingType[] = [
   { id: 19, label: 'Fourplex' },
 ]
 
+export const LISTING_FILTER_BUILDING_TYPES: BuildingType[] = [
+  { id: 1, label: 'House' },
+  { id: 2, label: 'Duplex' },
+  { id: 3, label: 'Triplex' },
+  { id: 19, label: 'Fourplex' },
+]
+
 export interface RangeOption {
   label: string
   value: string

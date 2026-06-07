@@ -15,6 +15,21 @@ export function formatCompactPrice(price: number): string {
     return `$${Math.round(price / 1000)}k`;
 }
 
+export function formatPropertyType(buildingType: number): string {
+    switch (buildingType) {
+        case 1:
+            return "House";
+        case 2:
+            return "2-plex";
+        case 3:
+            return "3-plex";
+        case 19:
+            return "4-plex";
+        default:
+            return "";
+    }
+}
+
 export function daysSince(unix: number): number {
     const date = new Date(unix * 1000);
     const now = new Date();

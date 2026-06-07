@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/savedfilter"
@@ -28,6 +29,7 @@ type savedFilterHandlers struct {
 
 type savedFilterRequest struct {
 	Name                string   `json:"name"`
+	BuildingTypes       []int    `json:"buildingTypes"`
 	MaxPrice            *float64 `json:"maxPrice"`
 	MaxCommuteSec       *int     `json:"maxCommuteSec"`
 	NewWithinDays       *int     `json:"newWithinDays"`
@@ -49,6 +51,13 @@ func (req *savedFilterRequest) validate() (string, string) {
 	if req.MaxPrice != nil && *req.MaxPrice < 0 {
 		return "", "maxPrice must be >= 0"
 	}
+	for _, id := range req.BuildingTypes {
+		switch id {
+		case 1, 2, 3, 19:
+		default:
+			return "", "buildingTypes contains an unsupported building type"
+		}
+	}
 	if req.MaxCommuteSec != nil && *req.MaxCommuteSec < 0 {
 		return "", "maxCommuteSec must be >= 0"
 	}
@@ -67,9 +76,23 @@ func (req *savedFilterRequest) validate() (string, string) {
 	return name, ""
 }
 
+func encodeBuildingTypes(ids []int) string {
+	parts := make([]string, 0, len(ids))
+	seen := map[int]bool{}
+	for _, id := range ids {
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		parts = append(parts, strconv.Itoa(id))
+	}
+	return strings.Join(parts, ",")
+}
+
 func (req *savedFilterRequest) toModel(name string) savedfilter.SavedFilter {
 	return savedfilter.SavedFilter{
 		Name:                name,
+		BuildingTypes:       encodeBuildingTypes(req.BuildingTypes),
 		MaxPrice:            req.MaxPrice,
 		MaxCommuteSec:       req.MaxCommuteSec,
 		NewWithinDays:       req.NewWithinDays,

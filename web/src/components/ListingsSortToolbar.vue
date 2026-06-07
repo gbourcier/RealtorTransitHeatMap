@@ -1,19 +1,33 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { SortBy, SortDir } from "../api/listings";
 import type { SortOption } from "../composables/useListings";
+import { LISTING_FILTER_BUILDING_TYPES } from "../constants/realtor";
 
 interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    buildingTypes: number[];
     mobile?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 defineEmits<{
     selectSort: [opt: SortOption];
+    selectBuildingType: [id: number | null];
 }>();
+
+const buildingTypeOptions = LISTING_FILTER_BUILDING_TYPES;
+const buildingTypeActive = computed(() => props.buildingTypes.length > 0);
+const buildingTypeLabel = computed(() => {
+    if (props.buildingTypes.length === 0) return "Type";
+    if (props.buildingTypes.length === 1) {
+        return buildingTypeOptions.find((opt) => opt.id === props.buildingTypes[0])?.label ?? "Type";
+    }
+    return "Types";
+});
 </script>
 
 <template>
@@ -35,6 +49,34 @@ defineEmits<{
                 </v-icon>
             </button>
         </div>
+        <v-menu location="bottom end" :offset="6" content-class="building-type-menu-surface">
+            <template #activator="{ props: menuProps }">
+                <button
+                    v-bind="menuProps"
+                    type="button"
+                    class="building-type-pill"
+                    :class="{ 'building-type-pill--active': buildingTypeActive }"
+                    :aria-pressed="buildingTypeActive"
+                >
+                    <span class="building-type-pill__label">{{ buildingTypeLabel }}</span>
+                    <v-icon size="14" class="building-type-pill__icon">mdi-chevron-down</v-icon>
+                </button>
+            </template>
+            <v-list class="building-type-menu" density="compact" nav>
+                <v-list-item
+                    title="Any type"
+                    :active="buildingTypes.length === 0"
+                    @click="$emit('selectBuildingType', null)"
+                />
+                <v-list-item
+                    v-for="opt in buildingTypeOptions"
+                    :key="opt.id"
+                    :title="opt.label"
+                    :active="buildingTypes.length === 1 && buildingTypes[0] === opt.id"
+                    @click="$emit('selectBuildingType', opt.id)"
+                />
+            </v-list>
+        </v-menu>
     </div>
 </template>
 
@@ -115,6 +157,74 @@ defineEmits<{
 .sort-tabs__dir {
     flex-shrink: 0;
     opacity: 0.9;
+}
+
+.building-type-pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.building-type-pill:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgba(var(--v-theme-on-surface), 0.92);
+}
+
+.building-type-pill:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
+}
+
+.building-type-pill--active {
+    border-color: transparent;
+    background-color: rgb(var(--v-theme-secondary));
+    color: rgb(var(--v-theme-on-secondary));
+    font-weight: 700;
+}
+
+.building-type-pill--active:hover {
+    background-color: color-mix(in srgb, rgb(var(--v-theme-secondary)) 88%, #fff);
+    color: rgb(var(--v-theme-on-secondary));
+}
+
+.building-type-pill__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.building-type-pill__icon {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.building-type-menu {
+    min-width: 180px;
+    padding: 8px;
+    border-radius: 14px;
+}
+
+:deep(.building-type-menu-surface) {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+:deep(.building-type-menu .v-list-item) {
+    border-radius: 8px;
 }
 
 </style>

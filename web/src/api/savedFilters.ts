@@ -1,6 +1,7 @@
 import { api } from './client'
 
 export interface SavedFilterDefinition {
+  buildingTypes: number[]
   maxPrice: number | null
   maxCommuteSec: number | null
   newWithinDays: number | null

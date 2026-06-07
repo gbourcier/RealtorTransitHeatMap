@@ -14,6 +14,7 @@ export interface ScrapeRun {
   errorKind?: string
   errorMessage?: string
   scheduleId?: string | null
+  scheduleName?: string | null
 }
 
 export interface ListRunsParams {

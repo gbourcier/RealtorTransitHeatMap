@@ -12,6 +12,7 @@ import { listTransitStops } from "../api/transit";
 import { debounce } from "../utils/debounce";
 
 const props = defineProps<{
+    buildingTypes: number[];
     maxPrice: number | null;
     maxCommuteSec: number | null;
     newWithinDays: number | null;
@@ -116,12 +117,14 @@ function clusterIcon(c: L.MarkerCluster): L.DivIcon {
 function pricePillIcon(
     price: number | null,
     commuteSec: number | null,
+    buildingType: number,
 ): L.DivIcon {
     const label = formatCompactPrice(price);
     const tier = commuteTier(commuteSec);
+    const icon = buildingType === 1 ? "mdi-home" : "mdi-domain";
     return L.divIcon({
         className: `price-pin price-pin--${tier}`,
-        html: `<span class="price-pin__label">${label}</span>`,
+        html: `<span class="price-pin__label"><i class="mdi ${icon} price-pin__type" aria-hidden="true"></i><span>${label}</span></span>`,
         iconSize: undefined as unknown as L.PointExpression,
         iconAnchor: [0, 0],
     });
@@ -185,6 +188,20 @@ function formatBath(count: number): string {
     return Number.isInteger(count) ? `${count}` : count.toFixed(1);
 }
 
+function formatBuildingType(buildingType: number): string {
+    switch (buildingType) {
+        case 2:
+            return "2-plex";
+        case 3:
+            return "3-plex";
+        case 19:
+            return "4-plex";
+        case 1:
+        default:
+            return "house";
+    }
+}
+
 function favButtonHtml(isFavorite: boolean): string {
     const icon = isFavorite ? "mdi-heart" : "mdi-heart-outline";
     const cls = isFavorite ? " map-popup__fav--active" : "";
@@ -218,6 +235,7 @@ function popupHtml(pin: ListingMapPin): string {
     const bd = pin.bedroomCount > 0 ? `${pin.bedroomCount}` : "—";
     const ba = formatBath(pin.bathroomCount);
     const area = formatArea(pin.interiorAreaSqft);
+    const buildingType = escapeHtml(formatBuildingType(pin.buildingType));
     return `
         <div class="map-popup">
             <div class="map-popup__top-actions">
@@ -231,6 +249,10 @@ function popupHtml(pin: ListingMapPin): string {
                 ${localityLine}
             </div>
             <div class="map-popup__stats">
+                <div class="map-popup__stat">
+                    <i class="mdi mdi-domain map-popup__stat-icon" aria-hidden="true"></i>
+                    <div class="map-popup__stat-value map-popup__stat-value--type">${buildingType}</div>
+                </div>
                 <div class="map-popup__stat">
                     <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
                     <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit"> bd</span></div>
@@ -263,6 +285,7 @@ async function load() {
     loading.value = true;
     try {
         const pins = await listListingsForMap({
+            ...(props.buildingTypes.length > 0 && { buildingTypes: props.buildingTypes }),
             ...(props.maxPrice != null && { maxPrice: props.maxPrice }),
             ...(props.maxCommuteSec != null && {
                 maxCommuteSec: props.maxCommuteSec,
@@ -284,7 +307,11 @@ async function load() {
         const markers: L.Marker[] = [];
         for (const pin of pins) {
             const m = L.marker([pin.latitude, pin.longitude], {
-                icon: pricePillIcon(pin.currentPrice, pin.commuteSecondsDowntown),
+                icon: pricePillIcon(
+                    pin.currentPrice,
+                    pin.commuteSecondsDowntown,
+                    pin.buildingType,
+                ),
                 riseOnHover: true,
             }) as L.Marker & { _data?: MarkerData };
             m._data = {
@@ -466,6 +493,7 @@ const debouncedLoad = debounce(() => load(), 250);
 
 watch(
     () => [
+        props.buildingTypes.join(","),
         props.maxPrice,
         props.maxCommuteSec,
         props.newWithinDays,
@@ -733,9 +761,12 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .price-pin__label {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     transform: translate(-50%, -50%);
-    padding: 4px 11px;
+    padding: 4px 10px 4px 9px;
     border-radius: 999px;
     background: rgba(var(--v-theme-popup-overlay), 0.88);
     color: rgb(var(--v-theme-on-surface));
@@ -753,6 +784,17 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
         inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.08);
     cursor: pointer;
     transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.price-pin__type {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    min-width: 14px;
+    font-size: 13px;
+    line-height: 1;
+    color: rgba(var(--v-theme-on-surface), 0.72);
 }
 
 .price-pin__label::before {
@@ -953,8 +995,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup {
     position: relative;
-    min-width: 240px;
-    max-width: 280px;
+    min-width: 280px;
+    max-width: 320px;
     font-size: 0.875rem;
 }
 
@@ -1073,9 +1115,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: center;
-    padding: 12px 8px;
+    padding: 12px 6px;
     margin-bottom: 12px;
     border-radius: 10px;
     background-color: rgba(var(--v-theme-on-surface), 0.04);
@@ -1087,7 +1129,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 0 8px;
+    min-width: 0;
+    padding: 0 5px;
     position: relative;
     text-align: center;
 }
@@ -1103,19 +1146,29 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 }
 
 .map-popup__stat-icon {
-    font-size: 22px;
+    font-size: 21px;
     color: rgba(var(--v-theme-on-surface), 0.85);
     line-height: 1;
 }
 
 .map-popup__stat-value {
-    font-size: 0.95rem;
+    max-width: 100%;
+    font-size: 0.84rem;
     font-weight: 600;
     color: rgba(var(--v-theme-on-surface), 0.95);
-    line-height: 1;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+}
+
+.map-popup__stat-value--type {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.65);
+    white-space: nowrap;
 }
 
 .map-popup__stat-unit {
+    font-size: 0.8rem;
     font-weight: 500;
     color: rgba(var(--v-theme-on-surface), 0.65);
 }

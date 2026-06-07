@@ -41,7 +41,10 @@ export function useSavedViews(filters: ListingFiltersState): SavedViewsState {
     const dirty = computed(() => {
         const a = active.value;
         if (!a) return false;
+        const savedBuildingTypes = a.buildingTypes ?? [];
         return (
+            savedBuildingTypes.length !== filters.buildingTypes.value.length ||
+            savedBuildingTypes.some((id, i) => id !== filters.buildingTypes.value[i]) ||
             a.maxPrice !== filters.maxPrice.value ||
             a.maxCommuteSec !== filters.maxCommuteSec.value ||
             a.newWithinDays !== filters.newWithinDays.value ||
@@ -81,6 +84,7 @@ export function useSavedViews(filters: ListingFiltersState): SavedViewsState {
     }
 
     function resetFilters(): void {
+        filters.buildingTypes.value = [];
         filters.maxPrice.value = null;
         filters.maxCommuteSec.value = null;
         filters.newWithinDays.value = null;

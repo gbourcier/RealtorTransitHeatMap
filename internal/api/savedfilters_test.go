@@ -18,6 +18,7 @@ type fakeSavedFilterService struct {
 	createErr   error
 	updateUser  uuid.UUID
 	updateID    uuid.UUID
+	updated     savedfilter.SavedFilter
 	updateErr   error
 	deleteUser  uuid.UUID
 	deleteID    uuid.UUID
@@ -40,9 +41,10 @@ func (f *fakeSavedFilterService) Create(_ context.Context, sf *savedfilter.Saved
 	return nil
 }
 
-func (f *fakeSavedFilterService) Update(_ context.Context, userID, id uuid.UUID, _ savedfilter.SavedFilter) error {
+func (f *fakeSavedFilterService) Update(_ context.Context, userID, id uuid.UUID, fields savedfilter.SavedFilter) error {
 	f.updateUser = userID
 	f.updateID = id
+	f.updated = fields
 	return f.updateErr
 }
 
@@ -99,12 +101,24 @@ func TestCreateSavedFilterUsesContextUser(t *testing.T) {
 	h := &savedFilterHandlers{svc: svc}
 	uid := uuid.New()
 	rec := httptest.NewRecorder()
-	h.create(rec, authedRequest(http.MethodPost, "/api/saved-filters/", []byte(`{"name":"Downtown","maxPrice":500000,"favoritesOnly":true}`), uid))
+	h.create(rec, authedRequest(http.MethodPost, "/api/saved-filters/", []byte(`{"name":"Downtown","buildingTypes":[2,3,19],"maxPrice":500000,"favoritesOnly":true}`), uid))
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("want 201, got %d", rec.Code)
 	}
 	if svc.created == nil || svc.created.UserID != uid {
 		t.Fatalf("create used wrong user: %+v", svc.created)
+	}
+	if svc.created.BuildingTypes != "2,3,19" {
+		t.Fatalf("building types not encoded: %q", svc.created.BuildingTypes)
+	}
+}
+
+func TestCreateSavedFilterRejectsUnsupportedBuildingType(t *testing.T) {
+	h := &savedFilterHandlers{svc: &fakeSavedFilterService{}}
+	rec := httptest.NewRecorder()
+	h.create(rec, authedRequest(http.MethodPost, "/api/saved-filters/", []byte(`{"name":"Downtown","buildingTypes":[17]}`), uuid.New()))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("want 400, got %d", rec.Code)
 	}
 }
 

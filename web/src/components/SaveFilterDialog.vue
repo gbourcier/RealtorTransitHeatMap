@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
+import { LISTING_FILTER_BUILDING_TYPES } from "../constants/realtor";
 import { formatCompactPrice } from "../utils/listingFormat";
 
 interface Props {
@@ -27,6 +28,12 @@ const nameInput = ref<HTMLInputElement | null>(null);
 
 const suggested = computed(() => {
     const parts: string[] = [];
+    if (props.filters.buildingTypes.value.length > 0) {
+        const labels = props.filters.buildingTypes.value
+            .map((id) => LISTING_FILTER_BUILDING_TYPES.find((opt) => opt.id === id)?.label)
+            .filter((label): label is string => !!label);
+        parts.push(labels.length <= 2 ? labels.join("/") : `${labels.length} types`);
+    }
     if (props.filters.maxCommuteSec.value != null) {
         parts.push(`≤${Math.round(props.filters.maxCommuteSec.value / 60)}m`);
     }

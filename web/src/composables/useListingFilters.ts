@@ -2,6 +2,7 @@ import { ref, computed, type Ref, type ComputedRef } from "vue";
 import type { SavedFilterDefinition } from "../api/savedFilters";
 
 export interface ListingFiltersState {
+    buildingTypes: Ref<number[]>;
     maxPrice: Ref<number | null>;
     maxCommuteSec: Ref<number | null>;
     newWithinDays: Ref<number | null>;
@@ -16,6 +17,7 @@ export interface ListingFiltersState {
 }
 
 export function useListingFilters(): ListingFiltersState {
+    const buildingTypes = ref<number[]>([]);
     const maxPrice = ref<number | null>(null);
     const maxCommuteSec = ref<number | null>(null);
     const newWithinDays = ref<number | null>(null);
@@ -27,6 +29,7 @@ export function useListingFilters(): ListingFiltersState {
 
     const activeFilterCount = computed(() => {
         let n = 0;
+        if (buildingTypes.value.length > 0) n++;
         if (maxPrice.value != null) n++;
         if (maxCommuteSec.value != null) n++;
         if (newWithinDays.value != null) n++;
@@ -39,6 +42,7 @@ export function useListingFilters(): ListingFiltersState {
 
     function toDefinition(): SavedFilterDefinition {
         return {
+            buildingTypes: [...buildingTypes.value],
             maxPrice: maxPrice.value,
             maxCommuteSec: maxCommuteSec.value,
             newWithinDays: newWithinDays.value,
@@ -51,6 +55,7 @@ export function useListingFilters(): ListingFiltersState {
     }
 
     function applyDefinition(def: SavedFilterDefinition) {
+        buildingTypes.value = [...(def.buildingTypes ?? [])];
         maxPrice.value = def.maxPrice;
         maxCommuteSec.value = def.maxCommuteSec;
         newWithinDays.value = def.newWithinDays;
@@ -62,6 +67,7 @@ export function useListingFilters(): ListingFiltersState {
     }
 
     return {
+        buildingTypes,
         maxPrice,
         maxCommuteSec,
         newWithinDays,

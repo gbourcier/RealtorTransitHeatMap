@@ -10,7 +10,7 @@ import EmptyState from "./EmptyState.vue";
 
 const SKELETON_ROW_HEIGHT = 156;
 const SKELETON_LIST_PADDING = 20;
-const MIN_PANEL_WIDTH = 320;
+const MIN_PANEL_WIDTH = 344;
 const MAX_PANEL_WIDTH = 680;
 const MIN_MAP_WIDTH = 360;
 const RESIZE_STEP = 24;
@@ -22,6 +22,7 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
+    buildingTypes: number[];
     selectedKey: string | null;
     width: number;
 }
@@ -30,6 +31,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
+    selectBuildingType: [id: number | null];
     cardClick: [item: Listing];
     cardHover: [item: Listing];
     cardLeave: [];
@@ -154,8 +156,14 @@ function onResizeKeydown(event: KeyboardEvent): void {
             @pointerdown="onResizePointerDown"
             @keydown="onResizeKeydown"
         />
-        <ListingsSortToolbar :sort-by="sortBy" :sort-dir="sortDir" :sort-options="sortOptions"
-            @select-sort="emit('selectSort', $event)" />
+        <ListingsSortToolbar
+            :sort-by="sortBy"
+            :sort-dir="sortDir"
+            :sort-options="sortOptions"
+            :building-types="buildingTypes"
+            @select-sort="emit('selectSort', $event)"
+            @select-building-type="emit('selectBuildingType', $event)"
+        />
         <div ref="bodyEl" class="listings-side-panel__body">
             <div v-if="loading && items.length === 0" class="listing-cards listing-cards--panel">
                 <ListingCardSkeleton v-for="i in skeletonCount" :key="`skeleton-panel-${i}`" variant="panel" />

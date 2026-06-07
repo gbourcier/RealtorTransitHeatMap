@@ -40,6 +40,7 @@ type building struct {
 	BathroomTotal string `json:"BathroomTotal"`
 	Bedrooms      string `json:"Bedrooms"`
 	SizeInterior  string `json:"SizeInterior"`
+	Type          string `json:"Type"`
 }
 
 type address struct {

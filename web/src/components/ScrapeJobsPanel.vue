@@ -185,6 +185,7 @@ onUnmounted(() => {
             <th class="text-right">Total</th>
             <th class="text-right">New</th>
             <th class="text-right">Stale</th>
+            <th>Job</th>
             <th>Trigger</th>
             <th>Error</th>
           </tr>
@@ -201,6 +202,7 @@ onUnmounted(() => {
             <td class="text-right">{{ r.totalCount ?? '—' }}</td>
             <td class="text-right">{{ r.newCount ?? '—' }}</td>
             <td class="text-right">{{ r.staleCount ?? '—' }}</td>
+            <td>{{ r.scheduleName ?? '—' }}</td>
             <td>
               <v-chip v-if="r.scheduleId" size="x-small" variant="outlined">scheduled</v-chip>
               <v-chip v-else size="x-small" variant="outlined" color="grey">manual</v-chip>
@@ -239,6 +241,7 @@ onUnmounted(() => {
             </span>
           </div>
           <div class="scrape-card__bottom">
+            <span v-if="r.scheduleName" class="scrape-card__job">{{ r.scheduleName }}</span>
             <v-chip v-if="r.scheduleId" size="x-small" variant="outlined">scheduled</v-chip>
             <v-chip v-else size="x-small" variant="outlined" color="grey">manual</v-chip>
             <span v-if="r.errorKind" class="scrape-card__error">
@@ -355,5 +358,10 @@ onUnmounted(() => {
 .scrape-card__error {
   font-size: 0.8125rem;
   color: rgb(var(--v-theme-error));
+}
+
+.scrape-card__job {
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 </style>

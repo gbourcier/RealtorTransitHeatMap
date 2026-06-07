@@ -215,6 +215,7 @@ func decodeObservations(results []listingResult) []listing.Observation {
 				Address:          r.Property.Address.AddressText,
 				IsAvailable:      r.StatusId == "1",
 				Slug:             r.RelativeDetailsURL,
+				BuildingType:     parseBuildingType(r.Building.Type),
 				BedroomCount:     bedrooms,
 				BathroomCount:    bathrooms,
 				InteriorAreaSqft: parseSqft(r.Building.SizeInterior),
@@ -223,6 +224,23 @@ func decodeObservations(results []listingResult) []listing.Observation {
 		})
 	}
 	return out
+}
+
+func parseBuildingType(raw string) listing.BuildingType {
+	s := strings.ToLower(strings.TrimSpace(raw))
+	compact := strings.NewReplacer(" ", "", "-", "", "/", "", "_", "").Replace(s)
+	switch {
+	case strings.Contains(compact, "fourplex") || strings.Contains(compact, "quadruplex"):
+		return listing.BuildingTypeFourplex
+	case strings.Contains(compact, "triplex"):
+		return listing.BuildingTypeTriplex
+	case strings.Contains(compact, "duplex"):
+		return listing.BuildingTypeDuplex
+	case strings.Contains(compact, "apartment") || strings.Contains(compact, "condo"):
+		return listing.BuildingTypeApartment
+	default:
+		return listing.BuildingTypeHouse
+	}
 }
 
 func parseSqft(raw string) float64 {
