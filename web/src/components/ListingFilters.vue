@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
+import { LISTING_FILTER_BUILDING_TYPES } from "../constants/realtor";
 import { formatCompactPrice } from "../utils/listingFormat";
 import HeatSlider from "./HeatSlider.vue";
 
@@ -60,6 +61,8 @@ const recencyOptions = [
     { value: 7, label: "This week" },
 ];
 
+const buildingTypeOptions = LISTING_FILTER_BUILDING_TYPES;
+
 const commuteMin = computed(() =>
     props.state.maxCommuteSec.value == null
         ? null
@@ -85,6 +88,30 @@ const priceLabel = computed(() =>
         ? "Any"
         : `≤ ${formatCompactPrice(props.state.maxPrice.value)}`,
 );
+
+const buildingTypeLabel = computed(() => {
+    if (props.state.buildingTypes.value.length === 0) return "Any";
+    if (props.state.buildingTypes.value.length === 1) {
+        const id = props.state.buildingTypes.value[0];
+        return buildingTypeOptions.find((opt) => opt.id === id)?.label ?? "1 type";
+    }
+    return `${props.state.buildingTypes.value.length} types`;
+});
+
+function isBuildingTypeSelected(id: number): boolean {
+    return props.state.buildingTypes.value.includes(id);
+}
+
+function toggleBuildingType(id: number): void {
+    if (isBuildingTypeSelected(id)) {
+        props.state.buildingTypes.value = props.state.buildingTypes.value.filter((v) => v !== id);
+        return;
+    }
+    const allowedIds = buildingTypeOptions.map((opt) => opt.id);
+    props.state.buildingTypes.value = [...props.state.buildingTypes.value, id]
+        .filter((v) => allowedIds.includes(v))
+        .sort((a, b) => allowedIds.indexOf(a) - allowedIds.indexOf(b));
+}
 
 async function onUpdate(): Promise<void> {
     try {
@@ -170,6 +197,36 @@ async function onUpdate(): Promise<void> {
                     :ticks="priceTicks"
                     aria-label="Maximum price"
                 />
+            </section>
+
+            <section class="fp__sec">
+                <div class="fp__sec-head">
+                    <span class="fp__label">Building type</span>
+                    <span
+                        class="fp__val"
+                        :class="{ 'fp__val--set': state.buildingTypes.value.length > 0 }"
+                    >
+                        {{ buildingTypeLabel }}
+                    </span>
+                </div>
+                <div class="chips" aria-label="Building type">
+                    <button
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': state.buildingTypes.value.length === 0 }"
+                        :aria-pressed="state.buildingTypes.value.length === 0"
+                        @click="state.buildingTypes.value = []"
+                    >Any</button>
+                    <button
+                        v-for="opt in buildingTypeOptions"
+                        :key="opt.id"
+                        type="button"
+                        class="chip"
+                        :class="{ 'chip--on': isBuildingTypeSelected(opt.id) }"
+                        :aria-pressed="isBuildingTypeSelected(opt.id)"
+                        @click="toggleBuildingType(opt.id)"
+                    >{{ opt.label }}</button>
+                </div>
             </section>
 
             <section class="fp__sec">

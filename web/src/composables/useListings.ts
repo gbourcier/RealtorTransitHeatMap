@@ -65,6 +65,7 @@ export function useListings(filters: ListingFiltersState): ListingsState {
                     offset,
                     sortBy: sortBy.value,
                     sortDir: sortDir.value,
+                    ...(filters.buildingTypes.value.length > 0 && { buildingTypes: filters.buildingTypes.value }),
                     ...(filters.maxPrice.value != null && { maxPrice: filters.maxPrice.value }),
                     ...(filters.maxCommuteSec.value != null && { maxCommuteSec: filters.maxCommuteSec.value }),
                     ...(filters.newWithinDays.value != null && { newWithinDays: filters.newWithinDays.value }),

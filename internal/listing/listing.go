@@ -64,6 +64,7 @@ type Where struct {
 	ShowUnavailable     bool
 	FavoritesOnly       bool
 	UserID              uuid.UUID
+	BuildingTypes       []BuildingType
 	MaxPrice            *float64
 	MaxCommuteSec       *int
 	NewSince            *time.Time

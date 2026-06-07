@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/favorite"
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/gtfs/refresh"
@@ -364,6 +366,7 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 type SavedFilterResponse struct {
 	ID                  string   `json:"id"`
 	Name                string   `json:"name"`
+	BuildingTypes       []int    `json:"buildingTypes"`
 	MaxPrice            *float64 `json:"maxPrice"`
 	MaxCommuteSec       *int     `json:"maxCommuteSec"`
 	NewWithinDays       *int     `json:"newWithinDays"`
@@ -376,10 +379,26 @@ type SavedFilterResponse struct {
 	UpdatedAt           int64    `json:"updatedAt"`
 }
 
+func decodeBuildingTypes(raw string) []int {
+	if raw == "" {
+		return []int{}
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]int, 0, len(parts))
+	for _, part := range parts {
+		n, err := strconv.Atoi(strings.TrimSpace(part))
+		if err == nil {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
 func savedFilterFromModel(sf *savedfilter.SavedFilter) SavedFilterResponse {
 	return SavedFilterResponse{
 		ID:                  sf.ID.String(),
 		Name:                sf.Name,
+		BuildingTypes:       decodeBuildingTypes(sf.BuildingTypes),
 		MaxPrice:            sf.MaxPrice,
 		MaxCommuteSec:       sf.MaxCommuteSec,
 		NewWithinDays:       sf.NewWithinDays,

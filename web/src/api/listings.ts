@@ -34,6 +34,7 @@ export interface ListListingsParams {
   offset?: number;
   sortBy?: SortBy;
   sortDir?: SortDir;
+  buildingTypes?: number[];
   maxPrice?: number;
   maxCommuteSec?: number;
   newWithinDays?: number;
@@ -63,6 +64,7 @@ export interface ListingMapPin {
 }
 
 export interface MapFilterParams {
+  buildingTypes?: number[];
   maxPrice?: number;
   maxCommuteSec?: number;
   newWithinDays?: number;
@@ -76,8 +78,13 @@ export interface MapFilterParams {
 export async function listListings(
   params: ListListingsParams = {},
 ): Promise<Paginated<Listing>> {
+  const { buildingTypes, ...rest } = params;
+  const requestParams = {
+    ...rest,
+    ...(buildingTypes?.length ? { buildingTypes: buildingTypes.join(",") } : {}),
+  };
   const { data } = await api.get<Paginated<Listing>>("/api/listings", {
-    params,
+    params: requestParams,
   });
   return data;
 }
@@ -85,8 +92,13 @@ export async function listListings(
 export async function listListingsForMap(
   params: MapFilterParams = {},
 ): Promise<ListingMapPin[]> {
+  const { buildingTypes, ...rest } = params;
+  const requestParams = {
+    ...rest,
+    ...(buildingTypes?.length ? { buildingTypes: buildingTypes.join(",") } : {}),
+  };
   const { data } = await api.get<ListingMapPin[]>("/api/listings/map", {
-    params,
+    params: requestParams,
   });
   return data;
 }

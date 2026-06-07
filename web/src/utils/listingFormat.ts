@@ -20,11 +20,11 @@ export function formatPropertyType(buildingType: number): string {
         case 1:
             return "House";
         case 2:
-            return "Duplex";
+            return "2-plex";
         case 3:
-            return "Triplex";
+            return "3-plex";
         case 19:
-            return "Fourplex";
+            return "4-plex";
         default:
             return "";
     }

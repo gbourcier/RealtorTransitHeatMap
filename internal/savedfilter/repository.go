@@ -49,6 +49,7 @@ func (r *Repository) Update(ctx context.Context, userID, id uuid.UUID, fields Sa
 		Where("id = ? AND user_id = ?", id, userID).
 		Updates(map[string]any{
 			"name":                   fields.Name,
+			"building_types":         fields.BuildingTypes,
 			"max_price":              fields.MaxPrice,
 			"max_commute_sec":        fields.MaxCommuteSec,
 			"new_within_days":        fields.NewWithinDays,

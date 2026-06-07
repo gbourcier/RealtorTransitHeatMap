@@ -88,6 +88,9 @@ func (r *Repository) ListListings(ctx context.Context, where Where, page Page, s
 	if where.FavoritesOnly {
 		q = q.Where("fav.user_id IS NOT NULL")
 	}
+	if len(where.BuildingTypes) > 0 {
+		q = q.Where("listings.building_type IN ?", where.BuildingTypes)
+	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)
 	}
@@ -141,6 +144,9 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 	}
 	if where.FavoritesOnly {
 		q = q.Where("fav.user_id IS NOT NULL")
+	}
+	if len(where.BuildingTypes) > 0 {
+		q = q.Where("listings.building_type IN ?", where.BuildingTypes)
 	}
 	if where.MaxPrice != nil {
 		q = q.Where("lp.price IS NOT NULL AND lp.price <= ?", *where.MaxPrice)

@@ -17,6 +17,7 @@ type SavedFilter struct {
 	UserID              uuid.UUID `gorm:"column:user_id"`
 	Name                string    `gorm:"column:name"`
 	MaxPrice            *float64  `gorm:"column:max_price"`
+	BuildingTypes       string    `gorm:"column:building_types"`
 	MaxCommuteSec       *int      `gorm:"column:max_commute_sec"`
 	NewWithinDays       *int      `gorm:"column:new_within_days"`
 	MinBedrooms         *int      `gorm:"column:min_bedrooms"`

@@ -12,6 +12,7 @@ import { listTransitStops } from "../api/transit";
 import { debounce } from "../utils/debounce";
 
 const props = defineProps<{
+    buildingTypes: number[];
     maxPrice: number | null;
     maxCommuteSec: number | null;
     newWithinDays: number | null;
@@ -284,6 +285,7 @@ async function load() {
     loading.value = true;
     try {
         const pins = await listListingsForMap({
+            ...(props.buildingTypes.length > 0 && { buildingTypes: props.buildingTypes }),
             ...(props.maxPrice != null && { maxPrice: props.maxPrice }),
             ...(props.maxCommuteSec != null && {
                 maxCommuteSec: props.maxCommuteSec,
@@ -491,6 +493,7 @@ const debouncedLoad = debounce(() => load(), 250);
 
 watch(
     () => [
+        props.buildingTypes.join(","),
         props.maxPrice,
         props.maxCommuteSec,
         props.newWithinDays,

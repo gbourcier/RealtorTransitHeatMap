@@ -143,6 +143,7 @@ const reloadListings = debounce(() => listings.loadInitial(), 250);
 
 watch(
     () => [
+        filters.buildingTypes.value.join(","),
         filters.maxPrice.value,
         filters.maxCommuteSec.value,
         filters.newWithinDays.value,
@@ -266,6 +267,7 @@ onBeforeUnmount(() => {
             class="map-fullbleed__map"
             :class="{ 'map-fullbleed__map--dim': mapLoading }"
             :max-price="filters.maxPrice.value"
+            :building-types="filters.buildingTypes.value"
             :max-commute-sec="filters.maxCommuteSec.value"
             :new-within-days="filters.newWithinDays.value"
             :min-bedrooms="filters.minBedrooms.value"

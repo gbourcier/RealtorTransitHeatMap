@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/auth"
@@ -14,8 +15,29 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var validListingFilterBuildingTypes = map[listing.BuildingType]bool{
+	listing.BuildingTypeHouse:    true,
+	listing.BuildingTypeDuplex:   true,
+	listing.BuildingTypeTriplex:  true,
+	listing.BuildingTypeFourplex: true,
+}
+
 func parseListingWhere(r *http.Request) (listing.Where, error) {
 	where := listing.Where{}
+	if v := r.URL.Query().Get("buildingTypes"); v != "" {
+		for _, raw := range strings.Split(v, ",") {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
+				continue
+			}
+			n, perr := strconv.Atoi(raw)
+			bt := listing.BuildingType(n)
+			if perr != nil || !validListingFilterBuildingTypes[bt] {
+				return where, fmt.Errorf("invalid 'buildingTypes' query param")
+			}
+			where.BuildingTypes = append(where.BuildingTypes, bt)
+		}
+	}
 	if v := r.URL.Query().Get("maxPrice"); v != "" {
 		n, perr := strconv.ParseFloat(v, 64)
 		if perr != nil || n < 0 {

@@ -37,9 +37,6 @@ const isFavorite = computed(() =>
 
 const address = computed(() => parseAddress(props.item.address));
 const propertyType = computed(() => formatPropertyType(props.item.buildingType));
-const propertyContext = computed(() =>
-    [propertyType.value, address.value.locality].filter(Boolean),
-);
 
 function onActivate() {
     emit("click", props.item);
@@ -72,19 +69,34 @@ function onToggleFavorite() {
         @focus="variant === 'panel' && emit('hover', item)"
         @blur="variant === 'panel' && emit('leave')"
     >
-        <button
-            v-if="favorites"
-            type="button"
-            class="listing-card__fav"
-            :class="{ 'listing-card__fav--active': isFavorite }"
-            :aria-pressed="isFavorite"
-            :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-            @click.stop="onToggleFavorite"
-            @keydown.enter.stop="onToggleFavorite"
-            @keydown.space.stop.prevent="onToggleFavorite"
-        >
-            <v-icon size="20">{{ isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
-        </button>
+        <div v-if="propertyType || isNew(item.firstSeenAt) || favorites" class="listing-card__actions">
+            <v-chip
+                v-if="propertyType"
+                size="x-small"
+                variant="tonal"
+                class="listing-card__status-chip listing-card__property-type"
+            >{{ propertyType }}</v-chip>
+            <v-chip
+                v-if="isNew(item.firstSeenAt)"
+                size="x-small"
+                color="secondary"
+                variant="tonal"
+                class="listing-card__status-chip listing-card__new"
+            >new</v-chip>
+            <button
+                v-if="favorites"
+                type="button"
+                class="listing-card__fav"
+                :class="{ 'listing-card__fav--active': isFavorite }"
+                :aria-pressed="isFavorite"
+                :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                @click.stop="onToggleFavorite"
+                @keydown.enter.stop="onToggleFavorite"
+                @keydown.space.stop.prevent="onToggleFavorite"
+            >
+                <v-icon size="20">{{ isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+            </button>
+        </div>
         <div class="listing-card__top">
             <span class="listing-card__price">{{ formatPrice(item.currentPrice) }}</span>
             <v-chip
@@ -94,22 +106,12 @@ function onToggleFavorite() {
                 variant="tonal"
                 class="listing-card__expired"
             >expired</v-chip>
-            <v-chip
-                v-if="isNew(item.firstSeenAt)"
-                size="x-small"
-                color="secondary"
-                :variant="variant === 'panel' ? 'flat' : 'tonal'"
-                class="listing-card__new"
-            >new</v-chip>
-        </div>
-        <div v-if="propertyContext.length" class="listing-card__property-context">
-            <template v-for="(part, index) in propertyContext" :key="part">
-                <span>{{ part }}</span>
-                <span v-if="index < propertyContext.length - 1" aria-hidden="true">&middot;</span>
-            </template>
         </div>
         <div class="listing-card__street">
             {{ address.street }}
+        </div>
+        <div v-if="address.locality" class="listing-card__locality">
+            {{ address.locality }}
         </div>
         <div class="listing-card__meta">
             <a
@@ -187,31 +189,28 @@ function onToggleFavorite() {
     font-weight: 500;
 }
 
-.listing-card--mobile .listing-card__property-context {
-    font-size: 0.875rem;
-}
-
 .listing-card--mobile .listing-card__meta {
     border-top: 0;
     padding-top: 14px;
     margin-top: 10px;
 }
 
-.listing-card--mobile .listing-card__new {
-    top: 18px;
-    right: 58px;
-}
-
-.listing-card--mobile .listing-card__fav {
+.listing-card--mobile .listing-card__actions {
     top: 12px;
     right: 12px;
 }
 
-.listing-card__fav {
+.listing-card__actions {
     position: absolute;
     top: 8px;
     right: 8px;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.listing-card__fav {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -252,8 +251,8 @@ function onToggleFavorite() {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
-    padding-right: 88px;
+    margin-bottom: 8px;
+    padding-right: 166px;
 }
 
 .listing-card__price {
@@ -262,32 +261,37 @@ function onToggleFavorite() {
     line-height: 1.2;
 }
 
-.listing-card__new {
-    position: absolute;
-    top: 12px;
-    right: 50px;
+.listing-card__status-chip {
+    height: 26px;
     margin-left: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.listing-card__property-type {
+    color: rgba(var(--v-theme-on-surface), 0.72);
+}
+
+.listing-card__new {
+    color: rgb(var(--v-theme-on-secondary-container));
 }
 
 .listing-card__expired {
     margin-left: 0;
 }
 
-.listing-card__property-context {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 5px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    line-height: 1.2;
-    color: rgba(var(--v-theme-on-surface), 0.66);
-}
-
 .listing-card__street {
     font-size: 0.95rem;
     line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.listing-card__locality {
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    color: rgba(var(--v-theme-on-surface), 0.62);
+    overflow-wrap: anywhere;
 }
 
 .listing-card__meta {
