@@ -4,6 +4,7 @@ import type { Listing } from "../api/listings";
 import { favoritesKey } from "../composables/useFavorites";
 import {
     formatPrice,
+    formatPropertyType,
     formatDate,
     isNew,
     formatCommute,
@@ -32,6 +33,12 @@ const isFavorite = computed(() =>
     favorites
         ? favorites.isFavorite(props.item.board, props.item.mls, props.item.isFavorite)
         : props.item.isFavorite,
+);
+
+const address = computed(() => parseAddress(props.item.address));
+const propertyType = computed(() => formatPropertyType(props.item.buildingType));
+const propertyContext = computed(() =>
+    [propertyType.value, address.value.locality].filter(Boolean),
 );
 
 function onActivate() {
@@ -95,11 +102,14 @@ function onToggleFavorite() {
                 class="listing-card__new"
             >new</v-chip>
         </div>
-        <div class="listing-card__street">
-            {{ parseAddress(item.address).street }}
+        <div v-if="propertyContext.length" class="listing-card__property-context">
+            <template v-for="(part, index) in propertyContext" :key="part">
+                <span>{{ part }}</span>
+                <span v-if="index < propertyContext.length - 1" aria-hidden="true">&middot;</span>
+            </template>
         </div>
-        <div v-if="parseAddress(item.address).locality" class="listing-card__locality">
-            {{ parseAddress(item.address).locality }}
+        <div class="listing-card__street">
+            {{ address.street }}
         </div>
         <div class="listing-card__meta">
             <a
@@ -175,6 +185,10 @@ function onToggleFavorite() {
 .listing-card--mobile .listing-card__street {
     font-size: 1rem;
     font-weight: 500;
+}
+
+.listing-card--mobile .listing-card__property-context {
+    font-size: 0.875rem;
 }
 
 .listing-card--mobile .listing-card__meta {
@@ -259,15 +273,21 @@ function onToggleFavorite() {
     margin-left: 0;
 }
 
+.listing-card__property-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 5px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: rgba(var(--v-theme-on-surface), 0.66);
+}
+
 .listing-card__street {
     font-size: 0.95rem;
     line-height: 1.3;
-}
-
-.listing-card__locality {
-    font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.65);
-    margin-top: 2px;
 }
 
 .listing-card__meta {
