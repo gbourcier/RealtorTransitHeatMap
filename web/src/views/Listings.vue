@@ -6,6 +6,7 @@ import { useDisplay } from "vuetify";
 import type { Listing } from "../api/listings";
 import ListingsMap from "../components/ListingsMap.vue";
 import ListingFilters from "../components/ListingFilters.vue";
+import SaveFilterDialog from "../components/SaveFilterDialog.vue";
 import ViewSelector from "../components/ViewSelector.vue";
 import FiltersButton from "../components/FiltersButton.vue";
 import ListingsCountPill from "../components/ListingsCountPill.vue";
@@ -39,7 +40,6 @@ if (savedFiltersStore.defaultFilter) {
     views.applySaved(savedFiltersStore.defaultFilter);
 }
 function openSaveFromHeader(): void {
-    filtersOpen.value = true;
     saveModalOpen.value = true;
 }
 const listings = useListings(filters);
@@ -159,11 +159,18 @@ onBeforeUnmount(() => {
             :state="filters"
             :views="views"
             :total="listings.total.value"
-            v-model:save-open="saveModalOpen"
             @close="filtersOpen = false"
             @error="showError"
+            @save="saveModalOpen = true"
         />
     </Transition>
+
+    <SaveFilterDialog
+        v-if="headerVisible"
+        v-model="saveModalOpen"
+        :filters="filters"
+        :views="views"
+    />
 
     <Teleport to="#header-actions-slot" :disabled="!teleportReady">
         <v-btn
