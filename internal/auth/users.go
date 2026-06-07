@@ -157,6 +157,7 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		Role:     req.Role,
 		IsActive: req.IsActive,
 	}
+	passwordChanged := false
 	if req.Password != nil {
 		if len(*req.Password) < minPasswordLength {
 			writeError(w, http.StatusBadRequest, "password is too short")
@@ -173,6 +174,7 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		patch.PasswordHash = &hash
+		passwordChanged = true
 	}
 
 	updated, err := h.users.Update(r.Context(), id, patch)
@@ -184,6 +186,13 @@ func (h *UserHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		slog.Error("users update failed", "err", err)
 		writeError(w, http.StatusInternalServerError, "failed to update user")
 		return
+	}
+	if passwordChanged {
+		if err := h.svc.RevokeUserSessions(r.Context(), id); err != nil {
+			slog.Error("revoke user sessions failed", "err", err, "user_id", id)
+			writeError(w, http.StatusInternalServerError, "failed to update user")
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, toUserResponse(updated))
 }

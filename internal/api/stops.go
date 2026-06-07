@@ -26,7 +26,7 @@ func (h *stopHandlers) list(w http.ResponseWriter, r *http.Request) {
 	stops, err := h.svc.List(r.Context())
 	if err != nil {
 		slog.Error("listStops failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list stops")
 		return
 	}
 	out := make([]StopResponse, 0, len(stops))

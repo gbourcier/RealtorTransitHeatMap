@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -30,8 +29,7 @@ func (h *preferenceHandlers) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req preferenceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 
@@ -48,7 +46,7 @@ func (h *preferenceHandlers) patch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			slog.Error("setDefaultFilter lookup failed", "err", err)
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, http.StatusInternalServerError, "failed to update preferences")
 			return
 		}
 		filterID = &id
@@ -56,7 +54,7 @@ func (h *preferenceHandlers) patch(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.prefs.SetDefaultFilter(r.Context(), userID, filterID); err != nil {
 		slog.Error("setDefaultFilter failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to update preferences")
 		return
 	}
 	writeJSON(w, http.StatusOK, preferenceRequest{DefaultFilterID: req.DefaultFilterID})

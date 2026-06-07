@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -58,8 +57,7 @@ func (h *favoriteHandlers) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req favoriteKey
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	if req.Board <= 0 || req.MLS <= 0 {
@@ -72,7 +70,7 @@ func (h *favoriteHandlers) add(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("addFavorite failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to add favorite")
 		return
 	}
 	writeJSON(w, http.StatusOK, req)
@@ -95,7 +93,7 @@ func (h *favoriteHandlers) removeOne(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.svc.Remove(r.Context(), userID, board, mls); err != nil {
 		slog.Error("removeFavorite failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to remove favorite")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -107,8 +105,7 @@ func (h *favoriteHandlers) removeBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req favoriteBatchRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid json body")
+	if !decodeJSONBody(w, r, &req) {
 		return
 	}
 	if len(req.Items) == 0 {
@@ -130,7 +127,7 @@ func (h *favoriteHandlers) removeBatch(w http.ResponseWriter, r *http.Request) {
 	deleted, err := h.svc.RemoveBatch(r.Context(), userID, keys)
 	if err != nil {
 		slog.Error("removeBatchFavorites failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to remove favorites")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]int64{"deleted": deleted})
@@ -169,7 +166,7 @@ func (h *favoriteHandlers) list(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("listFavorites failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to list favorites")
 		return
 	}
 

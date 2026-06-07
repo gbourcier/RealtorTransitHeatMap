@@ -15,6 +15,9 @@ func NewServer(addr string, staticFS fs.FS, guard *auth.Guard, authH *auth.Handl
 		Addr:              addr,
 		Handler:           NewRouter(staticFS, guard, authH, userH, scrapes, gtfsRefresh, schedRepo, reloader, dispatcher, listings, favorites, savedFilters, preferences, transitSvc, stopSvc),
 		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      65 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 }
 

@@ -110,6 +110,10 @@ func (svc *Service) Logout(ctx context.Context, token string) error {
 	return svc.sessions.delete(ctx, hashToken(token))
 }
 
+func (svc *Service) RevokeUserSessions(ctx context.Context, userID uuid.UUID) error {
+	return svc.sessions.deleteForUser(ctx, userID)
+}
+
 func (svc *Service) MarkSeen(ctx context.Context, id uuid.UUID) {
 	if err := svc.users.TouchLastSeen(ctx, id, lastSeenThrottle); err != nil {
 		slog.Warn("touch last_seen", "err", err)
@@ -155,6 +159,9 @@ func (svc *Service) Bootstrap(ctx context.Context) error {
 		_, updateErr := svc.users.Update(ctx, existing.ID, user.Patch{PasswordHash: &ph})
 		if updateErr != nil {
 			return updateErr
+		}
+		if err := svc.RevokeUserSessions(ctx, existing.ID); err != nil {
+			return err
 		}
 		slog.Info("admin password reset", "username", svc.cfg.AdminUsername)
 	}

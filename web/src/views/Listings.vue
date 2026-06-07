@@ -22,9 +22,13 @@ import { useBodyScrollLock } from "../composables/useBodyScrollLock";
 import { useSavedFiltersStore } from "../stores/savedFilters";
 import { debounce } from "../utils/debounce";
 
+const DEFAULT_PANEL_WIDTH = 360;
+const PANEL_WIDTH_STORAGE_KEY = "listingsSidePanelWidth";
+
 const { mdAndUp } = useDisplay();
 const viewMode = ref<"list" | "map">("map");
 const drawerOpen = ref(true);
+const panelWidth = ref(readStoredPanelWidth());
 const filtersOpen = ref(false);
 const saveModalOpen = ref(false);
 const teleportReady = ref(false);
@@ -125,6 +129,17 @@ function openListing(item: Listing): void {
     window.open(item.slug, "_blank", "noopener,noreferrer");
 }
 
+function readStoredPanelWidth(): number {
+    if (typeof window === "undefined") return DEFAULT_PANEL_WIDTH;
+    const stored = Number(window.localStorage.getItem(PANEL_WIDTH_STORAGE_KEY));
+    return Number.isFinite(stored) && stored > 0 ? stored : DEFAULT_PANEL_WIDTH;
+}
+
+function updatePanelWidth(width: number): void {
+    panelWidth.value = width;
+    window.localStorage.setItem(PANEL_WIDTH_STORAGE_KEY, String(width));
+}
+
 onMounted(() => {
     teleportReady.value = true;
     listings.loadInitial();
@@ -190,6 +205,7 @@ onBeforeUnmount(() => {
         v-show="mdAndUp || viewMode === 'map'"
         class="map-fullbleed"
         :class="{ 'map-fullbleed--with-panel': mdAndUp && drawerOpen }"
+        :style="{ '--listings-panel-width': `${panelWidth}px` }"
     >
         <ListingsMap
             ref="mapRef"
@@ -224,7 +240,9 @@ onBeforeUnmount(() => {
             :sort-dir="listings.sortDir.value"
             :sort-options="listings.sortOptions"
             :selected-key="selectedKey"
+            :width="panelWidth"
             @select-sort="listings.selectSort"
+            @update:width="updatePanelWidth"
             @card-click="focusListingOnMap"
             @card-hover="highlightListingOnMap"
             @card-leave="clearMapHighlight"
@@ -303,7 +321,7 @@ onBeforeUnmount(() => {
 }
 
 .map-fullbleed--with-panel .map-fullbleed__loading {
-    right: 360px;
+    right: var(--listings-panel-width);
 }
 
 .filter-drawer-enter-active,

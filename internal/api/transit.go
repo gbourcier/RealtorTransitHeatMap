@@ -33,7 +33,7 @@ func (h *transitHandlers) compute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("transit compute failed", "err", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to start transit computation")
 		return
 	}
 	writeJSON(w, http.StatusAccepted, map[string]any{"started": true, "refresh": refresh})
@@ -62,7 +62,7 @@ func (h *transitHandlers) computeOne(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("transit computeOne failed", "err", err, "board", board, "mls", mls)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "failed to compute transit")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"computed": true})

@@ -36,6 +36,10 @@ func (r *sessionRepository) delete(ctx context.Context, token string) error {
 	return r.db.WithContext(ctx).Where("token = ?", token).Delete(&Session{}).Error
 }
 
+func (r *sessionRepository) deleteForUser(ctx context.Context, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&Session{}).Error
+}
+
 func (r *sessionRepository) deleteExpired(ctx context.Context, before time.Time) (int64, error) {
 	res := r.db.WithContext(ctx).Where("expires_at < ?", before).Delete(&Session{})
 	return res.RowsAffected, res.Error

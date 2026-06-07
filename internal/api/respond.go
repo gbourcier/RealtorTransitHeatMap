@@ -35,6 +35,8 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
+const maxJSONBodyBytes = 1 << 20
+
 type PaginatedResponse[T any] struct {
 	Items  []T   `json:"items"`
 	Total  int64 `json:"total"`
@@ -52,6 +54,15 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, errorResponse{Error: msg})
+}
+
+func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
+	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid json body")
+		return false
+	}
+	return true
 }
 
 type ScheduleParamsDTO struct {
