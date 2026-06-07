@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { computed } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
 import { formatCompactPrice } from "../utils/listingFormat";
@@ -9,14 +9,13 @@ interface Props {
     state: ListingFiltersState;
     views: SavedViewsState;
     total: number;
-    saveOpen: boolean;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
     close: [];
     error: [message: string];
-    "update:saveOpen": [value: boolean];
+    save: [];
 }>();
 
 const PRICE_MIN = 300_000;
@@ -85,63 +84,6 @@ const priceLabel = computed(() =>
         : `≤ ${formatCompactPrice(props.state.maxPrice.value)}`,
 );
 
-const saveOpenLocal = computed({
-    get: () => props.saveOpen,
-    set: (v: boolean) => emit("update:saveOpen", v),
-});
-
-const name = ref("");
-const saving = ref(false);
-const saveError = ref<string | null>(null);
-const nameInput = ref<HTMLInputElement | null>(null);
-
-const suggested = computed(() => {
-    const parts: string[] = [];
-    if (props.state.maxCommuteSec.value != null) {
-        parts.push(`≤${Math.round(props.state.maxCommuteSec.value / 60)}m`);
-    }
-    if (props.state.maxPrice.value != null) {
-        parts.push(`under ${formatCompactPrice(props.state.maxPrice.value)}`);
-    }
-    if (props.state.minBedrooms.value != null) {
-        parts.push(`${props.state.minBedrooms.value}+ bd`);
-    }
-    return parts.join(" · ") || "My filter";
-});
-
-watch(
-    saveOpenLocal,
-    (open) => {
-        if (!open) return;
-        name.value = suggested.value;
-        saveError.value = null;
-        nextTick(() => nameInput.value?.focus());
-    },
-    { immediate: true },
-);
-
-function openSave(): void {
-    saveOpenLocal.value = true;
-}
-
-async function commitSave(): Promise<void> {
-    const trimmed = name.value.trim();
-    if (!trimmed || saving.value) return;
-    saving.value = true;
-    saveError.value = null;
-    try {
-        await props.views.saveAsNew(trimmed);
-        saveOpenLocal.value = false;
-    } catch (e: any) {
-        saveError.value =
-            e?.response?.status === 409
-                ? "A saved filter with that name already exists."
-                : "Failed to save filter.";
-    } finally {
-        saving.value = false;
-    }
-}
-
 async function onUpdate(): Promise<void> {
     try {
         await props.views.updateActive();
@@ -177,7 +119,7 @@ async function onUpdate(): Promise<void> {
             <span v-if="views.dirty.value" class="fp__applied__actions">
                 <button
                     class="fp__applied__btn fp__applied__btn--ghost"
-                    @click="openSave"
+                    @click="emit('save')"
                 >Save as new</button>
                 <button
                     class="fp__applied__btn fp__applied__btn--primary"
@@ -287,40 +229,15 @@ async function onUpdate(): Promise<void> {
 
         <footer class="fp__foot">
             <button class="fp__reset" @click="views.resetFilters()">Reset</button>
-            <button class="fp__save" @click="openSave">
+            <button class="fp__save" @click="emit('save')">
                 <v-icon size="16">mdi-bookmark-outline</v-icon>
                 Save
             </button>
             <button class="fp__apply" @click="emit('close')">
-                Show <b>{{ total.toLocaleString() }}</b> listing{{ total === 1 ? "" : "s" }}
+                Show <b>{{ total.toLocaleString() }}</b> result{{ total === 1 ? "" : "s" }}
             </button>
         </footer>
 
-        <div v-if="saveOpenLocal" class="fp__modal" @click="saveOpenLocal = false">
-            <div class="fp__modal-card" @click.stop>
-                <div class="fp__modal-title">Save these filters as a view</div>
-                <div class="fp__modal-sub">
-                    It'll appear in the header view menu for one-tap recall.
-                </div>
-                <input
-                    ref="nameInput"
-                    v-model="name"
-                    class="fp__modal-input"
-                    placeholder="e.g. Downtown commute"
-                    maxlength="60"
-                    @keydown.enter="commitSave"
-                />
-                <p v-if="saveError" class="fp__modal-error">{{ saveError }}</p>
-                <div class="fp__modal-actions">
-                    <button class="fp__modal-cancel" @click="saveOpenLocal = false">Cancel</button>
-                    <button
-                        class="fp__modal-ok"
-                        :disabled="!name.trim() || saving"
-                        @click="commitSave"
-                    >Save view</button>
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -714,111 +631,6 @@ async function onUpdate(): Promise<void> {
 
 .fp__apply:hover {
     filter: brightness(1.06);
-}
-
-.fp__modal {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 22px;
-    background: rgba(var(--v-theme-map-bg), 0.62);
-    backdrop-filter: blur(3px);
-}
-
-.fp__modal-card {
-    width: 100%;
-    max-width: 320px;
-    padding: 22px;
-    border-radius: 16px;
-    background: rgb(var(--v-theme-surface));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
-    box-shadow: 0 18px 50px rgba(var(--v-theme-shadow), 0.55);
-}
-
-.fp__modal-title {
-    font-size: 1.0625rem;
-    font-weight: 700;
-}
-
-.fp__modal-sub {
-    font-size: 0.8125rem;
-    color: rgba(var(--v-theme-on-surface), 0.55);
-    margin: 5px 0 16px;
-}
-
-.fp__modal-input {
-    width: 100%;
-    height: 44px;
-    padding: 0 13px;
-    border-radius: 10px;
-    background: rgba(var(--v-theme-on-surface), 0.06);
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
-    color: rgba(var(--v-theme-on-surface), 0.95);
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color 120ms ease, background-color 120ms ease;
-}
-
-.fp__modal-input::placeholder {
-    color: rgba(var(--v-theme-on-surface), 0.4);
-}
-
-.fp__modal-input:focus {
-    border-color: rgb(var(--v-theme-primary));
-    background: rgba(var(--v-theme-on-surface), 0.09);
-}
-
-.fp__modal-error {
-    margin: 8px 0 0;
-    font-size: 0.75rem;
-    color: rgb(var(--v-theme-error));
-}
-
-.fp__modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 18px;
-}
-
-.fp__modal-cancel {
-    flex: 1 1 0;
-    height: 42px;
-    border-radius: 999px;
-    cursor: pointer;
-    background: transparent;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.fp__modal-cancel:hover {
-    background: rgba(var(--v-theme-on-surface), 0.06);
-}
-
-.fp__modal-ok {
-    flex: 1 1 0;
-    height: 42px;
-    border-radius: 999px;
-    cursor: pointer;
-    background: rgb(var(--v-theme-primary));
-    border: 0;
-    color: rgb(var(--v-theme-on-primary));
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: filter 120ms ease, opacity 120ms ease;
-}
-
-.fp__modal-ok:hover:not(:disabled) {
-    filter: brightness(1.06);
-}
-
-.fp__modal-ok:disabled {
-    opacity: 0.4;
-    cursor: default;
 }
 
 @media (max-width: 600px) {

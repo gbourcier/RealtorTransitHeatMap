@@ -15,14 +15,12 @@ interface Props {
     sortBy: SortBy;
     sortDir: SortDir;
     sortOptions: SortOption[];
-    favoritesOnly: boolean;
 }
 
 defineProps<Props>();
 
 const emit = defineEmits<{
     selectSort: [opt: SortOption];
-    toggleFavorites: [];
     cardClick: [item: Listing];
     loadMore: [];
 }>();
@@ -38,10 +36,8 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
             :sort-by="sortBy"
             :sort-dir="sortDir"
             :sort-options="sortOptions"
-            :favorites-only="favoritesOnly"
             mobile
             @select-sort="emit('selectSort', $event)"
-            @toggle-favorites="emit('toggleFavorites')"
         />
 
         <div
