@@ -120,6 +120,17 @@ function toggleResultsPanel(): void {
     drawerOpen.value = !drawerOpen.value;
 }
 
+function selectToolbarBuildingType(id: number | null): void {
+    if (id == null) {
+        filters.buildingTypes.value = [];
+        return;
+    }
+    filters.buildingTypes.value =
+        filters.buildingTypes.value.length === 1 && filters.buildingTypes.value[0] === id
+            ? []
+            : [id];
+}
+
 const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
 const mapCount = ref(0);
 const mapLoading = ref(false);
@@ -297,9 +308,11 @@ onBeforeUnmount(() => {
             :sort-by="listings.sortBy.value"
             :sort-dir="listings.sortDir.value"
             :sort-options="listings.sortOptions"
+            :building-types="filters.buildingTypes.value"
             :selected-key="selectedKey"
             :width="panelWidth"
             @select-sort="listings.selectSort"
+            @select-building-type="selectToolbarBuildingType"
             @update:width="updatePanelWidth"
             @card-click="focusListingOnMap"
             @card-hover="highlightListingOnMap"
@@ -316,7 +329,9 @@ onBeforeUnmount(() => {
         :sort-by="listings.sortBy.value"
         :sort-dir="listings.sortDir.value"
         :sort-options="listings.sortOptions"
+        :building-types="filters.buildingTypes.value"
         @select-sort="listings.selectSort"
+        @select-building-type="selectToolbarBuildingType"
         @card-click="openListing"
         @load-more="listings.loadMore"
     />

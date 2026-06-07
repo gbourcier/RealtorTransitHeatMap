@@ -27,7 +27,7 @@ const triggerLabel = computed(() =>
         ? "Favourites"
         : activeView.value
           ? activeView.value.name
-          : "Saved views",
+          : "All listings",
 );
 const triggerIcon = computed(() =>
     favActive.value
@@ -36,7 +36,7 @@ const triggerIcon = computed(() =>
           ? props.views.isDefault(activeView.value.id)
               ? "mdi-star"
               : "mdi-star-outline"
-          : "mdi-star-outline",
+          : "mdi-format-list-bulleted",
 );
 
 function onSelectAll(): void {
