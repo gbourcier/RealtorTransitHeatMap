@@ -92,9 +92,11 @@ async function onDelete(id: string): Promise<void> {
                 :aria-expanded="menuOpen"
                 aria-label="Select view"
             >
-                <v-icon size="14" class="viewsel__ic">{{ triggerIcon }}</v-icon>
-                <span class="viewsel__label">{{ triggerLabel }}</span>
-                <v-icon size="12" class="viewsel__caret">mdi-chevron-down</v-icon>
+                <span class="viewsel__content">
+                    <v-icon :icon="triggerIcon" size="14" class="viewsel__ic" />
+                    <span class="viewsel__label">{{ triggerLabel }}</span>
+                    <v-icon icon="mdi-chevron-down" size="12" class="viewsel__caret" />
+                </span>
             </button>
         </template>
 
@@ -181,9 +183,14 @@ async function onDelete(id: string): Promise<void> {
 
 <style scoped>
 .viewsel {
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    justify-content: center;
+    flex: 0 0 auto;
     height: 28px;
     max-width: 200px;
     padding: 0 10px 0 11px;
@@ -192,12 +199,15 @@ async function onDelete(id: string): Promise<void> {
     background: transparent;
     border: 1.5px solid rgba(var(--v-theme-on-surface), 0.24);
     color: rgba(var(--v-theme-on-surface), 0.82);
+    font-family: inherit;
     font-size: 0.8125rem;
     font-weight: 600;
+    line-height: 1;
     letter-spacing: normal;
+    text-align: center;
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease,
-        color 120ms ease, box-shadow 120ms ease;
+        color 120ms ease;
 }
 
 .viewsel:hover {
@@ -206,8 +216,24 @@ async function onDelete(id: string): Promise<void> {
 }
 
 .viewsel:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+    outline: none;
+}
+
+.viewsel:focus-visible::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border: 2px solid rgb(var(--v-theme-primary));
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.viewsel__content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
 }
 
 .viewsel__ic {
@@ -231,7 +257,6 @@ async function onDelete(id: string): Promise<void> {
     border-color: rgb(var(--v-theme-primary));
     color: rgb(var(--v-theme-primary));
     background: rgba(var(--v-theme-primary), 0.13);
-    box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.1);
     padding: 0 9px 0 10px;
 }
 
@@ -241,8 +266,24 @@ async function onDelete(id: string): Promise<void> {
     border-color: rgb(var(--v-theme-accent));
     color: rgb(var(--v-theme-accent));
     background: rgba(var(--v-theme-accent), 0.15);
-    box-shadow: 0 0 0 3px rgba(var(--v-theme-accent), 0.1);
     padding: 0 9px 0 10px;
+}
+
+.viewsel--saved::after,
+.viewsel--fav::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.viewsel--saved::after {
+    border: 3px solid rgba(var(--v-theme-primary), 0.1);
+}
+
+.viewsel--fav::after {
+    border: 3px solid rgba(var(--v-theme-accent), 0.1);
 }
 
 .viewsel--saved .viewsel__ic,
@@ -413,17 +454,30 @@ async function onDelete(id: string): Promise<void> {
 
 @media (max-width: 600px) {
     .viewsel {
+        width: 58px;
         max-width: none;
-        padding: 0 9px;
+        padding: 0;
     }
 
     .viewsel--saved,
     .viewsel--fav {
-        padding: 0 8px;
+        padding: 0;
     }
 
     .viewsel__label {
         display: none;
+    }
+
+    .viewsel__content {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: grid;
+        grid-template-columns: 14px 12px;
+        column-gap: 8px;
+        flex: none;
+        width: 34px;
+        transform: translate(-50%, -50%);
     }
 }
 </style>

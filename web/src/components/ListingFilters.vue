@@ -234,7 +234,7 @@ async function onUpdate(): Promise<void> {
                 Save
             </button>
             <button class="fp__apply" @click="emit('close')">
-                Show <b>{{ total.toLocaleString() }}</b> listing{{ total === 1 ? "" : "s" }}
+                Show <b>{{ total.toLocaleString() }}</b> result{{ total === 1 ? "" : "s" }}
             </button>
         </footer>
 
