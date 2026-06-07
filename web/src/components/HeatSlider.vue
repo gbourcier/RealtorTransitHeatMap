@@ -139,38 +139,38 @@ function onKeydown(e: KeyboardEvent): void {
     top: 50%;
     left: 0;
     right: 0;
-    height: 5px;
+    height: 6px;
     transform: translateY(-50%);
     border-radius: 999px;
-    background: rgba(var(--v-theme-on-surface), 0.14);
+    background: rgba(244, 241, 232, 0.14);
 }
 
 .sld__rail--heat {
     background: linear-gradient(
         90deg,
-        rgb(var(--v-theme-commute-fast)) 0%,
-        rgb(var(--v-theme-commute-mid)) 52%,
-        rgb(var(--v-theme-commute-slow)) 100%
+        #9be84a 0%,
+        #ffb454 55%,
+        #ff5c8a 100%
     );
 }
 
 .sld__fill {
     position: absolute;
     top: 50%;
-    height: 5px;
+    height: 6px;
     transform: translateY(-50%);
     border-radius: 999px;
-    background: rgb(var(--v-theme-primary));
+    background: #b6f24a;
 }
 
 .sld__dim {
     position: absolute;
     top: 50%;
-    height: 7px;
+    height: 6px;
     transform: translateY(-50%);
     border-radius: 999px;
-    background: rgb(var(--v-theme-surface));
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
+    background: #2a2d27;
+    box-shadow: inset 0 0 0 1px rgba(244, 241, 232, 0.06);
 }
 
 .sld__knob {
@@ -180,10 +180,9 @@ function onKeydown(e: KeyboardEvent): void {
     height: 20px;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: rgb(var(--v-theme-primary));
-    border: 3px solid rgb(var(--v-theme-surface));
-    box-shadow: 0 0 0 1px rgba(var(--v-theme-primary), 0.6),
-        0 2px 5px rgba(var(--v-theme-shadow), 0.45);
+    background: #b6f24a;
+    border: 3px solid #181a17;
+    box-shadow: 0 0 0 1.5px #b6f24a, 0 2px 6px rgba(0, 0, 0, 0.5);
     cursor: grab;
 }
 
@@ -192,7 +191,7 @@ function onKeydown(e: KeyboardEvent): void {
 }
 
 .sld__knob:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
+    outline: 2px solid #6ccff6;
     outline-offset: 3px;
 }
 
@@ -200,8 +199,8 @@ function onKeydown(e: KeyboardEvent): void {
     position: relative;
     height: 0.85rem;
     margin-top: 9px;
-    font-size: 0.6875rem;
-    color: rgba(var(--v-theme-on-surface), 0.42);
+    font-size: 12px;
+    color: rgba(244, 241, 232, 0.52);
     font-variant-numeric: tabular-nums;
 }
 

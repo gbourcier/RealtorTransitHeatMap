@@ -25,7 +25,7 @@ const triggerLabel = computed(() =>
         ? "Favourites"
         : activeView.value
           ? activeView.value.name
-          : "All listings",
+          : "Saved views",
 );
 const triggerIcon = computed(() =>
     favActive.value
@@ -33,8 +33,8 @@ const triggerIcon = computed(() =>
         : activeView.value
           ? props.views.isDefault(activeView.value.id)
               ? "mdi-star"
-              : "mdi-bookmark"
-          : "mdi-format-list-bulleted",
+              : "mdi-star-outline"
+          : "mdi-star-outline",
 );
 
 function onSelectAll(): void {
@@ -93,9 +93,9 @@ async function onDelete(id: string): Promise<void> {
                 aria-label="Select view"
             >
                 <span class="viewsel__content">
-                    <v-icon :icon="triggerIcon" size="14" class="viewsel__ic" />
+                    <v-icon :icon="triggerIcon" size="16" class="viewsel__ic" />
                     <span class="viewsel__label">{{ triggerLabel }}</span>
-                    <v-icon icon="mdi-chevron-down" size="12" class="viewsel__caret" />
+                    <v-icon icon="mdi-chevron-down" size="15" class="viewsel__caret" />
                 </span>
             </button>
         </template>
@@ -110,7 +110,7 @@ async function onDelete(id: string): Promise<void> {
                 @click="onSelectAll"
             >
                 <span class="view-menu__ic">
-                    <v-icon size="14">mdi-format-list-bulleted</v-icon>
+                    <v-icon size="18">mdi-format-list-bulleted</v-icon>
                 </span>
                 <span class="view-menu__name">All listings</span>
                 <v-icon v-if="triggerState === 'all'" size="14" class="view-menu__check">mdi-check</v-icon>
@@ -122,7 +122,7 @@ async function onDelete(id: string): Promise<void> {
                 :class="{ 'view-menu__item--on': triggerState === 'fav' }"
                 @click="onSelectFavourites"
             >
-                <span class="view-menu__ic"><v-icon size="14">mdi-heart</v-icon></span>
+                <span class="view-menu__ic"><v-icon size="18">mdi-heart</v-icon></span>
                 <span class="view-menu__name">Favourites</span>
                 <v-icon v-if="triggerState === 'fav'" size="14" class="view-menu__check">mdi-check</v-icon>
             </button>
@@ -191,28 +191,32 @@ async function onDelete(id: string): Promise<void> {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    height: 28px;
-    max-width: 200px;
-    padding: 0 10px 0 11px;
+    height: 40px;
+    max-width: 230px;
+    padding: 0 14px;
     border-radius: 999px;
     white-space: nowrap;
-    background: transparent;
-    border: 1.5px solid rgba(var(--v-theme-on-surface), 0.24);
-    color: rgba(var(--v-theme-on-surface), 0.82);
+    background: #2a2d27;
+    border: 1px solid rgba(244, 241, 232, 0.12);
+    color: #f4f1e8;
     font-family: inherit;
-    font-size: 0.8125rem;
+    font-size: 14px;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: normal;
+    letter-spacing: 0;
     text-align: center;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease,
-        color 120ms ease;
+    transition: background-color 140ms ease, border-color 140ms ease,
+        box-shadow 140ms ease, transform 60ms ease;
 }
 
 .viewsel:hover {
-    border-color: rgba(var(--v-theme-on-surface), 0.42);
-    background: rgba(var(--v-theme-on-surface), 0.04);
+    border-color: rgba(244, 241, 232, 0.22);
+    background: #34382f;
+}
+
+.viewsel:active {
+    transform: translateY(1px);
 }
 
 .viewsel:focus-visible {
@@ -223,7 +227,7 @@ async function onDelete(id: string): Promise<void> {
     content: "";
     position: absolute;
     inset: -4px;
-    border: 2px solid rgb(var(--v-theme-primary));
+    border: 2px solid #6ccff6;
     border-radius: inherit;
     pointer-events: none;
 }
@@ -232,13 +236,13 @@ async function onDelete(id: string): Promise<void> {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 8px;
     min-width: 0;
 }
 
 .viewsel__ic {
     flex: 0 0 auto;
-    opacity: 0.9;
+    color: #f2c14e;
 }
 
 .viewsel__label {
@@ -248,25 +252,23 @@ async function onDelete(id: string): Promise<void> {
 
 .viewsel__caret {
     flex: 0 0 auto;
-    opacity: 0.65;
+    color: rgba(244, 241, 232, 0.52);
 }
 
 .viewsel--saved,
 .viewsel--saved:hover {
-    border-width: 2px;
-    border-color: rgb(var(--v-theme-primary));
-    color: rgb(var(--v-theme-primary));
-    background: rgba(var(--v-theme-primary), 0.13);
-    padding: 0 9px 0 10px;
+    border: 1.5px solid #6ccff6;
+    color: #f4f1e8;
+    background: #2a2d27;
+    box-shadow: 0 0 0 3px rgba(108, 207, 246, 0.15);
 }
 
 .viewsel--fav,
 .viewsel--fav:hover {
-    border-width: 2px;
-    border-color: rgb(var(--v-theme-accent));
-    color: rgb(var(--v-theme-accent));
-    background: rgba(var(--v-theme-accent), 0.15);
-    padding: 0 9px 0 10px;
+    border: 1.5px solid #6ccff6;
+    color: #f4f1e8;
+    background: #2a2d27;
+    box-shadow: 0 0 0 3px rgba(108, 207, 246, 0.15);
 }
 
 .viewsel--saved::after,
@@ -279,11 +281,11 @@ async function onDelete(id: string): Promise<void> {
 }
 
 .viewsel--saved::after {
-    border: 3px solid rgba(var(--v-theme-primary), 0.1);
+    border: 0;
 }
 
 .viewsel--fav::after {
-    border: 3px solid rgba(var(--v-theme-accent), 0.1);
+    border: 0;
 }
 
 .viewsel--saved .viewsel__ic,
@@ -294,48 +296,49 @@ async function onDelete(id: string): Promise<void> {
 }
 
 .view-menu {
-    width: 290px;
-    padding: 6px;
-    border-radius: 14px;
-    background: rgb(var(--v-theme-surface));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
-    box-shadow: 0 20px 56px rgba(var(--v-theme-shadow), 0.55);
-    color: rgba(var(--v-theme-on-surface), 0.92);
+    width: 300px;
+    padding: 8px;
+    border-radius: 16px;
+    background: #262925;
+    border: 1px solid rgba(244, 241, 232, 0.12);
+    box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.8);
+    color: #f4f1e8;
+    font-family: Inter, system-ui, sans-serif;
 }
 
 .view-menu__label {
-    font-size: 0.65625rem;
-    font-weight: 700;
-    letter-spacing: 1.2px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
     text-transform: uppercase;
-    color: rgba(var(--v-theme-on-surface), 0.34);
-    padding: 9px 11px 6px;
+    color: rgba(244, 241, 232, 0.34);
+    padding: 10px 12px 6px;
 }
 
 .view-menu__item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 13px;
     width: 100%;
-    height: 40px;
-    padding: 0 11px;
+    height: 46px;
+    padding: 0 12px;
     border: 0;
-    border-radius: 9px;
+    border-radius: 11px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.86);
-    font-size: 0.84375rem;
-    font-weight: 500;
+    color: #f4f1e8;
+    font-size: 15px;
+    font-weight: 600;
     text-align: left;
     cursor: pointer;
     transition: background-color 120ms ease;
 }
 
 .view-menu__item:hover {
-    background: rgba(var(--v-theme-on-surface), 0.06);
+    background: rgba(244, 241, 232, 0.06);
 }
 
 .view-menu__item:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
+    outline: 2px solid #6ccff6;
     outline-offset: -2px;
 }
 
@@ -345,7 +348,7 @@ async function onDelete(id: string): Promise<void> {
     justify-content: center;
     width: 16px;
     flex: 0 0 auto;
-    color: rgba(var(--v-theme-on-surface), 0.5);
+    color: rgba(244, 241, 232, 0.52);
 }
 
 .view-menu__star {
@@ -354,19 +357,19 @@ async function onDelete(id: string): Promise<void> {
     justify-content: center;
     width: 16px;
     flex: 0 0 auto;
-    color: rgba(var(--v-theme-on-surface), 0.4);
+    color: rgba(244, 241, 232, 0.34);
     border-radius: 4px;
     cursor: pointer;
     transition: color 120ms ease, transform 80ms ease;
 }
 
 .view-menu__star:hover {
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
     transform: scale(1.18);
 }
 
 .view-menu__star--on {
-    color: rgb(var(--v-theme-primary));
+    color: #f2c14e;
 }
 
 .view-menu__name {
@@ -378,32 +381,33 @@ async function onDelete(id: string): Promise<void> {
 
 .view-menu__check {
     flex: 0 0 auto;
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
 }
 
 .view-menu__item--on {
-    background: rgba(var(--v-theme-primary), 0.1);
+    background: rgba(182, 242, 74, 0.12);
+    color: #b6f24a;
 }
 
 .view-menu__item--on .view-menu__name {
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
     font-weight: 700;
 }
 
 .view-menu__item--fav .view-menu__ic {
-    color: rgb(var(--v-theme-accent));
+    color: #f2c14e;
 }
 
 .view-menu__item--fav.view-menu__item--on {
-    background: rgba(var(--v-theme-accent), 0.12);
+    background: rgba(182, 242, 74, 0.12);
 }
 
 .view-menu__item--fav.view-menu__item--on .view-menu__name {
-    color: rgb(var(--v-theme-accent));
+    color: #b6f24a;
 }
 
 .view-menu__item--fav.view-menu__item--on .view-menu__check {
-    color: rgb(var(--v-theme-accent));
+    color: #b6f24a;
 }
 
 .view-menu__del {
@@ -416,7 +420,7 @@ async function onDelete(id: string): Promise<void> {
     border: 0;
     border-radius: 7px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.4);
+    color: rgba(244, 241, 232, 0.34);
     opacity: 0;
     cursor: pointer;
     transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
@@ -428,40 +432,42 @@ async function onDelete(id: string): Promise<void> {
 }
 
 .view-menu__del:hover {
-    background: rgba(var(--v-theme-error), 0.16);
-    color: rgb(var(--v-theme-error));
+    background: rgba(255, 92, 138, 0.16);
+    color: #ff5c8a;
 }
 
 .view-menu__div {
     height: 1px;
-    background: rgba(var(--v-theme-on-surface), 0.08);
-    margin: 6px 8px;
+    background: rgba(244, 241, 232, 0.12);
+    margin: 7px 6px;
 }
 
 .view-menu__empty {
     padding: 6px 12px 10px;
     font-size: 0.78125rem;
-    color: rgba(var(--v-theme-on-surface), 0.42);
+    color: rgba(244, 241, 232, 0.52);
 }
 
 .view-menu__save .view-menu__ic {
-    color: rgb(var(--v-theme-primary));
+    color: #b6f24a;
 }
 
 .view-menu__save .view-menu__name {
     font-weight: 600;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 899px) {
     .viewsel {
-        width: 58px;
+        width: auto;
+        min-width: 58px;
+        height: 38px;
         max-width: none;
-        padding: 0;
+        padding: 0 11px;
     }
 
     .viewsel--saved,
     .viewsel--fav {
-        padding: 0;
+        padding: 0 11px;
     }
 
     .viewsel__label {
@@ -473,10 +479,9 @@ async function onDelete(id: string): Promise<void> {
         left: 50%;
         top: 50%;
         display: grid;
-        grid-template-columns: 14px 12px;
+        grid-template-columns: 16px 14px;
         column-gap: 8px;
-        flex: none;
-        width: 34px;
+        width: 38px;
         transform: translate(-50%, -50%);
     }
 }

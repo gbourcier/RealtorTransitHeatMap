@@ -47,6 +47,7 @@ export function useSavedViews(filters: ListingFiltersState): SavedViewsState {
             a.newWithinDays !== filters.newWithinDays.value ||
             a.minBedrooms !== filters.minBedrooms.value ||
             a.minBathrooms !== filters.minBathrooms.value ||
+            a.minInteriorAreaSqft !== filters.minInteriorAreaSqft.value ||
             a.includeExpired !== filters.includeExpired.value
         );
     });
@@ -75,7 +76,7 @@ export function useSavedViews(filters: ListingFiltersState): SavedViewsState {
     }
 
     function selectFavourites(): void {
-        activeId.value = null;
+        resetFilters();
         filters.favoritesOnly.value = true;
     }
 
@@ -85,6 +86,8 @@ export function useSavedViews(filters: ListingFiltersState): SavedViewsState {
         filters.newWithinDays.value = null;
         filters.minBedrooms.value = null;
         filters.minBathrooms.value = null;
+        filters.minInteriorAreaSqft.value = null;
+        filters.favoritesOnly.value = false;
         filters.includeExpired.value = false;
         activeId.value = null;
     }

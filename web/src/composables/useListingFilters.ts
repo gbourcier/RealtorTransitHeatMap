@@ -32,6 +32,7 @@ export function useListingFilters(): ListingFiltersState {
         if (newWithinDays.value != null) n++;
         if (minBedrooms.value != null) n++;
         if (minBathrooms.value != null) n++;
+        if (minInteriorAreaSqft.value != null) n++;
         if (includeExpired.value) n++;
         return n;
     });

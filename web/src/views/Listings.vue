@@ -72,6 +72,10 @@ function onVisibilityChange(): void {
     if (document.visibilityState === "hidden") flushFavorites();
 }
 
+function toggleResultsPanel(): void {
+    drawerOpen.value = !drawerOpen.value;
+}
+
 const mapRef = ref<InstanceType<typeof ListingsMap> | null>(null);
 const mapCount = ref(0);
 const mapLoading = ref(false);
@@ -144,12 +148,14 @@ onMounted(() => {
     teleportReady.value = true;
     listings.loadInitial();
     window.addEventListener("beforeunload", flushFavorites);
+    window.addEventListener("listings:toggle-panel", toggleResultsPanel);
     document.addEventListener("visibilitychange", onVisibilityChange);
 });
 
 onBeforeUnmount(() => {
     reloadListings.cancel();
     window.removeEventListener("beforeunload", flushFavorites);
+    window.removeEventListener("listings:toggle-panel", toggleResultsPanel);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     flushFavorites();
 });
@@ -158,7 +164,7 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="#header-filters-slot" :disabled="!teleportReady">
         <template v-if="headerVisible">
-            <ListingsCountPill :total="listings.total.value" />
+            <ListingsCountPill :total="listings.total.value" :loading="listings.loading.value || mapLoading" />
             <ViewSelector :views="views" :filters="filters" @save="openSaveFromHeader" />
             <FiltersButton
                 :open="filtersOpen"
@@ -188,17 +194,17 @@ onBeforeUnmount(() => {
     />
 
     <Teleport to="#header-actions-slot" :disabled="!teleportReady">
-        <v-btn
+        <button
             v-if="headerVisible && mdAndUp"
-            icon
-            variant="text"
-            size="x-small"
-            :active="drawerOpen"
+            type="button"
+            class="panel-toggle"
+            :class="{ 'panel-toggle--on': drawerOpen }"
+            :aria-pressed="drawerOpen"
             :aria-label="drawerOpen ? 'Hide results panel' : 'Show results panel'"
             @click="drawerOpen = !drawerOpen"
         >
-            <v-icon size="20">mdi-dock-right</v-icon>
-        </v-btn>
+            <v-icon size="18">mdi-dock-right</v-icon>
+        </button>
     </Teleport>
 
     <div
@@ -210,6 +216,7 @@ onBeforeUnmount(() => {
         <ListingsMap
             ref="mapRef"
             class="map-fullbleed__map"
+            :class="{ 'map-fullbleed__map--dim': mapLoading }"
             :max-price="filters.maxPrice.value"
             :max-commute-sec="filters.maxCommuteSec.value"
             :new-within-days="filters.newWithinDays.value"
@@ -229,7 +236,8 @@ onBeforeUnmount(() => {
             aria-live="polite"
             aria-label="Loading map listings"
         >
-            <v-progress-circular indeterminate size="72" width="5" color="primary" />
+            <v-progress-circular indeterminate size="18" width="3" color="primary" />
+            <span>Loading listings…</span>
         </div>
         <ListingsSidePanel
             v-if="mdAndUp && drawerOpen"
@@ -296,7 +304,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .map-fullbleed {
     position: relative;
-    height: calc(100dvh - 40px);
+    height: calc(100dvh - 66px);
     width: 100%;
     display: flex;
 }
@@ -305,6 +313,11 @@ onBeforeUnmount(() => {
     flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
+    transition: filter 300ms ease;
+}
+
+.map-fullbleed__map--dim {
+    filter: brightness(0.78);
 }
 
 .map-fullbleed__loading {
@@ -316,12 +329,29 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 11px;
     pointer-events: none;
     z-index: 500;
+    color: #f4f1e8;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.map-fullbleed__loading {
+    top: 54%;
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    padding: 11px 20px;
+    border-radius: 999px;
+    background: rgba(24, 26, 23, 0.9);
+    border: 1px solid rgba(244, 241, 232, 0.12);
+    box-shadow: 0 14px 40px -16px #000;
+    transform: translate(-50%, -50%);
 }
 
 .map-fullbleed--with-panel .map-fullbleed__loading {
-    right: var(--listings-panel-width);
+    margin-left: calc(var(--listings-panel-width) / -2);
 }
 
 .filter-drawer-enter-active,
@@ -333,5 +363,48 @@ onBeforeUnmount(() => {
 .filter-drawer-leave-to {
     opacity: 0;
     transform: translateX(12px);
+}
+
+.panel-toggle {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #f4f1e8;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, transform 60ms ease;
+}
+
+.panel-toggle:hover {
+    background: rgba(244, 241, 232, 0.06);
+}
+
+.panel-toggle--on {
+    background: #2a2d27;
+    border-color: rgba(244, 241, 232, 0.12);
+}
+
+.panel-toggle--on:hover {
+    background: #34382f;
+    border-color: rgba(244, 241, 232, 0.22);
+}
+
+.panel-toggle:active {
+    transform: translateY(1px);
+}
+
+.panel-toggle:focus-visible {
+    outline: 2px solid #6ccff6;
+    outline-offset: 2px;
+}
+
+@media (max-width: 899px) {
+    .map-fullbleed {
+        height: calc(100dvh - 58px);
+    }
 }
 </style>

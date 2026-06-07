@@ -4,8 +4,10 @@
       <default-system-bar
         :settings-active="isSettingsActive"
         :show-back="showBack"
+        :show-panel-toggle="route.name === 'listings'"
         @click:settings="onToggleSettings"
         @click:back="onBackToMap"
+        @click:panel-toggle="onToggleListingsPanel"
       />
 
       <default-drawer
@@ -49,5 +51,9 @@ function onToggleSettings() {
 function onBackToMap() {
   settingsDrawer.value = false
   router.push('/listings')
+}
+
+function onToggleListingsPanel() {
+  window.dispatchEvent(new CustomEvent('listings:toggle-panel'))
 }
 </script>
