@@ -8,6 +8,7 @@ export interface Listing {
   commuteSecondsDowntown: number | null;
   firstSeenAt: number;
   slug: string;
+  buildingType: number;
   bedroomCount: number;
   bathroomCount: number;
   interiorAreaSqft: number;
@@ -53,6 +54,7 @@ export interface ListingMapPin {
   commuteSecondsDowntown: number | null;
   firstSeenAt: number;
   slug: string;
+  buildingType: number;
   bedroomCount: number;
   bathroomCount: number;
   interiorAreaSqft: number;

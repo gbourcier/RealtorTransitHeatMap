@@ -5,19 +5,20 @@
 TRUNCATE listings, listing_price_history RESTART IDENTITY CASCADE;
 
 INSERT INTO listings (board, mls, latitude, longitude, address, is_available,
+                        building_type, bedroom_count, bathroom_count, interior_area_sqft,
                         commute_seconds_downtown, commute_computed_at,
                         first_seen_at, last_updated_at)
 VALUES
-    (1234, 12345678, 45.5240, -73.5810, '1234 Rue Mont-Royal E, Montréal',      TRUE,   600, now(), now() - interval '30 days', now()),
-    (1234, 12345679, 45.4860, -73.5910, '456 Av. Westmount, Westmount',          TRUE,   900, now(), now() - interval '30 days', now()),
-    (1234, 12345680, 45.5200, -73.6050, '789 Av. Bernard, Outremont',            TRUE,  1200, now(), now() - interval '30 days', now()),
-    (1234, 12345681, 45.4580, -73.5670, '234 Rue Wellington, Verdun',            TRUE,  1500, now(), now() - interval '30 days', now()),
-    (1234, 12345682, 45.4700, -73.6200, '567 Rue Sherbrooke O, Montréal',        FALSE, 1800, now(), now() - interval '30 days', now()),
-    (1234, 12345683, 45.5240, -73.6010, '890 Av. Laurier, Montréal',             TRUE,  1100, now(), now() - interval '30 days', now()),
-    (1234, 12345684, 45.5460, -73.5850, '321 Rue Beaubien, Montréal',            FALSE, 1400, now(), now() - interval '30 days', now()),
-    (1234, 12345685, 45.4770, -73.5850, '654 Rue Notre-Dame O, Montréal',        TRUE,  1000, now(), now() - interval '30 days', now()),
-    (1234, 12345686, 45.5410, -73.5470, '987 Rue Ontario E, Montréal',           TRUE,  1300, now(), now() - interval '30 days', now()),
-    (1234, 12345687, 45.5050, -73.5670, '1010 Rue Sainte-Catherine O, Montréal', TRUE,   300, now(), now() - interval '30 days', now());
+    (1234, 12345678, 45.5240, -73.5810, '1234 Rue Mont-Royal E, Montréal',      TRUE,  0, 3, 2, 1400,  600, now(), now() - interval '30 days', now()),
+    (1234, 12345679, 45.4860, -73.5910, '456 Av. Westmount, Westmount',          TRUE,  0, 4, 3, 2200,  900, now(), now() - interval '30 days', now()),
+    (1234, 12345680, 45.5200, -73.6050, '789 Av. Bernard, Outremont',            TRUE,  0, 3, 2, 1550, 1200, now(), now() - interval '30 days', now()),
+    (1234, 12345681, 45.4580, -73.5670, '234 Rue Wellington, Verdun',            TRUE,  0, 2, 1,  950, 1500, now(), now() - interval '30 days', now()),
+    (1234, 12345682, 45.4700, -73.6200, '567 Rue Sherbrooke O, Montréal',        FALSE, 0, 3, 2, 1300, 1800, now(), now() - interval '30 days', now()),
+    (1234, 12345683, 45.5240, -73.6010, '890 Av. Laurier, Montréal',             TRUE,  0, 3, 2, 1450, 1100, now(), now() - interval '30 days', now()),
+    (1234, 12345684, 45.5460, -73.5850, '321 Rue Beaubien, Montréal',            FALSE, 0, 2, 1, 1000, 1400, now(), now() - interval '30 days', now()),
+    (1234, 12345685, 45.4770, -73.5850, '654 Rue Notre-Dame O, Montréal',        TRUE,  0, 3, 2, 1250, 1000, now(), now() - interval '30 days', now()),
+    (1234, 12345686, 45.5410, -73.5470, '987 Rue Ontario E, Montréal',           TRUE,  0, 2, 1,  900, 1300, now(), now() - interval '30 days', now()),
+    (1234, 12345687, 45.5050, -73.5670, '1010 Rue Sainte-Catherine O, Montréal', TRUE,  0, 4, 2, 1800,  300, now(), now() - interval '30 days', now());
 
 -- 30 history rows per listing, spaced 1 day apart, with a small downward drift
 -- over time (today's price is ~0.9% below the price 30 days ago — i.e. mild

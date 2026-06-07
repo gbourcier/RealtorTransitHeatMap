@@ -11,6 +11,7 @@ export interface Favorite {
   firstSeenAt: number;
   favoritedAt: number;
   slug: string;
+  buildingType: number;
   bedroomCount: number;
   bathroomCount: number;
   interiorAreaSqft: number;

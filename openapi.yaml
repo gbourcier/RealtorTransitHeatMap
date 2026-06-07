@@ -801,7 +801,7 @@ components:
 
     Listing:
       type: object
-      required: [board, mls, address, firstSeenAt, slug]
+      required: [board, mls, address, firstSeenAt, slug, buildingType]
       properties:
         board:
           type: integer
@@ -824,6 +824,10 @@ components:
         slug:
           type: string
           description: Full realtor.ca URL for the listing.
+        buildingType:
+          type: integer
+          enum: [0, 1, 2, 3]
+          description: "Listing building type: 0=house, 1=duplex, 2=triplex, 3=fourplex."
         isAvailable:
           type: boolean
           description: False when the listing has been delisted/expired.
@@ -885,7 +889,7 @@ components:
 
     Favorite:
       type: object
-      required: [board, mls, address, latitude, longitude, firstSeenAt, favoritedAt, slug, isAvailable]
+      required: [board, mls, address, latitude, longitude, firstSeenAt, favoritedAt, slug, buildingType, isAvailable]
       properties:
         board:
           type: integer
@@ -918,6 +922,10 @@ components:
         slug:
           type: string
           description: Full realtor.ca URL for the listing.
+        buildingType:
+          type: integer
+          enum: [0, 1, 2, 3]
+          description: "Listing building type: 0=house, 1=duplex, 2=triplex, 3=fourplex."
         isAvailable:
           type: boolean
           description: False when the listing has been delisted/expired.

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gbourcier/RealtorTransitHeatMap/internal/config"
+	"github.com/gbourcier/RealtorTransitHeatMap/internal/listing"
 )
 
 func TestFetchPricesMock(t *testing.T) {
@@ -97,11 +98,11 @@ func TestDecodeObservations(t *testing.T) {
 
 func TestParseSqft(t *testing.T) {
 	cases := map[string]float64{
-		"":              0,
-		"1115.14 sqft":  1115.14,
-		"827 sqft":      827,
-		"  500 sqft  ":  500,
-		"not-a-number":  0,
+		"":             0,
+		"1115.14 sqft": 1115.14,
+		"827 sqft":     827,
+		"  500 sqft  ": 500,
+		"not-a-number": 0,
 	}
 	for in, want := range cases {
 		got := parseSqft(in)
@@ -113,12 +114,13 @@ func TestParseSqft(t *testing.T) {
 
 func TestDecodeObservationsBuildingFields(t *testing.T) {
 	results := []listingResult{{
-		MlsNumber: 1,
+		MlsNumber:  1,
 		Individual: []individual{{Organization: organization{OrganizationId: 1}}},
 		Building: building{
 			BathroomTotal: "2",
 			Bedrooms:      "3",
 			SizeInterior:  "1115.14 sqft",
+			Type:          "Triplex",
 		},
 	}}
 	got := decodeObservations(results)
@@ -134,5 +136,26 @@ func TestDecodeObservationsBuildingFields(t *testing.T) {
 	}
 	if l.InteriorAreaSqft != 1115.14 {
 		t.Errorf("InteriorAreaSqft = %v, want 1115.14", l.InteriorAreaSqft)
+	}
+	if l.BuildingType != listing.BuildingTypeTriplex {
+		t.Errorf("BuildingType = %d, want %d", l.BuildingType, listing.BuildingTypeTriplex)
+	}
+}
+
+func TestParseBuildingType(t *testing.T) {
+	cases := map[string]listing.BuildingType{
+		"":          listing.BuildingTypeHouse,
+		"House":     listing.BuildingTypeHouse,
+		"Detached":  listing.BuildingTypeHouse,
+		"Duplex":    listing.BuildingTypeDuplex,
+		"duplex":    listing.BuildingTypeDuplex,
+		" Triplex ": listing.BuildingTypeTriplex,
+		"Fourplex":  listing.BuildingTypeFourplex,
+	}
+	for in, want := range cases {
+		got := parseBuildingType(in)
+		if got != want {
+			t.Errorf("parseBuildingType(%q) = %d, want %d", in, got, want)
+		}
 	}
 }

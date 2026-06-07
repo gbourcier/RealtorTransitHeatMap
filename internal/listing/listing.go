@@ -6,6 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type BuildingType int
+
+const (
+	BuildingTypeHouse BuildingType = iota
+	BuildingTypeDuplex
+	BuildingTypeTriplex
+	BuildingTypeFourplex
+)
+
 type Listing struct {
 	Board                  int `gorm:"column:board;primaryKey"`
 	MLS                    int `gorm:"column:mls;primaryKey"`
@@ -14,6 +23,7 @@ type Listing struct {
 	Address                string
 	IsAvailable            bool           `gorm:"column:is_available"`
 	Slug                   string         `gorm:"column:slug"`
+	BuildingType           BuildingType   `gorm:"column:building_type"`
 	BedroomCount           int            `gorm:"column:bedroom_count"`
 	BathroomCount          int            `gorm:"column:bathroom_count"`
 	InteriorAreaSqft       float64        `gorm:"column:interior_area_sqft"`
@@ -68,20 +78,21 @@ type ListingRow struct {
 }
 
 type MapPinRow struct {
-	Board                  int       `gorm:"column:board"`
-	MLS                    int       `gorm:"column:mls"`
-	Latitude               float64   `gorm:"column:latitude"`
-	Longitude              float64   `gorm:"column:longitude"`
-	Address                string    `gorm:"column:address"`
-	Slug                   string    `gorm:"column:slug"`
-	BedroomCount           int       `gorm:"column:bedroom_count"`
-	BathroomCount          int       `gorm:"column:bathroom_count"`
-	InteriorAreaSqft       float64   `gorm:"column:interior_area_sqft"`
-	CommuteSecondsDowntown *int      `gorm:"column:commute_seconds_downtown"`
-	FirstSeenAt            time.Time `gorm:"column:first_seen_at"`
-	CurrentPrice           *float64  `gorm:"column:current_price"`
-	IsAvailable            bool      `gorm:"column:is_available"`
-	IsFavorite             bool      `gorm:"column:is_favorite"`
+	Board                  int          `gorm:"column:board"`
+	MLS                    int          `gorm:"column:mls"`
+	Latitude               float64      `gorm:"column:latitude"`
+	Longitude              float64      `gorm:"column:longitude"`
+	Address                string       `gorm:"column:address"`
+	Slug                   string       `gorm:"column:slug"`
+	BuildingType           BuildingType `gorm:"column:building_type"`
+	BedroomCount           int          `gorm:"column:bedroom_count"`
+	BathroomCount          int          `gorm:"column:bathroom_count"`
+	InteriorAreaSqft       float64      `gorm:"column:interior_area_sqft"`
+	CommuteSecondsDowntown *int         `gorm:"column:commute_seconds_downtown"`
+	FirstSeenAt            time.Time    `gorm:"column:first_seen_at"`
+	CurrentPrice           *float64     `gorm:"column:current_price"`
+	IsAvailable            bool         `gorm:"column:is_available"`
+	IsFavorite             bool         `gorm:"column:is_favorite"`
 }
 
 type PendingCommute struct {
