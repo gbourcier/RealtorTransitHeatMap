@@ -100,8 +100,8 @@ const emit = defineEmits<{ toggle: [] }>();
 @media (max-width: 899px) {
     .filters-btn {
         height: 38px;
-        padding: 0 11px;
-        gap: 9px;
+        padding: 0 13px;
+        gap: 11px;
     }
 
     .filters-btn__label {

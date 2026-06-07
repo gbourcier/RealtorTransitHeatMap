@@ -432,13 +432,18 @@ async function onLogout() {
   }
 
   .brand__word,
-  .header-bar__divider,
   .header-bar__actions {
     display: none;
   }
 
   .header-bar__filters {
-    gap: 8px;
+    gap: 11px;
+  }
+
+  .header-bar__divider {
+    display: block;
+    height: 28px;
+    margin-inline: 10px;
   }
 
   .user-pill {

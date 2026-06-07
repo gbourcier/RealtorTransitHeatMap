@@ -66,15 +66,22 @@ withDefaults(defineProps<Props>(), {
 
 @media (max-width: 899px) {
     .count-pill {
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
         height: 38px;
+        min-width: 44px;
+        line-height: 1;
     }
 
     .count-pill__label {
-        display: none;
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
     }
 
     .count-pill__shimmer {
-        width: 34px;
+        width: 44px;
     }
 }
 </style>

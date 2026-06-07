@@ -95,10 +95,15 @@ function clusterIcon(c: L.MarkerCluster): L.DivIcon {
     const tier = commuteTier(medCommute);
     const count = c.getChildCount();
     const sizeClass = count >= 100 ? "lg" : count >= 10 ? "md" : "sm";
+    const mobileClass = mobile.value ? " price-cluster--mobile" : "";
+    const listingLabel = count === 1 ? "listing" : "listings";
+    const html = mobile.value
+        ? `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span><span class="price-cluster__label">${listingLabel}</span></div>`
+        : `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span></div>`;
     return L.divIcon({
-        className: `price-cluster price-cluster--${tier} price-cluster--${sizeClass}`,
-        html: `<div class="price-cluster__inner"><span class="price-cluster__count">${count}</span></div>`,
-        iconSize: L.point(40, 40),
+        className: `price-cluster price-cluster--${tier} price-cluster--${sizeClass}${mobileClass}`,
+        html,
+        iconSize: mobile.value ? L.point(58, 48) : L.point(40, 40),
     });
 }
 
@@ -397,7 +402,7 @@ onMounted(() => {
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         chunkedLoading: true,
-        maxClusterRadius: mobile.value ? 50 : 65,
+        maxClusterRadius: mobile.value ? 58 : 65,
         disableClusteringAtZoom: 15,
         iconCreateFunction: clusterIcon,
     });
@@ -801,6 +806,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 .price-cluster__inner {
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 34px;
@@ -837,6 +843,17 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     height: 52px;
 }
 
+.price-cluster--mobile .price-cluster__inner {
+    width: 52px;
+    height: 42px;
+    border-radius: 14px;
+}
+
+.price-cluster--mobile .price-cluster__inner::before {
+    inset: -4px;
+    border-radius: 16px;
+}
+
 .price-cluster:hover .price-cluster__inner {
     transform: scale(1.06);
     box-shadow:
@@ -853,12 +870,33 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     color: rgba(var(--v-theme-on-surface), 0.96);
 }
 
+.price-cluster__label {
+    margin-top: 2px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1;
+    color: rgba(var(--v-theme-on-surface), 0.58);
+}
+
 .price-cluster--md .price-cluster__count {
     font-size: 13px;
 }
 
 .price-cluster--lg .price-cluster__count {
     font-size: 15px;
+}
+
+.price-cluster--mobile.price-cluster--md .price-cluster__inner,
+.price-cluster--mobile.price-cluster--lg .price-cluster__inner {
+    width: 58px;
+    height: 46px;
+}
+
+.price-cluster--mobile .price-cluster__count,
+.price-cluster--mobile.price-cluster--md .price-cluster__count,
+.price-cluster--mobile.price-cluster--lg .price-cluster__count {
+    font-size: 13px;
 }
 
 .marker-cluster.price-pin--highlighted {
