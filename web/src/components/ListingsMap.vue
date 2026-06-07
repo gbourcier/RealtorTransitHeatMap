@@ -187,6 +187,20 @@ function formatBath(count: number): string {
     return Number.isInteger(count) ? `${count}` : count.toFixed(1);
 }
 
+function formatBuildingType(buildingType: number): string {
+    switch (buildingType) {
+        case 2:
+            return "2-plex";
+        case 3:
+            return "3-plex";
+        case 19:
+            return "4-plex";
+        case 1:
+        default:
+            return "house";
+    }
+}
+
 function favButtonHtml(isFavorite: boolean): string {
     const icon = isFavorite ? "mdi-heart" : "mdi-heart-outline";
     const cls = isFavorite ? " map-popup__fav--active" : "";
@@ -220,6 +234,7 @@ function popupHtml(pin: ListingMapPin): string {
     const bd = pin.bedroomCount > 0 ? `${pin.bedroomCount}` : "—";
     const ba = formatBath(pin.bathroomCount);
     const area = formatArea(pin.interiorAreaSqft);
+    const buildingType = escapeHtml(formatBuildingType(pin.buildingType));
     return `
         <div class="map-popup">
             <div class="map-popup__top-actions">
@@ -233,6 +248,10 @@ function popupHtml(pin: ListingMapPin): string {
                 ${localityLine}
             </div>
             <div class="map-popup__stats">
+                <div class="map-popup__stat">
+                    <i class="mdi mdi-domain map-popup__stat-icon" aria-hidden="true"></i>
+                    <div class="map-popup__stat-value map-popup__stat-value--type">${buildingType}</div>
+                </div>
                 <div class="map-popup__stat">
                     <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
                     <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit"> bd</span></div>
@@ -973,8 +992,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup {
     position: relative;
-    min-width: 240px;
-    max-width: 280px;
+    min-width: 280px;
+    max-width: 320px;
     font-size: 0.875rem;
 }
 
@@ -1093,9 +1112,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: center;
-    padding: 12px 8px;
+    padding: 12px 6px;
     margin-bottom: 12px;
     border-radius: 10px;
     background-color: rgba(var(--v-theme-on-surface), 0.04);
@@ -1107,7 +1126,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 0 8px;
+    min-width: 0;
+    padding: 0 5px;
     position: relative;
     text-align: center;
 }
@@ -1123,19 +1143,29 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 }
 
 .map-popup__stat-icon {
-    font-size: 22px;
+    font-size: 21px;
     color: rgba(var(--v-theme-on-surface), 0.85);
     line-height: 1;
 }
 
 .map-popup__stat-value {
-    font-size: 0.95rem;
+    max-width: 100%;
+    font-size: 0.84rem;
     font-weight: 600;
     color: rgba(var(--v-theme-on-surface), 0.95);
-    line-height: 1;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+}
+
+.map-popup__stat-value--type {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(var(--v-theme-on-surface), 0.65);
+    white-space: nowrap;
 }
 
 .map-popup__stat-unit {
+    font-size: 0.8rem;
     font-weight: 500;
     color: rgba(var(--v-theme-on-surface), 0.65);
 }
