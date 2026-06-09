@@ -356,12 +356,14 @@ onBeforeUnmount(() => {
         :model-value="favorites.snackbar.value.open"
         location="bottom"
         :timeout="-1"
+        class="favorites-snackbar"
+        content-class="favorites-snackbar__content"
     >
         {{ favorites.snackbar.value.count === 1
             ? "Removed from favorites"
             : `Removed ${favorites.snackbar.value.count} from favorites` }}
         <template #actions>
-            <v-btn variant="text" color="accent" @click="favorites.undo()">Undo</v-btn>
+            <v-btn variant="text" color="primary" @click="favorites.undo()">Undo</v-btn>
         </template>
     </v-snackbar>
 </template>
@@ -465,6 +467,20 @@ onBeforeUnmount(() => {
 .panel-toggle:focus-visible {
     outline: 2px solid #6ccff6;
     outline-offset: 2px;
+}
+
+.favorites-snackbar :deep(.favorites-snackbar__content) {
+    background: rgb(var(--v-theme-popup-overlay));
+    color: rgb(var(--v-theme-on-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 10px;
+    box-shadow:
+        0 18px 48px -18px rgba(var(--v-theme-shadow), 0.85),
+        inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.favorites-snackbar :deep(.v-snackbar__actions) {
+    color: rgb(var(--v-theme-primary));
 }
 
 @media (max-width: 899px) {

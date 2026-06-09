@@ -26,8 +26,8 @@ export const vuetify = createVuetify({
           'on-surface': '#F4F1E8',
           'on-primary': '#172006',
 
-          'commute-fast': '#9BE84A',
-          'commute-mid': '#FFB454',
+          'commute-fast': '#B6F24A',
+          'commute-mid': '#F2C14E',
           'commute-slow': '#FF5C8A',
 
           'header-bar': '#181A17',

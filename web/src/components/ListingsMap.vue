@@ -198,7 +198,7 @@ function formatBuildingType(buildingType: number): string {
             return "4-plex";
         case 1:
         default:
-            return "house";
+            return "House";
     }
 }
 
@@ -218,15 +218,15 @@ function popupHtml(pin: ListingMapPin): string {
     const expiredBadge = pin.isAvailable
         ? ""
         : `<div class="map-popup__expired">Expired listing</div>`;
-    const commuteMin =
+    const commuteLabel =
         pin.commuteSecondsDowntown != null
-            ? Math.round(pin.commuteSecondsDowntown / 60).toString()
+            ? `${Math.round(pin.commuteSecondsDowntown / 60)} min`
             : "—";
     const slug = escapeHtml(pin.slug);
     const directionsHref = commuteMapUrl(pin.address);
     const directionsBtn = directionsHref
-        ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--secondary">
-                <i class="mdi mdi-navigation-variant-outline" aria-hidden="true"></i><span>Directions</span>
+        ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--ghost" aria-label="Directions">
+                <i class="mdi mdi-navigation-variant-outline" aria-hidden="true"></i>
             </a>`
         : "";
     const localityLine = localityEsc
@@ -238,41 +238,48 @@ function popupHtml(pin: ListingMapPin): string {
     const buildingType = escapeHtml(formatBuildingType(pin.buildingType));
     return `
         <div class="map-popup">
-            <div class="map-popup__top-actions">
-                ${favButtonHtml(pin.isFavorite)}
-                <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
-            </div>
-            <div class="map-popup__price">${price}</div>
-            ${expiredBadge}
-            <div class="map-popup__address">
-                <div class="map-popup__street">${streetEsc}</div>
-                ${localityLine}
-            </div>
-            <div class="map-popup__stats">
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-domain map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value map-popup__stat-value--type">${buildingType}</div>
+            <div class="map-popup__body">
+                <div class="map-popup__top">
+                    <div class="map-popup__header">
+                        <div class="map-popup__price">${price}</div>
+                        <div class="map-popup__street">${streetEsc}</div>
+                        ${localityLine}
+                        ${expiredBadge}
+                    </div>
+                    <div class="map-popup__top-actions">
+                        ${favButtonHtml(pin.isFavorite)}
+                        <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit"> bd</span></div>
+                <div class="map-popup__stats">
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-home-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-key">${buildingType}</div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit">bd</span></div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-bathtub-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${ba}<span class="map-popup__stat-unit">ba</span></div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-ruler-square map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${area}<span class="map-popup__stat-unit">ft²</span></div>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-bathtub-outline map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${ba}<span class="map-popup__stat-unit"> ba</span></div>
+                <div class="map-popup__commute-row">
+                    <span class="map-popup__commute-label">Commute</span>
+                    <div class="map-popup__commute map-popup__commute--${tier}">
+                        <span class="map-popup__commute-dot" aria-hidden="true"></span>
+                        <span class="map-popup__commute-text"><b>${commuteLabel}</b> to McGill</span>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-ruler map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${area}<span class="map-popup__stat-unit"> ft²</span></div>
-                </div>
-            </div>
-            <div class="map-popup__commute map-popup__commute--${tier}">
-                <span class="map-popup__commute-dot" aria-hidden="true"></span>
-                <div class="map-popup__commute-text">${commuteMin} min to McGill Station</div>
             </div>
             <div class="map-popup__actions">
                 <a href="${slug}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--primary">
-                    <span>Listing</span>
+                    <span>View listing</span>
                 </a>
                 ${directionsBtn}
             </div>
@@ -976,69 +983,87 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 }
 
 .leaflet-popup-content-wrapper {
-    background-color: rgb(var(--v-theme-surface));
+    background-color: rgb(var(--v-theme-popup-overlay));
     color: rgb(var(--v-theme-on-surface));
-    border-radius: 16px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 18px;
     box-shadow:
-        0 12px 32px rgba(var(--v-theme-shadow), 0.55),
-        0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
-    padding: 4px;
+        0 30px 70px -18px rgba(var(--v-theme-shadow), 0.85),
+        inset 0 2px 0 rgba(var(--v-theme-on-surface), 0.03);
+    padding: 0;
+    overflow: hidden;
 }
 
 .leaflet-popup-content {
-    margin: 18px 20px;
+    width: var(--map-popup-width, 332px) !important;
+    margin: 0;
 }
 
 .leaflet-popup-tip {
-    background-color: rgb(var(--v-theme-surface));
+    background-color: rgb(var(--v-theme-popup-overlay));
+    border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    box-shadow: none;
 }
 
 .map-popup {
     position: relative;
-    min-width: 280px;
-    max-width: 320px;
-    font-size: 0.875rem;
+    width: var(--map-popup-width, 332px);
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.map-popup__body {
+    padding: 18px 18px 6px;
+}
+
+.map-popup__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.map-popup__header {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .map-popup__top-actions {
-    position: absolute;
-    top: -6px;
-    right: -6px;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     gap: 2px;
+    margin-top: -4px;
 }
 
 .map-popup__fav {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.34);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .map-popup__fav .mdi {
-    font-size: 22px;
+    font-size: 19px;
 }
 
 .map-popup__close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.34);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .map-popup__close .mdi {
@@ -1047,142 +1072,156 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__close:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-}
-
-.map-popup__close:active {
-    transform: scale(0.9);
+    color: rgba(var(--v-theme-on-surface), 0.52);
 }
 
 .map-popup__fav:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-}
-
-.map-popup__fav:active {
-    transform: scale(0.9);
+    color: rgba(var(--v-theme-on-surface), 0.52);
 }
 
 .map-popup__fav--active {
-    color: rgb(var(--v-theme-accent));
+    color: rgb(var(--v-theme-error));
 }
 
 .map-popup__fav--active:hover {
-    color: rgb(var(--v-theme-accent));
-    background-color: rgba(var(--v-theme-accent), 0.12);
+    color: rgb(var(--v-theme-error));
+    background-color: rgba(var(--v-theme-error), 0.08);
 }
 
 .map-popup__price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.01em;
+    margin-bottom: 9px;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
     color: rgba(var(--v-theme-on-surface), 0.98);
-    margin-bottom: 10px;
-    padding-right: 72px;
 }
 
 .map-popup__expired {
     display: inline-flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-top: 8px;
     padding: 3px 10px;
     border-radius: 999px;
     background-color: rgba(var(--v-theme-warning), 0.16);
     color: rgb(var(--v-theme-warning));
-    font-size: 0.75rem;
+    border: 1px solid rgba(var(--v-theme-warning), 0.32);
+    font-size: 12px;
     font-weight: 600;
 }
 
-.map-popup__address {
-    margin-bottom: 14px;
-}
-
 .map-popup__street {
-    font-size: 1.35rem;
+    font-size: 16px;
     font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    line-height: 1.25;
+    letter-spacing: 0;
     color: rgba(var(--v-theme-on-surface), 0.98);
+    overflow-wrap: anywhere;
 }
 
 .map-popup__locality {
-    font-size: 0.9rem;
+    margin-top: 3px;
+    font-size: 13px;
     line-height: 1.3;
-    color: rgba(var(--v-theme-on-surface), 0.55);
-    margin-top: 4px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .map-popup__stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: center;
-    padding: 12px 6px;
-    margin-bottom: 12px;
-    border-radius: 10px;
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+    display: flex;
+    align-items: stretch;
+    margin: 16px 0 14px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 13px;
+    background: rgba(var(--v-theme-on-surface), 0.03);
+    overflow: hidden;
 }
 
 .map-popup__stat {
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
-    padding: 0 5px;
-    position: relative;
+    padding: 12px 6px 11px;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     text-align: center;
 }
 
-.map-popup__stat+.map-popup__stat::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 10%;
-    bottom: 10%;
-    width: 1px;
-    background-color: rgba(var(--v-theme-on-surface), 0.12);
+.map-popup__stat:first-child {
+    border-left: 0;
 }
 
 .map-popup__stat-icon {
-    font-size: 21px;
-    color: rgba(var(--v-theme-on-surface), 0.85);
+    font-size: 18px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
     line-height: 1;
 }
 
 .map-popup__stat-value {
     max-width: 100%;
-    font-size: 0.84rem;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0;
     color: rgba(var(--v-theme-on-surface), 0.95);
-    line-height: 1.08;
+    line-height: 1;
     overflow-wrap: anywhere;
 }
 
-.map-popup__stat-value--type {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.65);
-    white-space: nowrap;
+.map-popup__stat-key {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-weight: 600;
+    line-height: 1;
 }
 
 .map-popup__stat-unit {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.65);
+    margin-left: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+}
+
+.map-popup__commute-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.map-popup__commute-label {
+    font-size: 11px;
+    line-height: 28px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-weight: 700;
+    flex: 0 0 auto;
 }
 
 .map-popup__commute {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    border-radius: 10px;
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+    gap: 8px;
+    height: 28px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
     --commute-accent: var(--v-theme-on-surface);
+    background: color-mix(in srgb, rgb(var(--commute-accent)) 13%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--commute-accent)) 38%, transparent);
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 62%, rgb(var(--v-theme-on-surface)));
 }
 
 .map-popup__commute--fast {
@@ -1199,71 +1238,152 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__commute-dot {
     flex: 0 0 auto;
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background-color: rgb(var(--commute-accent));
-    box-shadow: 0 0 10px rgba(var(--commute-accent), 0.6);
+    box-shadow: 0 0 0 3px color-mix(in srgb, rgb(var(--commute-accent)) 20%, transparent);
 }
 
 .map-popup__commute-text {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.92);
+    font: inherit;
     line-height: 1.2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.map-popup__commute-text b {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 80%, rgb(var(--v-theme-on-surface)));
 }
 
 .map-popup__actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    padding: 14px 18px 18px;
 }
 
 .map-popup__btn {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    gap: 8px;
+    height: 44px;
+    border-radius: 999px;
+    font-size: 14.5px;
+    font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
     transition:
-        filter 120ms ease,
-        transform 120ms ease,
-        background-color 120ms ease;
+        background-color 140ms ease,
+        border-color 140ms ease,
+        transform 60ms ease,
+        box-shadow 140ms ease;
 }
 
 .map-popup__btn .mdi {
-    font-size: 18px;
+    font-size: 19px;
 }
 
 .map-popup__btn--primary {
     background-color: rgb(var(--v-theme-primary));
     color: rgb(var(--v-theme-on-primary));
+    box-shadow: 0 2px 12px -2px rgba(var(--v-theme-primary), 0.45);
 }
 
 .map-popup__btn--primary:hover {
-    filter: brightness(1.1);
+    background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 88%, white);
+    box-shadow: 0 5px 16px -3px rgba(var(--v-theme-primary), 0.55);
 }
 
-.map-popup__btn--secondary {
-    background-color: transparent;
-    color: rgb(var(--v-theme-secondary));
-    box-shadow: inset 0 0 0 1.5px rgb(var(--v-theme-secondary));
+.map-popup__btn--ghost {
+    flex: 0 0 auto;
+    width: 48px;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    color: rgb(var(--v-theme-on-surface));
 }
 
-.map-popup__btn--secondary .mdi {
-    color: rgb(var(--v-theme-secondary));
+.map-popup__btn--ghost:hover {
+    background: rgba(var(--v-theme-on-surface), 0.09);
+    border-color: rgba(var(--v-theme-on-surface), 0.22);
 }
 
-.map-popup__btn--secondary:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.08);
+.map-popup__btn--ghost .mdi {
+    color: inherit;
 }
 
 .map-popup__btn:active {
     transform: translateY(1px);
+}
+
+@media (max-width: 959.98px) {
+    .leaflet-popup {
+        --map-popup-width: min(292px, calc(100vw - 54px));
+    }
+
+    .map-popup__body {
+        padding: 16px 14px 5px;
+    }
+
+    .map-popup__top {
+        gap: 8px;
+    }
+
+    .map-popup__top-actions {
+        gap: 0;
+    }
+
+    .map-popup__fav,
+    .map-popup__close {
+        width: 30px;
+        height: 30px;
+    }
+
+    .map-popup__price {
+        font-size: 21px;
+    }
+
+    .map-popup__stats {
+        margin: 14px 0 12px;
+    }
+
+    .map-popup__stat {
+        padding: 10px 4px 9px;
+    }
+
+    .map-popup__stat-key {
+        font-size: 9.5px;
+    }
+
+    .map-popup__commute-row {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .map-popup__commute {
+        height: auto;
+        min-height: 28px;
+        max-width: 176px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        white-space: normal;
+    }
+
+    .map-popup__actions {
+        gap: 8px;
+        padding: 12px 14px 16px;
+    }
+
+    .map-popup__btn {
+        height: 42px;
+    }
+
+    .map-popup__btn--ghost {
+        width: 44px;
+    }
 }
 </style>
