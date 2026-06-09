@@ -286,6 +286,7 @@ onBeforeUnmount(() => {
             :min-interior-area-sqft="filters.minInteriorAreaSqft.value"
             :favorites-only="filters.favoritesOnly.value"
             :include-expired="filters.includeExpired.value"
+            :mobile-sheet="!mdAndUp"
             @update:count="mapCount = $event"
             @update:loading="mapLoading = $event"
             @toggle-favorite="onMapToggleFavorite"

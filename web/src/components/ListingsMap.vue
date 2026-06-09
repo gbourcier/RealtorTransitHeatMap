@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -21,6 +21,7 @@ const props = defineProps<{
     minInteriorAreaSqft: number | null;
     favoritesOnly: boolean;
     includeExpired: boolean;
+    mobileSheet: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -41,9 +42,11 @@ const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
 const hexLayer = shallowRef<L.LayerGroup | null>(null);
 const HEX_RESOLUTION = 8;
 const loading = ref(false);
+const selectedPin = ref<ListingMapPin | null>(null);
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
+let selectedMarkerEl: HTMLElement | null = null;
 
 function listingKey(board: number, mls: number): string {
     return `${board}-${mls}`;
@@ -202,6 +205,48 @@ function formatBuildingType(buildingType: number): string {
     }
 }
 
+const selectedAddress = computed(() => parseAddress(selectedPin.value?.address));
+const selectedPropertyType = computed(() =>
+    selectedPin.value ? formatBuildingType(selectedPin.value.buildingType) : "",
+);
+const selectedCommuteTier = computed(() =>
+    commuteTier(selectedPin.value?.commuteSecondsDowntown ?? null),
+);
+const selectedCommuteLabel = computed(() =>
+    selectedPin.value?.commuteSecondsDowntown != null
+        ? `${Math.round(selectedPin.value.commuteSecondsDowntown / 60)} min`
+        : "—",
+);
+const selectedDirectionsUrl = computed(() =>
+    selectedPin.value ? commuteMapUrl(selectedPin.value.address) : null,
+);
+
+function selectedBathLabel(pin: ListingMapPin): string {
+    return formatBath(pin.bathroomCount);
+}
+
+function selectedAreaLabel(pin: ListingMapPin): string {
+    return formatArea(pin.interiorAreaSqft);
+}
+
+function openSheet(pin: ListingMapPin): void {
+    selectedPin.value = pin;
+    markSelectedPin(pin.board, pin.mls);
+}
+
+function closeSheet(): void {
+    selectedPin.value = null;
+    clearSelectedPin();
+}
+
+function toggleSheetFavorite(pin: ListingMapPin): void {
+    emit("toggle-favorite", {
+        board: pin.board,
+        mls: pin.mls,
+        isFavorite: pin.isFavorite,
+    });
+}
+
 function favButtonHtml(isFavorite: boolean): string {
     const icon = isFavorite ? "mdi-heart" : "mdi-heart-outline";
     const cls = isFavorite ? " map-popup__fav--active" : "";
@@ -291,7 +336,7 @@ async function load() {
     if (!map.value || !cluster.value) return;
     loading.value = true;
     try {
-        const pins = await listListingsForMap({
+        const mapPins = await listListingsForMap({
             ...(props.buildingTypes.length > 0 && { buildingTypes: props.buildingTypes }),
             ...(props.maxPrice != null && { maxPrice: props.maxPrice }),
             ...(props.maxCommuteSec != null && {
@@ -309,10 +354,11 @@ async function load() {
             ...(props.includeExpired && { includeExpired: true }),
         });
         clearHighlight();
+        closeSheet();
         cluster.value.clearLayers();
         markersByKey.clear();
         const markers: L.Marker[] = [];
-        for (const pin of pins) {
+        for (const pin of mapPins) {
             const m = L.marker([pin.latitude, pin.longitude], {
                 icon: pricePillIcon(
                     pin.currentPrice,
@@ -328,9 +374,15 @@ async function load() {
                 commuteSec: pin.commuteSecondsDowntown,
                 isFavorite: pin.isFavorite,
             };
-            m.bindPopup(popupHtml(pin), { closeButton: false });
-            m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
-            m.on("popupopen", () => wireFavButton(m, pin));
+            if (!props.mobileSheet) {
+                m.bindPopup(popupHtml(pin), { closeButton: false });
+                m.on("popupopen", () => wireFavButton(m, pin));
+            }
+            m.on("click", (event) => {
+                L.DomEvent.stopPropagation(event);
+                emit("pin-click", { board: pin.board, mls: pin.mls });
+                if (props.mobileSheet) openSheet(pin);
+            });
             markers.push(m);
             markersByKey.set(listingKey(pin.board, pin.mls), m);
         }
@@ -415,6 +467,9 @@ onMounted(() => {
         zoomControl: false,
         attributionControl: false,
         preferCanvas: true,
+    });
+    map.value.on("click", () => {
+        if (props.mobileSheet) closeSheet();
     });
     L.control
         .attribution({ prefix: false, position: "bottomleft" })
@@ -513,6 +568,18 @@ watch(
     debouncedLoad,
 );
 
+watch(
+    () => props.mobileSheet,
+    () => {
+        closeSheet();
+        debouncedLoad();
+    },
+);
+
+watch(mobile, () => {
+    debouncedLoad();
+});
+
 watch(loading, (v) => emit("update:loading", v));
 
 function wireFavButton(
@@ -547,6 +614,13 @@ function setFavorite(board: number, mls: number, value: boolean): void {
         | undefined;
     if (!m) return;
     if (m._data) m._data.isFavorite = value;
+    if (
+        selectedPin.value &&
+        selectedPin.value.board === board &&
+        selectedPin.value.mls === mls
+    ) {
+        selectedPin.value = { ...selectedPin.value, isFavorite: value };
+    }
     const el = m.getPopup()?.getElement();
     const btn = el?.querySelector(".map-popup__fav") as HTMLButtonElement | null;
     if (!btn) return;
@@ -570,6 +644,24 @@ function focusListing(board: number, mls: number): boolean {
 }
 
 let highlightedEl: HTMLElement | null = null;
+
+function markSelectedPin(board: number, mls: number): void {
+    clearSelectedPin();
+    const marker = markersByKey.get(listingKey(board, mls));
+    if (!marker || !cluster.value) return;
+    const visible = cluster.value.getVisibleParent(marker) ?? marker;
+    const el = (visible as L.Marker | L.MarkerCluster).getElement?.();
+    if (!el) return;
+    el.classList.add("price-pin--selected");
+    selectedMarkerEl = el;
+}
+
+function clearSelectedPin(): void {
+    if (selectedMarkerEl) {
+        selectedMarkerEl.classList.remove("price-pin--selected");
+        selectedMarkerEl = null;
+    }
+}
 
 function highlightListing(board: number, mls: number): void {
     clearHighlight();
@@ -610,6 +702,113 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
                 &gt; 60 min
             </div>
         </div>
+
+        <Transition v-if="props.mobileSheet" name="mobile-sheet-transition">
+            <div
+                v-if="selectedPin"
+                class="mobile-listing-sheet"
+                role="dialog"
+                aria-label="Listing details"
+            >
+                <div class="mobile-listing-sheet__body">
+                    <div class="mobile-listing-sheet__top">
+                        <div class="mobile-listing-sheet__header">
+                            <div class="mobile-listing-sheet__price">
+                                {{ formatPrice(selectedPin.currentPrice) }}
+                            </div>
+                            <div class="mobile-listing-sheet__street">
+                                {{ selectedAddress.street }}
+                            </div>
+                            <div v-if="selectedAddress.locality" class="mobile-listing-sheet__locality">
+                                {{ selectedAddress.locality }}
+                            </div>
+                            <div v-if="!selectedPin.isAvailable" class="mobile-listing-sheet__expired">
+                                Expired listing
+                            </div>
+                        </div>
+                        <div class="mobile-listing-sheet__top-actions">
+                            <button
+                                type="button"
+                                class="mobile-listing-sheet__iconbtn"
+                                :class="{ 'mobile-listing-sheet__iconbtn--active': selectedPin.isFavorite }"
+                                :aria-pressed="selectedPin.isFavorite"
+                                :aria-label="selectedPin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                                @click="toggleSheetFavorite(selectedPin)"
+                            >
+                                <v-icon size="20">{{ selectedPin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+                            </button>
+                            <button
+                                type="button"
+                                class="mobile-listing-sheet__iconbtn"
+                                aria-label="Close listing details"
+                                @click="closeSheet"
+                            >
+                                <v-icon size="21">mdi-close</v-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mobile-listing-sheet__stats">
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-home-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-key">{{ selectedPropertyType }}</span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-bed-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedPin.bedroomCount > 0 ? selectedPin.bedroomCount : "—" }}<small>bd</small>
+                            </span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-bathtub-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedBathLabel(selectedPin) }}<small>ba</small>
+                            </span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-ruler-square</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedAreaLabel(selectedPin) }}<small>ft²</small>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mobile-listing-sheet__commute-row">
+                        <span class="mobile-listing-sheet__commute-label">Commute</span>
+                        <span
+                            class="mobile-listing-sheet__commute"
+                            :class="`mobile-listing-sheet__commute--${selectedCommuteTier}`"
+                        >
+                            <span class="mobile-listing-sheet__commute-dot" />
+                            <span class="mobile-listing-sheet__commute-text">
+                                <b>{{ selectedCommuteLabel }}</b> to McGill
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mobile-listing-sheet__actions">
+                    <a
+                        :href="selectedPin.slug"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--primary"
+                    >
+                        View listing
+                    </a>
+                    <a
+                        v-if="selectedDirectionsUrl"
+                        :href="selectedDirectionsUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--ghost"
+                        aria-label="Directions"
+                    >
+                        <v-icon size="20">mdi-navigation-variant-outline</v-icon>
+                    </a>
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
@@ -685,9 +884,277 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     background-color: rgb(var(--v-theme-commute-slow));
 }
 
+.mobile-listing-sheet {
+    position: fixed;
+    right: 11px;
+    bottom: 0;
+    left: 11px;
+    z-index: 2000;
+    width: 100%;
+    max-width: calc(100vw - 22px);
+    color: rgb(var(--v-theme-on-surface));
+    background: rgb(var(--v-theme-popup-overlay));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 22px 22px 0 0;
+    box-shadow:
+        0 -22px 70px -28px rgba(var(--v-theme-shadow), 0.95),
+        inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.mobile-listing-sheet__body {
+    padding: 22px 22px 6px;
+}
+
+.mobile-listing-sheet__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.mobile-listing-sheet__header {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mobile-listing-sheet__price {
+    margin-bottom: 10px;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.mobile-listing-sheet__street {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.14;
+    overflow-wrap: anywhere;
+}
+
+.mobile-listing-sheet__locality {
+    margin-top: 4px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.mobile-listing-sheet__expired {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--v-theme-warning), 0.32);
+    background: rgba(var(--v-theme-warning), 0.09);
+    color: rgb(var(--v-theme-warning));
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mobile-listing-sheet__top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.mobile-listing-sheet__iconbtn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(var(--v-theme-on-surface), 0.06);
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 60ms ease;
+}
+
+.mobile-listing-sheet__iconbtn--active {
+    color: rgb(var(--v-theme-error));
+}
+
+.mobile-listing-sheet__iconbtn:active {
+    transform: translateY(1px);
+}
+
+.mobile-listing-sheet__stats {
+    display: flex;
+    align-items: stretch;
+    margin: 20px 0 17px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 16px;
+    background: rgba(var(--v-theme-on-surface), 0.03);
+    overflow: hidden;
+}
+
+.mobile-listing-sheet__stat {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 6px 11px;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    text-align: center;
+}
+
+.mobile-listing-sheet__stat:first-child {
+    border-left: 0;
+}
+
+.mobile-listing-sheet__stat-key {
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.mobile-listing-sheet__stat-value {
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.mobile-listing-sheet__stat-value small {
+    margin-left: 2px;
+    color: rgba(var(--v-theme-on-surface), 0.38);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mobile-listing-sheet__commute-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mobile-listing-sheet__commute-label {
+    flex: 0 0 auto;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 30px;
+    text-transform: uppercase;
+}
+
+.mobile-listing-sheet__commute {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 210px;
+    height: 36px;
+    padding: 0 16px 0 12px;
+    border-radius: 999px;
+    --commute-accent: var(--v-theme-on-surface);
+    background: color-mix(in srgb, rgb(var(--commute-accent)) 13%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--commute-accent)) 38%, transparent);
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 62%, rgb(var(--v-theme-on-surface)));
+    white-space: nowrap;
+}
+
+.mobile-listing-sheet__commute--fast {
+    --commute-accent: var(--v-theme-commute-fast);
+}
+
+.mobile-listing-sheet__commute--mid {
+    --commute-accent: var(--v-theme-commute-mid);
+}
+
+.mobile-listing-sheet__commute--slow {
+    --commute-accent: var(--v-theme-commute-slow);
+}
+
+.mobile-listing-sheet__commute-dot {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgb(var(--commute-accent));
+    box-shadow: 0 0 0 4px color-mix(in srgb, rgb(var(--commute-accent)) 18%, transparent);
+}
+
+.mobile-listing-sheet__commute-text {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    text-overflow: ellipsis;
+}
+
+.mobile-listing-sheet__commute-text b {
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 80%, rgb(var(--v-theme-on-surface)));
+}
+
+.mobile-listing-sheet__actions {
+    display: flex;
+    gap: 12px;
+    padding: 18px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-listing-sheet__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 800;
+    transition: background-color 140ms ease, border-color 140ms ease, transform 60ms ease, box-shadow 140ms ease;
+}
+
+.mobile-listing-sheet__btn:active {
+    transform: translateY(1px);
+}
+
+.mobile-listing-sheet__btn--primary {
+    flex: 1 1 auto;
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow: 0 8px 24px -10px rgba(var(--v-theme-primary), 0.8);
+}
+
+.mobile-listing-sheet__btn--ghost {
+    flex: 0 0 auto;
+    width: 60px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgb(var(--v-theme-on-surface));
+}
+
 @media (max-width: 959.98px) {
     .listings-map-legend {
         display: none;
+    }
+}
+
+@media (max-width: 899px) {
+    .mobile-sheet-transition-enter-active,
+    .mobile-sheet-transition-leave-active {
+        transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+    }
+
+    .mobile-sheet-transition-enter-from,
+    .mobile-sheet-transition-leave-to {
+        opacity: 0;
+        transform: translateY(100%);
     }
 }
 </style>
@@ -826,14 +1293,35 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     z-index: 1001 !important;
 }
 
+.price-pin.price-pin--selected {
+    z-index: 1002 !important;
+}
+
 .price-pin.price-pin--highlighted .price-pin__label {
     transform: translate(-50%, -50%) scale(1.18);
+}
+
+.price-pin.price-pin--selected .price-pin__label {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow:
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35);
+}
+
+.price-pin.price-pin--selected .price-pin__type {
+    color: rgba(var(--v-theme-on-primary), 0.72);
 }
 
 .price-pin.price-pin--highlighted .price-pin__label::before {
     border-color: rgb(var(--v-theme-primary));
     border-width: 2px;
     inset: -3px;
+}
+
+.price-pin.price-pin--selected .price-pin__label::before {
+    border-color: transparent;
 }
 
 .price-cluster {
@@ -956,6 +1444,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     z-index: 1001 !important;
 }
 
+.marker-cluster.price-pin--selected {
+    z-index: 1002 !important;
+}
+
 .marker-cluster.price-pin--highlighted>div,
 .price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
@@ -963,6 +1455,21 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
         0 6px 14px rgba(var(--v-theme-shadow), 0.6);
     transform: scale(1.12);
     transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.marker-cluster.price-pin--selected>div,
+.price-cluster.price-pin--selected .price-cluster__inner {
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow:
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35);
+    transform: scale(1.08);
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.price-cluster.price-pin--selected .price-cluster__inner::before {
+    border-color: transparent;
 }
 
 .leaflet-control-attribution {
