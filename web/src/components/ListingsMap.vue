@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -21,6 +21,7 @@ const props = defineProps<{
     minInteriorAreaSqft: number | null;
     favoritesOnly: boolean;
     includeExpired: boolean;
+    mobileSheet: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -41,9 +42,11 @@ const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
 const hexLayer = shallowRef<L.LayerGroup | null>(null);
 const HEX_RESOLUTION = 8;
 const loading = ref(false);
+const selectedPin = ref<ListingMapPin | null>(null);
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
+let selectedMarkerEl: HTMLElement | null = null;
 
 function listingKey(board: number, mls: number): string {
     return `${board}-${mls}`;
@@ -198,8 +201,50 @@ function formatBuildingType(buildingType: number): string {
             return "4-plex";
         case 1:
         default:
-            return "house";
+            return "House";
     }
+}
+
+const selectedAddress = computed(() => parseAddress(selectedPin.value?.address));
+const selectedPropertyType = computed(() =>
+    selectedPin.value ? formatBuildingType(selectedPin.value.buildingType) : "",
+);
+const selectedCommuteTier = computed(() =>
+    commuteTier(selectedPin.value?.commuteSecondsDowntown ?? null),
+);
+const selectedCommuteLabel = computed(() =>
+    selectedPin.value?.commuteSecondsDowntown != null
+        ? `${Math.round(selectedPin.value.commuteSecondsDowntown / 60)} min`
+        : "—",
+);
+const selectedDirectionsUrl = computed(() =>
+    selectedPin.value ? commuteMapUrl(selectedPin.value.address) : null,
+);
+
+function selectedBathLabel(pin: ListingMapPin): string {
+    return formatBath(pin.bathroomCount);
+}
+
+function selectedAreaLabel(pin: ListingMapPin): string {
+    return formatArea(pin.interiorAreaSqft);
+}
+
+function openSheet(pin: ListingMapPin): void {
+    selectedPin.value = pin;
+    markSelectedPin(pin.board, pin.mls);
+}
+
+function closeSheet(): void {
+    selectedPin.value = null;
+    clearSelectedPin();
+}
+
+function toggleSheetFavorite(pin: ListingMapPin): void {
+    emit("toggle-favorite", {
+        board: pin.board,
+        mls: pin.mls,
+        isFavorite: pin.isFavorite,
+    });
 }
 
 function favButtonHtml(isFavorite: boolean): string {
@@ -218,15 +263,15 @@ function popupHtml(pin: ListingMapPin): string {
     const expiredBadge = pin.isAvailable
         ? ""
         : `<div class="map-popup__expired">Expired listing</div>`;
-    const commuteMin =
+    const commuteLabel =
         pin.commuteSecondsDowntown != null
-            ? Math.round(pin.commuteSecondsDowntown / 60).toString()
+            ? `${Math.round(pin.commuteSecondsDowntown / 60)} min`
             : "—";
     const slug = escapeHtml(pin.slug);
     const directionsHref = commuteMapUrl(pin.address);
     const directionsBtn = directionsHref
-        ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--secondary">
-                <i class="mdi mdi-navigation-variant-outline" aria-hidden="true"></i><span>Directions</span>
+        ? `<a href="${escapeHtml(directionsHref)}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--ghost" aria-label="Directions">
+                <i class="mdi mdi-navigation-variant-outline" aria-hidden="true"></i>
             </a>`
         : "";
     const localityLine = localityEsc
@@ -238,41 +283,48 @@ function popupHtml(pin: ListingMapPin): string {
     const buildingType = escapeHtml(formatBuildingType(pin.buildingType));
     return `
         <div class="map-popup">
-            <div class="map-popup__top-actions">
-                ${favButtonHtml(pin.isFavorite)}
-                <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
-            </div>
-            <div class="map-popup__price">${price}</div>
-            ${expiredBadge}
-            <div class="map-popup__address">
-                <div class="map-popup__street">${streetEsc}</div>
-                ${localityLine}
-            </div>
-            <div class="map-popup__stats">
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-domain map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value map-popup__stat-value--type">${buildingType}</div>
+            <div class="map-popup__body">
+                <div class="map-popup__top">
+                    <div class="map-popup__header">
+                        <div class="map-popup__price">${price}</div>
+                        <div class="map-popup__street">${streetEsc}</div>
+                        ${localityLine}
+                        ${expiredBadge}
+                    </div>
+                    <div class="map-popup__top-actions">
+                        ${favButtonHtml(pin.isFavorite)}
+                        <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit"> bd</span></div>
+                <div class="map-popup__stats">
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-home-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-key">${buildingType}</div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-bed-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${bd}<span class="map-popup__stat-unit">bd</span></div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-bathtub-outline map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${ba}<span class="map-popup__stat-unit">ba</span></div>
+                    </div>
+                    <div class="map-popup__stat">
+                        <i class="mdi mdi-ruler-square map-popup__stat-icon" aria-hidden="true"></i>
+                        <div class="map-popup__stat-value">${area}<span class="map-popup__stat-unit">ft²</span></div>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-bathtub-outline map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${ba}<span class="map-popup__stat-unit"> ba</span></div>
+                <div class="map-popup__commute-row">
+                    <span class="map-popup__commute-label">Commute</span>
+                    <div class="map-popup__commute map-popup__commute--${tier}">
+                        <span class="map-popup__commute-dot" aria-hidden="true"></span>
+                        <span class="map-popup__commute-text"><b>${commuteLabel}</b> to McGill</span>
+                    </div>
                 </div>
-                <div class="map-popup__stat">
-                    <i class="mdi mdi-ruler map-popup__stat-icon" aria-hidden="true"></i>
-                    <div class="map-popup__stat-value">${area}<span class="map-popup__stat-unit"> ft²</span></div>
-                </div>
-            </div>
-            <div class="map-popup__commute map-popup__commute--${tier}">
-                <span class="map-popup__commute-dot" aria-hidden="true"></span>
-                <div class="map-popup__commute-text">${commuteMin} min to McGill Station</div>
             </div>
             <div class="map-popup__actions">
                 <a href="${slug}" target="_blank" rel="noopener noreferrer" class="map-popup__btn map-popup__btn--primary">
-                    <span>Listing</span>
+                    <span>View listing</span>
                 </a>
                 ${directionsBtn}
             </div>
@@ -284,7 +336,7 @@ async function load() {
     if (!map.value || !cluster.value) return;
     loading.value = true;
     try {
-        const pins = await listListingsForMap({
+        const mapPins = await listListingsForMap({
             ...(props.buildingTypes.length > 0 && { buildingTypes: props.buildingTypes }),
             ...(props.maxPrice != null && { maxPrice: props.maxPrice }),
             ...(props.maxCommuteSec != null && {
@@ -302,10 +354,11 @@ async function load() {
             ...(props.includeExpired && { includeExpired: true }),
         });
         clearHighlight();
+        closeSheet();
         cluster.value.clearLayers();
         markersByKey.clear();
         const markers: L.Marker[] = [];
-        for (const pin of pins) {
+        for (const pin of mapPins) {
             const m = L.marker([pin.latitude, pin.longitude], {
                 icon: pricePillIcon(
                     pin.currentPrice,
@@ -321,9 +374,15 @@ async function load() {
                 commuteSec: pin.commuteSecondsDowntown,
                 isFavorite: pin.isFavorite,
             };
-            m.bindPopup(popupHtml(pin), { closeButton: false });
-            m.on("click", () => emit("pin-click", { board: pin.board, mls: pin.mls }));
-            m.on("popupopen", () => wireFavButton(m, pin));
+            if (!props.mobileSheet) {
+                m.bindPopup(popupHtml(pin), { closeButton: false });
+                m.on("popupopen", () => wireFavButton(m, pin));
+            }
+            m.on("click", (event) => {
+                L.DomEvent.stopPropagation(event);
+                emit("pin-click", { board: pin.board, mls: pin.mls });
+                if (props.mobileSheet) openSheet(pin);
+            });
             markers.push(m);
             markersByKey.set(listingKey(pin.board, pin.mls), m);
         }
@@ -408,6 +467,9 @@ onMounted(() => {
         zoomControl: false,
         attributionControl: false,
         preferCanvas: true,
+    });
+    map.value.on("click", () => {
+        if (props.mobileSheet) closeSheet();
     });
     L.control
         .attribution({ prefix: false, position: "bottomleft" })
@@ -506,6 +568,18 @@ watch(
     debouncedLoad,
 );
 
+watch(
+    () => props.mobileSheet,
+    () => {
+        closeSheet();
+        debouncedLoad();
+    },
+);
+
+watch(mobile, () => {
+    debouncedLoad();
+});
+
 watch(loading, (v) => emit("update:loading", v));
 
 function wireFavButton(
@@ -540,6 +614,13 @@ function setFavorite(board: number, mls: number, value: boolean): void {
         | undefined;
     if (!m) return;
     if (m._data) m._data.isFavorite = value;
+    if (
+        selectedPin.value &&
+        selectedPin.value.board === board &&
+        selectedPin.value.mls === mls
+    ) {
+        selectedPin.value = { ...selectedPin.value, isFavorite: value };
+    }
     const el = m.getPopup()?.getElement();
     const btn = el?.querySelector(".map-popup__fav") as HTMLButtonElement | null;
     if (!btn) return;
@@ -563,6 +644,24 @@ function focusListing(board: number, mls: number): boolean {
 }
 
 let highlightedEl: HTMLElement | null = null;
+
+function markSelectedPin(board: number, mls: number): void {
+    clearSelectedPin();
+    const marker = markersByKey.get(listingKey(board, mls));
+    if (!marker || !cluster.value) return;
+    const visible = cluster.value.getVisibleParent(marker) ?? marker;
+    const el = (visible as L.Marker | L.MarkerCluster).getElement?.();
+    if (!el) return;
+    el.classList.add("price-pin--selected");
+    selectedMarkerEl = el;
+}
+
+function clearSelectedPin(): void {
+    if (selectedMarkerEl) {
+        selectedMarkerEl.classList.remove("price-pin--selected");
+        selectedMarkerEl = null;
+    }
+}
 
 function highlightListing(board: number, mls: number): void {
     clearHighlight();
@@ -603,6 +702,113 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
                 &gt; 60 min
             </div>
         </div>
+
+        <Transition v-if="props.mobileSheet" name="mobile-sheet-transition">
+            <div
+                v-if="selectedPin"
+                class="mobile-listing-sheet"
+                role="dialog"
+                aria-label="Listing details"
+            >
+                <div class="mobile-listing-sheet__body">
+                    <div class="mobile-listing-sheet__top">
+                        <div class="mobile-listing-sheet__header">
+                            <div class="mobile-listing-sheet__price">
+                                {{ formatPrice(selectedPin.currentPrice) }}
+                            </div>
+                            <div class="mobile-listing-sheet__street">
+                                {{ selectedAddress.street }}
+                            </div>
+                            <div v-if="selectedAddress.locality" class="mobile-listing-sheet__locality">
+                                {{ selectedAddress.locality }}
+                            </div>
+                            <div v-if="!selectedPin.isAvailable" class="mobile-listing-sheet__expired">
+                                Expired listing
+                            </div>
+                        </div>
+                        <div class="mobile-listing-sheet__top-actions">
+                            <button
+                                type="button"
+                                class="mobile-listing-sheet__iconbtn"
+                                :class="{ 'mobile-listing-sheet__iconbtn--active': selectedPin.isFavorite }"
+                                :aria-pressed="selectedPin.isFavorite"
+                                :aria-label="selectedPin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                                @click="toggleSheetFavorite(selectedPin)"
+                            >
+                                <v-icon size="20">{{ selectedPin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+                            </button>
+                            <button
+                                type="button"
+                                class="mobile-listing-sheet__iconbtn"
+                                aria-label="Close listing details"
+                                @click="closeSheet"
+                            >
+                                <v-icon size="21">mdi-close</v-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mobile-listing-sheet__stats">
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-home-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-key">{{ selectedPropertyType }}</span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-bed-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedPin.bedroomCount > 0 ? selectedPin.bedroomCount : "—" }}<small>bd</small>
+                            </span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-bathtub-outline</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedBathLabel(selectedPin) }}<small>ba</small>
+                            </span>
+                        </div>
+                        <div class="mobile-listing-sheet__stat">
+                            <v-icon size="18">mdi-ruler-square</v-icon>
+                            <span class="mobile-listing-sheet__stat-value">
+                                {{ selectedAreaLabel(selectedPin) }}<small>ft²</small>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mobile-listing-sheet__commute-row">
+                        <span class="mobile-listing-sheet__commute-label">Commute</span>
+                        <span
+                            class="mobile-listing-sheet__commute"
+                            :class="`mobile-listing-sheet__commute--${selectedCommuteTier}`"
+                        >
+                            <span class="mobile-listing-sheet__commute-dot" />
+                            <span class="mobile-listing-sheet__commute-text">
+                                <b>{{ selectedCommuteLabel }}</b> to McGill
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mobile-listing-sheet__actions">
+                    <a
+                        :href="selectedPin.slug"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--primary"
+                    >
+                        View listing
+                    </a>
+                    <a
+                        v-if="selectedDirectionsUrl"
+                        :href="selectedDirectionsUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--ghost"
+                        aria-label="Directions"
+                    >
+                        <v-icon size="20">mdi-navigation-variant-outline</v-icon>
+                    </a>
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
@@ -678,9 +884,277 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     background-color: rgb(var(--v-theme-commute-slow));
 }
 
+.mobile-listing-sheet {
+    position: fixed;
+    right: 11px;
+    bottom: 0;
+    left: 11px;
+    z-index: 2000;
+    width: 100%;
+    max-width: calc(100vw - 22px);
+    color: rgb(var(--v-theme-on-surface));
+    background: rgb(var(--v-theme-popup-overlay));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 22px 22px 0 0;
+    box-shadow:
+        0 -22px 70px -28px rgba(var(--v-theme-shadow), 0.95),
+        inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.mobile-listing-sheet__body {
+    padding: 22px 22px 6px;
+}
+
+.mobile-listing-sheet__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.mobile-listing-sheet__header {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mobile-listing-sheet__price {
+    margin-bottom: 10px;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.mobile-listing-sheet__street {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.14;
+    overflow-wrap: anywhere;
+}
+
+.mobile-listing-sheet__locality {
+    margin-top: 4px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.mobile-listing-sheet__expired {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--v-theme-warning), 0.32);
+    background: rgba(var(--v-theme-warning), 0.09);
+    color: rgb(var(--v-theme-warning));
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mobile-listing-sheet__top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.mobile-listing-sheet__iconbtn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(var(--v-theme-on-surface), 0.06);
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, transform 60ms ease;
+}
+
+.mobile-listing-sheet__iconbtn--active {
+    color: rgb(var(--v-theme-error));
+}
+
+.mobile-listing-sheet__iconbtn:active {
+    transform: translateY(1px);
+}
+
+.mobile-listing-sheet__stats {
+    display: flex;
+    align-items: stretch;
+    margin: 20px 0 17px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 16px;
+    background: rgba(var(--v-theme-on-surface), 0.03);
+    overflow: hidden;
+}
+
+.mobile-listing-sheet__stat {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 6px 11px;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    text-align: center;
+}
+
+.mobile-listing-sheet__stat:first-child {
+    border-left: 0;
+}
+
+.mobile-listing-sheet__stat-key {
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.mobile-listing-sheet__stat-value {
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.mobile-listing-sheet__stat-value small {
+    margin-left: 2px;
+    color: rgba(var(--v-theme-on-surface), 0.38);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mobile-listing-sheet__commute-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mobile-listing-sheet__commute-label {
+    flex: 0 0 auto;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 30px;
+    text-transform: uppercase;
+}
+
+.mobile-listing-sheet__commute {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 210px;
+    height: 36px;
+    padding: 0 16px 0 12px;
+    border-radius: 999px;
+    --commute-accent: var(--v-theme-on-surface);
+    background: color-mix(in srgb, rgb(var(--commute-accent)) 13%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--commute-accent)) 38%, transparent);
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 62%, rgb(var(--v-theme-on-surface)));
+    white-space: nowrap;
+}
+
+.mobile-listing-sheet__commute--fast {
+    --commute-accent: var(--v-theme-commute-fast);
+}
+
+.mobile-listing-sheet__commute--mid {
+    --commute-accent: var(--v-theme-commute-mid);
+}
+
+.mobile-listing-sheet__commute--slow {
+    --commute-accent: var(--v-theme-commute-slow);
+}
+
+.mobile-listing-sheet__commute-dot {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgb(var(--commute-accent));
+    box-shadow: 0 0 0 4px color-mix(in srgb, rgb(var(--commute-accent)) 18%, transparent);
+}
+
+.mobile-listing-sheet__commute-text {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    text-overflow: ellipsis;
+}
+
+.mobile-listing-sheet__commute-text b {
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 80%, rgb(var(--v-theme-on-surface)));
+}
+
+.mobile-listing-sheet__actions {
+    display: flex;
+    gap: 12px;
+    padding: 18px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-listing-sheet__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 800;
+    transition: background-color 140ms ease, border-color 140ms ease, transform 60ms ease, box-shadow 140ms ease;
+}
+
+.mobile-listing-sheet__btn:active {
+    transform: translateY(1px);
+}
+
+.mobile-listing-sheet__btn--primary {
+    flex: 1 1 auto;
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow: 0 8px 24px -10px rgba(var(--v-theme-primary), 0.8);
+}
+
+.mobile-listing-sheet__btn--ghost {
+    flex: 0 0 auto;
+    width: 60px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgb(var(--v-theme-on-surface));
+}
+
 @media (max-width: 959.98px) {
     .listings-map-legend {
         display: none;
+    }
+}
+
+@media (max-width: 899px) {
+    .mobile-sheet-transition-enter-active,
+    .mobile-sheet-transition-leave-active {
+        transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+    }
+
+    .mobile-sheet-transition-enter-from,
+    .mobile-sheet-transition-leave-to {
+        opacity: 0;
+        transform: translateY(100%);
     }
 }
 </style>
@@ -819,14 +1293,35 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     z-index: 1001 !important;
 }
 
+.price-pin.price-pin--selected {
+    z-index: 1002 !important;
+}
+
 .price-pin.price-pin--highlighted .price-pin__label {
     transform: translate(-50%, -50%) scale(1.18);
+}
+
+.price-pin.price-pin--selected .price-pin__label {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow:
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35);
+}
+
+.price-pin.price-pin--selected .price-pin__type {
+    color: rgba(var(--v-theme-on-primary), 0.72);
 }
 
 .price-pin.price-pin--highlighted .price-pin__label::before {
     border-color: rgb(var(--v-theme-primary));
     border-width: 2px;
     inset: -3px;
+}
+
+.price-pin.price-pin--selected .price-pin__label::before {
+    border-color: transparent;
 }
 
 .price-cluster {
@@ -949,6 +1444,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     z-index: 1001 !important;
 }
 
+.marker-cluster.price-pin--selected {
+    z-index: 1002 !important;
+}
+
 .marker-cluster.price-pin--highlighted>div,
 .price-cluster.price-pin--highlighted .price-cluster__inner {
     box-shadow:
@@ -956,6 +1455,21 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
         0 6px 14px rgba(var(--v-theme-shadow), 0.6);
     transform: scale(1.12);
     transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.marker-cluster.price-pin--selected>div,
+.price-cluster.price-pin--selected .price-cluster__inner {
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
+    box-shadow:
+        0 6px 14px rgba(var(--v-theme-shadow), 0.55),
+        0 1px 2px rgba(var(--v-theme-shadow), 0.35);
+    transform: scale(1.08);
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.price-cluster.price-pin--selected .price-cluster__inner::before {
+    border-color: transparent;
 }
 
 .leaflet-control-attribution {
@@ -976,69 +1490,87 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 }
 
 .leaflet-popup-content-wrapper {
-    background-color: rgb(var(--v-theme-surface));
+    background-color: rgb(var(--v-theme-popup-overlay));
     color: rgb(var(--v-theme-on-surface));
-    border-radius: 16px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 18px;
     box-shadow:
-        0 12px 32px rgba(var(--v-theme-shadow), 0.55),
-        0 0 0 1px rgba(var(--v-theme-on-surface), 0.06);
-    padding: 4px;
+        0 30px 70px -18px rgba(var(--v-theme-shadow), 0.85),
+        inset 0 2px 0 rgba(var(--v-theme-on-surface), 0.03);
+    padding: 0;
+    overflow: hidden;
 }
 
 .leaflet-popup-content {
-    margin: 18px 20px;
+    width: var(--map-popup-width, 332px) !important;
+    margin: 0;
 }
 
 .leaflet-popup-tip {
-    background-color: rgb(var(--v-theme-surface));
+    background-color: rgb(var(--v-theme-popup-overlay));
+    border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    box-shadow: none;
 }
 
 .map-popup {
     position: relative;
-    min-width: 280px;
-    max-width: 320px;
-    font-size: 0.875rem;
+    width: var(--map-popup-width, 332px);
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.map-popup__body {
+    padding: 18px 18px 6px;
+}
+
+.map-popup__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.map-popup__header {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .map-popup__top-actions {
-    position: absolute;
-    top: -6px;
-    right: -6px;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     gap: 2px;
+    margin-top: -4px;
 }
 
 .map-popup__fav {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.34);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .map-popup__fav .mdi {
-    font-size: 22px;
+    font-size: 19px;
 }
 
 .map-popup__close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.34);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .map-popup__close .mdi {
@@ -1047,142 +1579,156 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__close:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-}
-
-.map-popup__close:active {
-    transform: scale(0.9);
+    color: rgba(var(--v-theme-on-surface), 0.52);
 }
 
 .map-popup__fav:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.9);
-}
-
-.map-popup__fav:active {
-    transform: scale(0.9);
+    color: rgba(var(--v-theme-on-surface), 0.52);
 }
 
 .map-popup__fav--active {
-    color: rgb(var(--v-theme-accent));
+    color: rgb(var(--v-theme-error));
 }
 
 .map-popup__fav--active:hover {
-    color: rgb(var(--v-theme-accent));
-    background-color: rgba(var(--v-theme-accent), 0.12);
+    color: rgb(var(--v-theme-error));
+    background-color: rgba(var(--v-theme-error), 0.08);
 }
 
 .map-popup__price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.01em;
+    margin-bottom: 9px;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
     color: rgba(var(--v-theme-on-surface), 0.98);
-    margin-bottom: 10px;
-    padding-right: 72px;
 }
 
 .map-popup__expired {
     display: inline-flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-top: 8px;
     padding: 3px 10px;
     border-radius: 999px;
     background-color: rgba(var(--v-theme-warning), 0.16);
     color: rgb(var(--v-theme-warning));
-    font-size: 0.75rem;
+    border: 1px solid rgba(var(--v-theme-warning), 0.32);
+    font-size: 12px;
     font-weight: 600;
 }
 
-.map-popup__address {
-    margin-bottom: 14px;
-}
-
 .map-popup__street {
-    font-size: 1.35rem;
+    font-size: 16px;
     font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    line-height: 1.25;
+    letter-spacing: 0;
     color: rgba(var(--v-theme-on-surface), 0.98);
+    overflow-wrap: anywhere;
 }
 
 .map-popup__locality {
-    font-size: 0.9rem;
+    margin-top: 3px;
+    font-size: 13px;
     line-height: 1.3;
-    color: rgba(var(--v-theme-on-surface), 0.55);
-    margin-top: 4px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .map-popup__stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: center;
-    padding: 12px 6px;
-    margin-bottom: 12px;
-    border-radius: 10px;
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+    display: flex;
+    align-items: stretch;
+    margin: 16px 0 14px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 13px;
+    background: rgba(var(--v-theme-on-surface), 0.03);
+    overflow: hidden;
 }
 
 .map-popup__stat {
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
-    padding: 0 5px;
-    position: relative;
+    padding: 12px 6px 11px;
+    border-left: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     text-align: center;
 }
 
-.map-popup__stat+.map-popup__stat::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 10%;
-    bottom: 10%;
-    width: 1px;
-    background-color: rgba(var(--v-theme-on-surface), 0.12);
+.map-popup__stat:first-child {
+    border-left: 0;
 }
 
 .map-popup__stat-icon {
-    font-size: 21px;
-    color: rgba(var(--v-theme-on-surface), 0.85);
+    font-size: 18px;
+    color: rgba(var(--v-theme-on-surface), 0.52);
     line-height: 1;
 }
 
 .map-popup__stat-value {
     max-width: 100%;
-    font-size: 0.84rem;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0;
     color: rgba(var(--v-theme-on-surface), 0.95);
-    line-height: 1.08;
+    line-height: 1;
     overflow-wrap: anywhere;
 }
 
-.map-popup__stat-value--type {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.65);
-    white-space: nowrap;
+.map-popup__stat-key {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-weight: 600;
+    line-height: 1;
 }
 
 .map-popup__stat-unit {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.65);
+    margin-left: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+}
+
+.map-popup__commute-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.map-popup__commute-label {
+    font-size: 11px;
+    line-height: 28px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-weight: 700;
+    flex: 0 0 auto;
 }
 
 .map-popup__commute {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    border-radius: 10px;
-    background-color: rgba(var(--v-theme-on-surface), 0.04);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.08);
+    gap: 8px;
+    height: 28px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
     --commute-accent: var(--v-theme-on-surface);
+    background: color-mix(in srgb, rgb(var(--commute-accent)) 13%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--commute-accent)) 38%, transparent);
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 62%, rgb(var(--v-theme-on-surface)));
 }
 
 .map-popup__commute--fast {
@@ -1199,71 +1745,152 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 
 .map-popup__commute-dot {
     flex: 0 0 auto;
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background-color: rgb(var(--commute-accent));
-    box-shadow: 0 0 10px rgba(var(--commute-accent), 0.6);
+    box-shadow: 0 0 0 3px color-mix(in srgb, rgb(var(--commute-accent)) 20%, transparent);
 }
 
 .map-popup__commute-text {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: rgba(var(--v-theme-on-surface), 0.92);
+    font: inherit;
     line-height: 1.2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.map-popup__commute-text b {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, rgb(var(--commute-accent)) 80%, rgb(var(--v-theme-on-surface)));
 }
 
 .map-popup__actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    padding: 14px 18px 18px;
 }
 
 .map-popup__btn {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    gap: 8px;
+    height: 44px;
+    border-radius: 999px;
+    font-size: 14.5px;
+    font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
     transition:
-        filter 120ms ease,
-        transform 120ms ease,
-        background-color 120ms ease;
+        background-color 140ms ease,
+        border-color 140ms ease,
+        transform 60ms ease,
+        box-shadow 140ms ease;
 }
 
 .map-popup__btn .mdi {
-    font-size: 18px;
+    font-size: 19px;
 }
 
 .map-popup__btn--primary {
     background-color: rgb(var(--v-theme-primary));
     color: rgb(var(--v-theme-on-primary));
+    box-shadow: 0 2px 12px -2px rgba(var(--v-theme-primary), 0.45);
 }
 
 .map-popup__btn--primary:hover {
-    filter: brightness(1.1);
+    background-color: color-mix(in srgb, rgb(var(--v-theme-primary)) 88%, white);
+    box-shadow: 0 5px 16px -3px rgba(var(--v-theme-primary), 0.55);
 }
 
-.map-popup__btn--secondary {
-    background-color: transparent;
-    color: rgb(var(--v-theme-secondary));
-    box-shadow: inset 0 0 0 1.5px rgb(var(--v-theme-secondary));
+.map-popup__btn--ghost {
+    flex: 0 0 auto;
+    width: 48px;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    color: rgb(var(--v-theme-on-surface));
 }
 
-.map-popup__btn--secondary .mdi {
-    color: rgb(var(--v-theme-secondary));
+.map-popup__btn--ghost:hover {
+    background: rgba(var(--v-theme-on-surface), 0.09);
+    border-color: rgba(var(--v-theme-on-surface), 0.22);
 }
 
-.map-popup__btn--secondary:hover {
-    background-color: rgba(var(--v-theme-secondary), 0.08);
+.map-popup__btn--ghost .mdi {
+    color: inherit;
 }
 
 .map-popup__btn:active {
     transform: translateY(1px);
+}
+
+@media (max-width: 959.98px) {
+    .leaflet-popup {
+        --map-popup-width: min(292px, calc(100vw - 54px));
+    }
+
+    .map-popup__body {
+        padding: 16px 14px 5px;
+    }
+
+    .map-popup__top {
+        gap: 8px;
+    }
+
+    .map-popup__top-actions {
+        gap: 0;
+    }
+
+    .map-popup__fav,
+    .map-popup__close {
+        width: 30px;
+        height: 30px;
+    }
+
+    .map-popup__price {
+        font-size: 21px;
+    }
+
+    .map-popup__stats {
+        margin: 14px 0 12px;
+    }
+
+    .map-popup__stat {
+        padding: 10px 4px 9px;
+    }
+
+    .map-popup__stat-key {
+        font-size: 9.5px;
+    }
+
+    .map-popup__commute-row {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .map-popup__commute {
+        height: auto;
+        min-height: 28px;
+        max-width: 176px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        white-space: normal;
+    }
+
+    .map-popup__actions {
+        gap: 8px;
+        padding: 12px 14px 16px;
+    }
+
+    .map-popup__btn {
+        height: 42px;
+    }
+
+    .map-popup__btn--ghost {
+        width: 44px;
+    }
 }
 </style>

@@ -26,16 +26,18 @@ export interface FavoritesController {
 export const favoritesKey: InjectionKey<FavoritesController> =
     Symbol("favorites");
 
+type PendingRemoval = {
+    item: FavoriteToggleItem;
+    timer: ReturnType<typeof setTimeout>;
+};
+
 function keyOf(board: number, mls: number): string {
     return `${board}-${mls}`;
 }
 
 export function useFavorites(): FavoritesController {
     const overrides = ref<Record<string, boolean>>({});
-    const pending = new Map<
-        string,
-        { item: FavoriteToggleItem; timer: ReturnType<typeof setTimeout> }
-    >();
+    const pending = new Map<string, PendingRemoval>();
     const snackbar = ref<FavoritesSnackbarState>({ open: false, count: 0 });
     let errorCb: ((message: string) => void) | null = null;
 
@@ -85,6 +87,7 @@ export function useFavorites(): FavoritesController {
                 clearTimeout(existing.timer);
                 pending.delete(k);
                 refreshSnackbar();
+                return;
             }
             void commitAdd(item);
             return;
@@ -92,12 +95,16 @@ export function useFavorites(): FavoritesController {
 
         const existing = pending.get(k);
         if (existing) clearTimeout(existing.timer);
-        const timer = setTimeout(() => {
-            pending.delete(k);
-            refreshSnackbar();
-            void commitRemove(item);
-        }, UNDO_TIMEOUT_MS);
-        pending.set(k, { item, timer });
+        const pendingRemoval: PendingRemoval = {
+            item,
+            timer: setTimeout(() => {
+                if (pending.get(k) !== pendingRemoval) return;
+                pending.delete(k);
+                refreshSnackbar();
+                void commitRemove(item);
+            }, UNDO_TIMEOUT_MS),
+        };
+        pending.set(k, pendingRemoval);
         refreshSnackbar();
     }
 
@@ -111,11 +118,11 @@ export function useFavorites(): FavoritesController {
     }
 
     function flush(): void {
-        for (const [, p] of pending) {
+        for (const [k, p] of pending) {
             clearTimeout(p.timer);
+            pending.delete(k);
             void commitRemove(p.item);
         }
-        pending.clear();
         refreshSnackbar();
     }
 

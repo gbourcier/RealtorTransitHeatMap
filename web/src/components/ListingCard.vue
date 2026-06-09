@@ -8,7 +8,6 @@ import {
     formatDate,
     isNew,
     formatCommute,
-    commuteColor,
     commuteMapUrl,
     parseAddress,
 } from "../utils/listingFormat";
@@ -37,6 +36,13 @@ const isFavorite = computed(() =>
 
 const address = computed(() => parseAddress(props.item.address));
 const propertyType = computed(() => formatPropertyType(props.item.buildingType));
+const commuteTierClass = computed(() => {
+    if (props.item.commuteSecondsDowntown == null) return "listing-card__commute--unknown";
+    const minutes = props.item.commuteSecondsDowntown / 60;
+    if (minutes < 30) return "listing-card__commute--fast";
+    if (minutes <= 60) return "listing-card__commute--mid";
+    return "listing-card__commute--slow";
+});
 
 function onActivate() {
     emit("click", props.item);
@@ -69,49 +75,43 @@ function onToggleFavorite() {
         @focus="variant === 'panel' && emit('hover', item)"
         @blur="variant === 'panel' && emit('leave')"
     >
-        <div v-if="propertyType || isNew(item.firstSeenAt) || favorites" class="listing-card__actions">
-            <v-chip
-                v-if="propertyType"
-                size="x-small"
-                variant="tonal"
-                class="listing-card__status-chip listing-card__property-type"
-            >{{ propertyType }}</v-chip>
-            <v-chip
-                v-if="isNew(item.firstSeenAt)"
-                size="x-small"
-                color="secondary"
-                variant="tonal"
-                class="listing-card__status-chip listing-card__new"
-            >new</v-chip>
-            <button
-                v-if="favorites"
-                type="button"
-                class="listing-card__fav"
-                :class="{ 'listing-card__fav--active': isFavorite }"
-                :aria-pressed="isFavorite"
-                :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-                @click.stop="onToggleFavorite"
-                @keydown.enter.stop="onToggleFavorite"
-                @keydown.space.stop.prevent="onToggleFavorite"
-            >
-                <v-icon size="20">{{ isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
-            </button>
-        </div>
         <div class="listing-card__top">
-            <span class="listing-card__price">{{ formatPrice(item.currentPrice) }}</span>
-            <v-chip
-                v-if="!item.isAvailable"
-                size="x-small"
-                color="warning"
-                variant="tonal"
-                class="listing-card__expired"
-            >expired</v-chip>
-        </div>
-        <div class="listing-card__street">
-            {{ address.street }}
-        </div>
-        <div v-if="address.locality" class="listing-card__locality">
-            {{ address.locality }}
+            <div class="listing-card__header">
+                <div class="listing-card__price">{{ formatPrice(item.currentPrice) }}</div>
+                <div class="listing-card__street">
+                    {{ address.street }}
+                </div>
+                <div v-if="address.locality" class="listing-card__locality">
+                    {{ address.locality }}
+                </div>
+            </div>
+            <div v-if="propertyType || isNew(item.firstSeenAt) || !item.isAvailable || favorites" class="listing-card__actions">
+                <span
+                    v-if="propertyType"
+                    class="listing-card__typebadge"
+                >{{ propertyType }}</span>
+                <span
+                    v-if="!item.isAvailable"
+                    class="listing-card__typebadge listing-card__typebadge--warning"
+                >expired</span>
+                <span
+                    v-else-if="isNew(item.firstSeenAt)"
+                    class="listing-card__typebadge listing-card__typebadge--new"
+                >new</span>
+                <button
+                    v-if="favorites"
+                    type="button"
+                    class="listing-card__fav"
+                    :class="{ 'listing-card__fav--active': isFavorite }"
+                    :aria-pressed="isFavorite"
+                    :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                    @click.stop="onToggleFavorite"
+                    @keydown.enter.stop="onToggleFavorite"
+                    @keydown.space.stop.prevent="onToggleFavorite"
+                >
+                    <v-icon size="19">{{ isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+                </button>
+            </div>
         </div>
         <div class="listing-card__meta">
             <a
@@ -120,19 +120,14 @@ function onToggleFavorite() {
                 target="_blank"
                 rel="noopener noreferrer"
                 class="listing-card__commute listing-card__commute--link"
+                :class="commuteTierClass"
                 @click.stop
             >
-                <span
-                    class="listing-card__commute-dot"
-                    :style="{ background: commuteColor(item.commuteSecondsDowntown) }"
-                />
-                <span>{{ formatCommute(item.commuteSecondsDowntown) }} downtown</span>
+                <span class="listing-card__commute-dot" />
+                <span><b>{{ formatCommute(item.commuteSecondsDowntown) }}</b> downtown</span>
             </a>
-            <span v-else class="listing-card__commute listing-card__commute--muted">
-                <span
-                    class="listing-card__commute-dot"
-                    :style="{ background: commuteColor(null) }"
-                />
+            <span v-else class="listing-card__commute listing-card__commute--muted" :class="commuteTierClass">
+                <span class="listing-card__commute-dot" />
                 —
             </span>
             <span class="listing-card__seen">{{ formatDate(item.firstSeenAt) }}</span>
@@ -146,16 +141,17 @@ function onToggleFavorite() {
     display: block;
     text-decoration: none;
     color: inherit;
-    background-color: rgba(var(--v-theme-on-surface), 0.03);
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    border-radius: 14px;
-    padding: 14px 14px 12px;
+    background-color: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 0;
+    padding: 16px;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: background-color 120ms ease, box-shadow 120ms ease;
 }
 
 .listing-card:active {
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
 }
 
 .listing-card:focus-visible {
@@ -164,24 +160,21 @@ function onToggleFavorite() {
 }
 
 .listing-card--interactive:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
-    border-color: rgba(var(--v-theme-on-surface), 0.18);
+    background-color: rgba(var(--v-theme-on-surface), 0.035);
 }
 
 .listing-card--selected,
 .listing-card--selected:hover {
-    background-color: rgba(var(--v-theme-primary), 0.12);
-    border-color: rgba(var(--v-theme-primary), 0.55);
-    box-shadow: inset 0 0 0 1px rgba(var(--v-theme-primary), 0.45);
+    background-color: rgba(var(--v-theme-primary), 0.09);
+    box-shadow: inset 3px 0 0 rgb(var(--v-theme-primary));
 }
 
 .listing-card--mobile {
-    padding: 18px 18px 16px;
+    padding: 18px;
 }
 
 .listing-card--mobile .listing-card__price {
     font-size: 1.6rem;
-    font-weight: 700;
 }
 
 .listing-card--mobile .listing-card__street {
@@ -191,46 +184,45 @@ function onToggleFavorite() {
 
 .listing-card--mobile .listing-card__meta {
     border-top: 0;
-    padding-top: 14px;
-    margin-top: 10px;
+    padding-top: 0;
+    margin-top: 14px;
 }
 
-.listing-card--mobile .listing-card__actions {
-    top: 12px;
-    right: 12px;
+.listing-card__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.listing-card__header {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .listing-card__actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 1;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-top: -3px;
 }
 
 .listing-card__fav {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.5);
+    color: rgba(var(--v-theme-on-surface), 0.34);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
 .listing-card__fav:hover {
     background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.85);
-}
-
-.listing-card__fav:active {
-    transform: scale(0.9);
+    color: rgba(var(--v-theme-on-surface), 0.52);
 }
 
 .listing-card__fav:focus-visible {
@@ -239,58 +231,64 @@ function onToggleFavorite() {
 }
 
 .listing-card__fav--active {
-    color: rgb(var(--v-theme-accent));
+    color: rgb(var(--v-theme-error));
 }
 
 .listing-card__fav--active:hover {
-    color: rgb(var(--v-theme-accent));
-    background-color: rgba(var(--v-theme-accent), 0.12);
-}
-
-.listing-card__top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding-right: 166px;
+    color: rgb(var(--v-theme-error));
+    background-color: rgba(var(--v-theme-error), 0.08);
 }
 
 .listing-card__price {
-    font-size: 1.25rem;
+    margin-bottom: 8px;
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.listing-card__typebadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(var(--v-theme-on-surface), 0.06);
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.2;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    white-space: nowrap;
 }
 
-.listing-card__status-chip {
-    height: 26px;
-    margin-left: 0;
-    font-size: 0.75rem;
-    font-weight: 600;
+.listing-card__typebadge--new {
+    color: rgb(var(--v-theme-secondary));
+    border-color: rgba(var(--v-theme-secondary), 0.28);
+    background: rgba(var(--v-theme-secondary), 0.08);
 }
 
-.listing-card__property-type {
-    color: rgba(var(--v-theme-on-surface), 0.72);
-}
-
-.listing-card__new {
-    color: rgb(var(--v-theme-on-secondary-container));
-}
-
-.listing-card__expired {
-    margin-left: 0;
+.listing-card__typebadge--warning {
+    color: rgb(var(--v-theme-warning));
+    border-color: rgba(var(--v-theme-warning), 0.32);
+    background: rgba(var(--v-theme-warning), 0.09);
 }
 
 .listing-card__street {
-    font-size: 0.95rem;
-    line-height: 1.3;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.25;
     overflow-wrap: anywhere;
 }
 
 .listing-card__locality {
-    margin-top: 2px;
-    font-size: 0.8125rem;
-    line-height: 1.25;
-    color: rgba(var(--v-theme-on-surface), 0.62);
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: rgba(var(--v-theme-on-surface), 0.52);
+    font-weight: 500;
     overflow-wrap: anywhere;
 }
 
@@ -298,39 +296,38 @@ function onToggleFavorite() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    font-size: 0.8125rem;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 12.5px;
 }
 
 .listing-card__commute {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: rgba(var(--v-theme-on-surface), 0.85);
-    font-weight: 500;
-    font-size: 0.8125rem;
+    height: 28px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    --commute-c: var(--v-theme-on-surface);
+    background: color-mix(in srgb, rgb(var(--commute-c)) 13%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--commute-c)) 38%, transparent);
+    color: color-mix(in srgb, rgb(var(--commute-c)) 62%, rgb(var(--v-theme-on-surface)));
 }
 
 .listing-card__commute--link {
     text-decoration: none;
-    padding: 6px 12px;
-    margin: -6px 0 -6px -4px;
-    border-radius: 999px;
-    background-color: rgba(var(--v-theme-on-surface), 0.06);
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: filter 120ms ease;
 }
 
 .listing-card__commute--link:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.1);
-    border-color: rgba(var(--v-theme-on-surface), 0.14);
+    filter: brightness(1.08);
 }
 
 .listing-card__commute--link:active {
-    background-color: rgba(var(--v-theme-on-surface), 0.14);
+    filter: brightness(1.16);
 }
 
 .listing-card__commute--link:focus-visible {
@@ -339,22 +336,43 @@ function onToggleFavorite() {
 }
 
 .listing-card__commute--muted {
+    --commute-c: var(--v-theme-on-surface);
     color: rgba(var(--v-theme-on-surface), 0.5);
-    font-weight: 400;
 }
 
 .listing-card__commute-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(var(--v-theme-shadow), 0.3);
+    flex: 0 0 auto;
+    background: rgb(var(--commute-c));
+    box-shadow: 0 0 0 3px color-mix(in srgb, rgb(var(--commute-c)) 20%, transparent);
+}
+
+.listing-card__commute b {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, rgb(var(--commute-c)) 80%, rgb(var(--v-theme-on-surface)));
+}
+
+.listing-card__commute--fast {
+    --commute-c: var(--v-theme-commute-fast);
+}
+
+.listing-card__commute--mid {
+    --commute-c: var(--v-theme-commute-mid);
+}
+
+.listing-card__commute--slow {
+    --commute-c: var(--v-theme-commute-slow);
 }
 
 .listing-card__seen {
     margin-left: auto;
-    color: rgba(var(--v-theme-on-surface), 0.45);
-    font-size: 0.75rem;
+    color: rgba(var(--v-theme-on-surface), 0.34);
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 </style>
