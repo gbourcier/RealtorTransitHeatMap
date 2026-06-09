@@ -24,10 +24,11 @@ import { debounce } from "../utils/debounce";
 
 const DEFAULT_PANEL_WIDTH = 360;
 const PANEL_WIDTH_STORAGE_KEY = "listingsSidePanelWidth";
+const PANEL_OPEN_STORAGE_KEY = "listingsSidePanelOpen";
 
 const { mdAndUp } = useDisplay();
 const viewMode = ref<"list" | "map">("map");
-const drawerOpen = ref(true);
+const drawerOpen = ref(readStoredPanelOpen());
 const panelWidth = ref(readStoredPanelWidth());
 const filtersOpen = ref(false);
 const filtersPanelRef = ref<{ rootEl: HTMLElement | null } | null>(null);
@@ -195,10 +196,20 @@ function readStoredPanelWidth(): number {
     return Number.isFinite(stored) && stored > 0 ? stored : DEFAULT_PANEL_WIDTH;
 }
 
+function readStoredPanelOpen(): boolean {
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(PANEL_OPEN_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+}
+
 function updatePanelWidth(width: number): void {
     panelWidth.value = width;
     window.localStorage.setItem(PANEL_WIDTH_STORAGE_KEY, String(width));
 }
+
+watch(drawerOpen, (open) => {
+    window.localStorage.setItem(PANEL_OPEN_STORAGE_KEY, String(open));
+});
 
 onMounted(() => {
     void refreshHeaderTeleportTargets();
