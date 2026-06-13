@@ -33,7 +33,7 @@
       offset="10"
       :transition="mobile ? 'mobile-sheet-transition' : 'scale-transition'"
       :content-class="mobile ? 'mobile-sheet-menu mobile-sheet-menu--user' : undefined"
-      :close-on-content-click="true"
+      :close-on-content-click="false"
     >
       <template #activator="{ props: menuProps }">
         <button
@@ -49,7 +49,44 @@
         </button>
       </template>
 
-      <div class="user-menu" role="menu" aria-label="User menu">
+      <div v-if="mobile && menuView === 'settings'" class="user-menu" role="menu" aria-label="Settings">
+        <header class="user-menu__header">
+          <button
+            type="button"
+            class="user-menu__back"
+            aria-label="Back to user menu"
+            @click="menuView = 'user'"
+          >
+            <v-icon size="20">mdi-arrow-left</v-icon>
+          </button>
+          <div class="user-menu__identity">
+            <span class="user-menu__name">Settings</span>
+            <span class="user-menu__role">Administration</span>
+          </div>
+        </header>
+
+        <div class="user-menu__sep" />
+
+        <div class="user-menu__items">
+          <button
+            v-for="item in settingsItems"
+            :key="item.to"
+            type="button"
+            role="menuitem"
+            class="user-menu__item user-menu__item--setting"
+            :class="{ 'user-menu__item--active': route.path === item.to }"
+            @click="onSettingRoute(item.to)"
+          >
+            <v-icon size="20" class="user-menu__item-icon">{{ item.icon }}</v-icon>
+            <span class="user-menu__setting-copy">
+              <span class="user-menu__item-label">{{ item.title }}</span>
+              <span class="user-menu__setting-subtitle">{{ item.subtitle }}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="user-menu" role="menu" aria-label="User menu">
         <header class="user-menu__header">
           <span class="user-menu__avatar">
             <v-icon size="22">mdi-account-outline</v-icon>
@@ -79,7 +116,7 @@
             role="menuitem"
             class="user-menu__item"
             :class="{ 'user-menu__item--active': settingsActive }"
-            @click="emit('click:settings')"
+            @click="onSettings"
           >
             <v-icon size="18" class="user-menu__item-icon">mdi-cog-outline</v-icon>
             <span class="user-menu__item-label">Settings</span>
@@ -89,7 +126,7 @@
             type="button"
             role="menuitem"
             class="user-menu__item user-menu__item--mobile-only"
-            @click="emit('click:panel-toggle')"
+            @click="onPanelToggle"
           >
             <v-icon size="18" class="user-menu__item-icon">mdi-dock-right</v-icon>
             <span class="user-menu__item-label">Toggle results panel</span>
@@ -117,7 +154,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
@@ -136,14 +173,61 @@ const router = useRouter()
 const route = useRoute()
 const { mobile } = useDisplay()
 const menuOpen = ref(false)
+const menuView = ref<'user' | 'settings'>('user')
+
+const settingsItems = [
+  {
+    title: 'Realtor Scraper',
+    subtitle: 'Schedules & manual runs',
+    icon: 'mdi-cog-transfer-outline',
+    to: '/scraper',
+  },
+  {
+    title: 'GTFS Data',
+    subtitle: 'Transit feed refresh',
+    icon: 'mdi-train',
+    to: '/transit',
+  },
+  {
+    title: 'Users',
+    subtitle: 'Manage accounts',
+    icon: 'mdi-account-group-outline',
+    to: '/users',
+  },
+]
 
 const favoritesActive = computed(() => route.name === 'favorites')
 
+watch(menuOpen, (open) => {
+  if (!open) menuView.value = 'user'
+})
+
 function onFavorites() {
+  menuOpen.value = false
   router.push('/favorites')
 }
 
+function onSettings() {
+  if (mobile.value) {
+    menuView.value = 'settings'
+    return
+  }
+  menuOpen.value = false
+  emit('click:settings')
+}
+
+function onSettingRoute(path: string) {
+  menuOpen.value = false
+  router.push(path)
+}
+
+function onPanelToggle() {
+  menuOpen.value = false
+  emit('click:panel-toggle')
+}
+
 async function onLogout() {
+  menuOpen.value = false
   await authStore.logout()
   savedFiltersStore.reset()
   router.push('/login')
@@ -333,6 +417,25 @@ async function onLogout() {
   color: #f4f1e8;
 }
 
+.user-menu__back {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 241, 232, 0.12);
+  background: #2a2d27;
+  color: #f4f1e8;
+  cursor: pointer;
+}
+
+.user-menu__back:focus-visible {
+  outline: 2px solid #6ccff6;
+  outline-offset: 2px;
+}
+
 .user-menu__identity {
   display: flex;
   flex-direction: column;
@@ -399,6 +502,24 @@ async function onLogout() {
 
 .user-menu__item-icon {
   color: rgba(244, 241, 232, 0.52);
+}
+
+.user-menu__item--setting {
+  height: 62px;
+}
+
+.user-menu__setting-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-menu__setting-subtitle {
+  margin-top: 2px;
+  color: rgba(244, 241, 232, 0.52);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .user-menu__item--mobile-only {

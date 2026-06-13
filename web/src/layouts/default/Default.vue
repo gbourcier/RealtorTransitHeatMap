@@ -18,7 +18,7 @@
       />
     </template>
 
-    <default-view />
+    <default-view :scrollable="isSettingsRoute" />
   </v-app>
 </template>
 
