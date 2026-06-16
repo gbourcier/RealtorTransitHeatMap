@@ -44,8 +44,8 @@ const cluster = shallowRef<L.MarkerClusterGroup | null>(null);
 const hexLayer = shallowRef<L.LayerGroup | null>(null);
 const HEX_RESOLUTION = 8;
 const loading = ref(false);
+const visiblePins = ref<ListingMapPin[]>([]);
 const selectedPin = ref<ListingMapPin | null>(null);
-const selectedPhotoFailed = ref(false);
 const animateMobileSheet = ref(true);
 const {
     dragClasses: sheetDragClasses,
@@ -61,6 +61,19 @@ useMobileBottomSheetCoordinator({
     close: () => closeSheet({ immediate: true }),
     enabled: () => props.mobileSheet,
 });
+const swipeStageEl = ref<HTMLElement | null>(null);
+const swipeOffsetX = ref(0);
+const swipeTransition = ref(false);
+const swipeState = ref<"idle" | "pending" | "horizontal" | "vertical">("idle");
+const failedPhotoKeys = ref(new Set<string>());
+let swipePointerId: number | null = null;
+let swipeCaptureEl: HTMLElement | null = null;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeLastX = 0;
+let swipeLastAt = 0;
+let swipeVelocityX = 0;
+let swipeTimer: number | null = null;
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
@@ -223,26 +236,49 @@ function formatBuildingType(buildingType: number): string {
     }
 }
 
-const selectedAddress = computed(() => parseAddress(selectedPin.value?.address));
-const selectedPhotoUrl = computed(() => selectedPin.value?.photoUrl ?? "");
-const showSelectedPhoto = computed(() =>
-    selectedPhotoUrl.value !== "" && !selectedPhotoFailed.value,
-);
-const selectedPhotoAlt = computed(() => `Listing photo for ${selectedAddress.value.street}`);
-const selectedPropertyType = computed(() =>
-    selectedPin.value ? formatBuildingType(selectedPin.value.buildingType) : "",
-);
-const selectedCommuteTier = computed(() =>
-    commuteTier(selectedPin.value?.commuteSecondsDowntown ?? null),
-);
-const selectedCommuteLabel = computed(() =>
-    selectedPin.value?.commuteSecondsDowntown != null
-        ? `${Math.round(selectedPin.value.commuteSecondsDowntown / 60)} min`
-        : "—",
-);
-const selectedDirectionsUrl = computed(() =>
-    selectedPin.value ? commuteMapUrl(selectedPin.value.address) : null,
-);
+type SheetPanePosition = "previous" | "current" | "next";
+type SheetPane = {
+    key: string;
+    pin: ListingMapPin;
+    position: SheetPanePosition;
+};
+const selectedListingIndex = computed(() => {
+    if (!selectedPin.value) return -1;
+    const key = listingKey(selectedPin.value.board, selectedPin.value.mls);
+    return visiblePins.value.findIndex((pin) => listingKey(pin.board, pin.mls) === key);
+});
+const canSwipeListings = computed(() => props.mobileSheet && visiblePins.value.length > 1);
+const sheetCarouselPanes = computed<SheetPane[]>(() => {
+    if (!selectedPin.value) return [];
+    const index = selectedListingIndex.value;
+    const pins = visiblePins.value;
+    if (pins.length < 2 || index < 0) {
+        return [{
+            key: `${listingKey(selectedPin.value.board, selectedPin.value.mls)}-current`,
+            pin: selectedPin.value,
+            position: "current",
+        }];
+    }
+
+    const previous = pins[(index - 1 + pins.length) % pins.length];
+    const current = pins[index];
+    const next = pins[(index + 1) % pins.length];
+    return [
+        { key: `${listingKey(previous.board, previous.mls)}-previous`, pin: previous, position: "previous" },
+        { key: `${listingKey(current.board, current.mls)}-current`, pin: current, position: "current" },
+        { key: `${listingKey(next.board, next.mls)}-next`, pin: next, position: "next" },
+    ];
+});
+const sheetSwipeClasses = computed(() => ({
+    "mobile-listing-sheet__swipe-track--dragging": swipeState.value === "horizontal",
+    "mobile-listing-sheet__swipe-track--settling": swipeTransition.value,
+}));
+const sheetSwipeTrackStyle = computed(() => {
+    const base = sheetCarouselPanes.value.length > 1 ? "-100%" : "0px";
+    return {
+        transform: `translate3d(calc(${base} + ${swipeOffsetX.value}px), 0, 0)`,
+    };
+});
 
 function selectedBathLabel(pin: ListingMapPin): string {
     return formatBath(pin.bathroomCount);
@@ -258,17 +294,16 @@ type CloseSheetOptions = {
 
 function openSheet(pin: ListingMapPin): void {
     resetSheetDrag();
+    resetSheetSwipe();
     animateMobileSheet.value = true;
-    selectedPhotoFailed.value = false;
-    selectedPin.value = pin;
-    markSelectedPin(pin.board, pin.mls);
+    selectSheetPin(pin);
 }
 
 function closeSheet(options: CloseSheetOptions = {}): void {
     if (options.immediate) {
         animateMobileSheet.value = false;
     }
-    selectedPhotoFailed.value = false;
+    resetSheetSwipe();
     selectedPin.value = null;
     clearSelectedPin();
     if (options.immediate) {
@@ -278,8 +313,197 @@ function closeSheet(options: CloseSheetOptions = {}): void {
     }
 }
 
-function onSelectedPhotoError(): void {
-    selectedPhotoFailed.value = true;
+function selectSheetPin(pin: ListingMapPin): void {
+    selectedPin.value = pin;
+    markSelectedPin(pin.board, pin.mls);
+}
+
+function pinAddress(pin: ListingMapPin): { street: string; locality: string } {
+    return parseAddress(pin.address);
+}
+
+function pinPhotoUrl(pin: ListingMapPin): string {
+    return pin.photoUrl ?? "";
+}
+
+function showPinPhoto(pin: ListingMapPin): boolean {
+    return pinPhotoUrl(pin) !== "" && !failedPhotoKeys.value.has(listingKey(pin.board, pin.mls));
+}
+
+function pinPhotoAlt(pin: ListingMapPin): string {
+    return `Listing photo for ${pinAddress(pin).street}`;
+}
+
+function pinPropertyType(pin: ListingMapPin): string {
+    return formatBuildingType(pin.buildingType);
+}
+
+function pinCommuteTier(pin: ListingMapPin): "fast" | "mid" | "slow" | "unknown" {
+    return commuteTier(pin.commuteSecondsDowntown ?? null);
+}
+
+function pinCommuteLabel(pin: ListingMapPin): string {
+    return pin.commuteSecondsDowntown != null
+        ? `${Math.round(pin.commuteSecondsDowntown / 60)} min`
+        : "—";
+}
+
+function pinDirectionsUrl(pin: ListingMapPin): string | null {
+    return commuteMapUrl(pin.address);
+}
+
+function clearSwipeTimer(): void {
+    if (swipeTimer == null) return;
+    window.clearTimeout(swipeTimer);
+    swipeTimer = null;
+}
+
+function resetSheetSwipe(): void {
+    clearSwipeTimer();
+    swipePointerId = null;
+    swipeCaptureEl = null;
+    swipeOffsetX.value = 0;
+    swipeTransition.value = false;
+    swipeState.value = "idle";
+    swipeVelocityX = 0;
+}
+
+function settleSwipeBack(): void {
+    clearSwipeTimer();
+    swipeTransition.value = true;
+    swipeOffsetX.value = 0;
+    swipeTimer = window.setTimeout(() => {
+        swipeTimer = null;
+        swipeTransition.value = false;
+        swipeState.value = "idle";
+    }, 220);
+}
+
+function animateSwipeToListing(direction: 1 | -1): void {
+    const pins = visiblePins.value;
+    const currentIndex = selectedListingIndex.value;
+    if (pins.length < 2 || currentIndex < 0) {
+        settleSwipeBack();
+        return;
+    }
+
+    const width = swipeStageEl.value?.offsetWidth ?? window.innerWidth;
+    const nextIndex = (currentIndex + direction + pins.length) % pins.length;
+    const nextPin = pins[nextIndex];
+
+    clearSwipeTimer();
+    swipeTransition.value = true;
+    swipeOffsetX.value = -direction * width;
+    swipeTimer = window.setTimeout(() => {
+        swipeTimer = null;
+        swipeTransition.value = false;
+        selectSheetPin(nextPin);
+        swipeOffsetX.value = 0;
+        swipeState.value = "idle";
+    }, 240);
+}
+
+function isInteractiveSwipeTarget(target: EventTarget | null): boolean {
+    return target instanceof Element && !!target.closest(
+        "a, button, input, textarea, select, [role='button'], .mobile-sheet-grip",
+    );
+}
+
+function onSheetSwipePointerDown(event: PointerEvent): void {
+    if (
+        event.button !== 0 ||
+        !canSwipeListings.value ||
+        swipeTransition.value ||
+        isInteractiveSwipeTarget(event.target)
+    ) {
+        return;
+    }
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) return;
+
+    clearSwipeTimer();
+    swipePointerId = event.pointerId;
+    swipeStartX = event.clientX;
+    swipeStartY = event.clientY;
+    swipeLastX = event.clientX;
+    swipeLastAt = performance.now();
+    swipeVelocityX = 0;
+    swipeOffsetX.value = 0;
+    swipeTransition.value = false;
+    swipeState.value = "pending";
+}
+
+function onSheetSwipePointerMove(event: PointerEvent): void {
+    if (swipePointerId !== event.pointerId || swipeState.value === "idle") return;
+
+    const dx = event.clientX - swipeStartX;
+    const dy = event.clientY - swipeStartY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (swipeState.value === "pending" && Math.max(absX, absY) > 8) {
+        swipeState.value = absX > absY * 1.15 ? "horizontal" : "vertical";
+        if (swipeState.value === "horizontal") {
+            const target = event.currentTarget;
+            if (target instanceof HTMLElement) {
+                target.setPointerCapture(event.pointerId);
+                swipeCaptureEl = target;
+            }
+        }
+    }
+
+    if (swipeState.value !== "horizontal") return;
+
+    const now = performance.now();
+    const dt = Math.max(1, now - swipeLastAt);
+    swipeVelocityX = (event.clientX - swipeLastX) / dt;
+    swipeLastX = event.clientX;
+    swipeLastAt = now;
+    swipeOffsetX.value = dx;
+    event.preventDefault();
+}
+
+function onSheetSwipePointerUp(event: PointerEvent): void {
+    if (swipePointerId !== event.pointerId) return;
+    const target = event.currentTarget;
+    const captureEl = swipeCaptureEl ?? (target instanceof HTMLElement ? target : null);
+    if (captureEl?.hasPointerCapture(event.pointerId)) {
+        captureEl.releasePointerCapture(event.pointerId);
+    }
+    swipePointerId = null;
+    swipeCaptureEl = null;
+
+    if (swipeState.value !== "horizontal") {
+        swipeState.value = "idle";
+        swipeOffsetX.value = 0;
+        return;
+    }
+
+    const width = swipeStageEl.value?.offsetWidth ?? window.innerWidth;
+    const threshold = Math.min(120, Math.max(72, width * 0.22));
+    const fastSwipe = Math.abs(swipeVelocityX) > 0.55 && Math.abs(swipeOffsetX.value) > 28;
+    const shouldNavigate = Math.abs(swipeOffsetX.value) > threshold || fastSwipe;
+
+    if (shouldNavigate) {
+        animateSwipeToListing(swipeOffsetX.value < 0 ? 1 : -1);
+        return;
+    }
+
+    settleSwipeBack();
+}
+
+function onSheetSwipePointerCancel(event: PointerEvent): void {
+    if (swipePointerId !== event.pointerId) return;
+    swipePointerId = null;
+    swipeCaptureEl = null;
+    settleSwipeBack();
+}
+
+function onPinPhotoError(pin: ListingMapPin): void {
+    failedPhotoKeys.value = new Set([
+        ...failedPhotoKeys.value,
+        listingKey(pin.board, pin.mls),
+    ]);
 }
 
 function toggleSheetFavorite(pin: ListingMapPin): void {
@@ -407,6 +631,7 @@ async function load() {
         });
         clearHighlight();
         closeSheet();
+        visiblePins.value = mapPins;
         cluster.value.clearLayers();
         markersByKey.clear();
         const markers: L.Marker[] = [];
@@ -583,6 +808,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     debouncedLoad.cancel();
+    resetSheetSwipe();
     if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
@@ -666,6 +892,11 @@ function setFavorite(board: number, mls: number, value: boolean): void {
         | undefined;
     if (!m) return;
     if (m._data) m._data.isFavorite = value;
+    visiblePins.value = visiblePins.value.map((pin) =>
+        pin.board === board && pin.mls === mls
+            ? { ...pin, isFavorite: value }
+            : pin,
+    );
     if (
         selectedPin.value &&
         selectedPin.value.board === board &&
@@ -759,13 +990,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
             <div
                 v-if="selectedPin"
                 class="mobile-listing-sheet"
-                :class="[
-                    sheetDragClasses,
-                    {
-                        'mobile-listing-sheet--with-photo': showSelectedPhoto,
-                        'mobile-listing-sheet--no-photo': !showSelectedPhoto,
-                    },
-                ]"
+                :class="sheetDragClasses"
                 :style="sheetDragStyle"
                 role="dialog"
                 aria-label="Listing details"
@@ -779,112 +1004,143 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
                     @pointerup="onDragPointerUp"
                     @pointercancel="onDragPointerCancel"
                 />
-                <div v-if="showSelectedPhoto" class="mobile-listing-sheet__photo">
-                    <img
-                        :src="selectedPhotoUrl"
-                        :alt="selectedPhotoAlt"
-                        loading="lazy"
-                        decoding="async"
-                        referrerpolicy="no-referrer"
-                        @error="onSelectedPhotoError"
-                    >
-                </div>
-                <div class="mobile-listing-sheet__top-actions">
-                    <button
-                        type="button"
-                        class="mobile-listing-sheet__iconbtn"
-                        :class="{ 'mobile-listing-sheet__iconbtn--active': selectedPin.isFavorite }"
-                        :aria-pressed="selectedPin.isFavorite"
-                        :aria-label="selectedPin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-                        @click="toggleSheetFavorite(selectedPin)"
-                    >
-                        <v-icon size="20">{{ selectedPin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
-                    </button>
-                    <button
-                        type="button"
-                        class="mobile-listing-sheet__iconbtn"
-                        aria-label="Close listing details"
-                        @click="closeSheet()"
-                    >
-                        <v-icon size="21">mdi-close</v-icon>
-                    </button>
-                </div>
-                <div class="mobile-listing-sheet__body">
-                    <div class="mobile-listing-sheet__top">
-                        <div class="mobile-listing-sheet__header">
-                            <div class="mobile-listing-sheet__price">
-                                {{ formatPrice(selectedPin.currentPrice) }}
-                            </div>
-                            <div class="mobile-listing-sheet__street">
-                                {{ selectedAddress.street }}
-                            </div>
-                            <div v-if="selectedAddress.locality" class="mobile-listing-sheet__locality">
-                                {{ selectedAddress.locality }}
-                            </div>
-                            <div v-if="!selectedPin.isAvailable" class="mobile-listing-sheet__expired">
-                                Expired listing
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="mobile-listing-sheet__stats">
-                        <div class="mobile-listing-sheet__stat">
-                            <v-icon size="18">mdi-home-outline</v-icon>
-                            <span class="mobile-listing-sheet__stat-key">{{ selectedPropertyType }}</span>
-                        </div>
-                        <div class="mobile-listing-sheet__stat">
-                            <v-icon size="18">mdi-bed-outline</v-icon>
-                            <span class="mobile-listing-sheet__stat-value">
-                                {{ selectedPin.bedroomCount > 0 ? selectedPin.bedroomCount : "—" }}<small>bd</small>
-                            </span>
-                        </div>
-                        <div class="mobile-listing-sheet__stat">
-                            <v-icon size="18">mdi-bathtub-outline</v-icon>
-                            <span class="mobile-listing-sheet__stat-value">
-                                {{ selectedBathLabel(selectedPin) }}<small>ba</small>
-                            </span>
-                        </div>
-                        <div class="mobile-listing-sheet__stat">
-                            <v-icon size="18">mdi-ruler-square</v-icon>
-                            <span class="mobile-listing-sheet__stat-value">
-                                {{ selectedAreaLabel(selectedPin) }}<small>ft²</small>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mobile-listing-sheet__commute-row">
-                        <span class="mobile-listing-sheet__commute-label">Commute</span>
-                        <span
-                            class="mobile-listing-sheet__commute"
-                            :class="`mobile-listing-sheet__commute--${selectedCommuteTier}`"
+                <div
+                    ref="swipeStageEl"
+                    class="mobile-listing-sheet__swipe-viewport"
+                    @pointerdown="onSheetSwipePointerDown"
+                    @pointermove="onSheetSwipePointerMove"
+                    @pointerup="onSheetSwipePointerUp"
+                    @pointercancel="onSheetSwipePointerCancel"
+                >
+                    <div
+                        class="mobile-listing-sheet__swipe-track"
+                        :class="sheetSwipeClasses"
+                        :style="sheetSwipeTrackStyle"
+                    >
+                        <article
+                            v-for="pane in sheetCarouselPanes"
+                            :key="pane.key"
+                            class="mobile-listing-sheet__swipe-pane"
+                            :aria-hidden="pane.position !== 'current'"
                         >
-                            <span class="mobile-listing-sheet__commute-dot" />
-                            <span class="mobile-listing-sheet__commute-text">
-                                <b>{{ selectedCommuteLabel }}</b> to McGill
-                            </span>
-                        </span>
-                    </div>
-                </div>
+                            <div
+                                class="mobile-listing-sheet__photo"
+                                :class="{ 'mobile-listing-sheet__photo--placeholder': !showPinPhoto(pane.pin) }"
+                            >
+                                <img
+                                    v-if="showPinPhoto(pane.pin)"
+                                    :src="pinPhotoUrl(pane.pin)"
+                                    :alt="pinPhotoAlt(pane.pin)"
+                                    loading="eager"
+                                    decoding="async"
+                                    referrerpolicy="no-referrer"
+                                    @error="onPinPhotoError(pane.pin)"
+                                >
+                                <div v-else class="mobile-listing-sheet__placeholder" role="img" aria-label="No listing photos available">
+                                    <v-icon size="34">mdi-image-off-outline</v-icon>
+                                    <span>No photos</span>
+                                </div>
+                            </div>
+                            <div class="mobile-listing-sheet__top-actions">
+                                <button
+                                    type="button"
+                                    class="mobile-listing-sheet__iconbtn"
+                                    :class="{ 'mobile-listing-sheet__iconbtn--active': pane.pin.isFavorite }"
+                                    :aria-pressed="pane.pin.isFavorite"
+                                    :aria-label="pane.pin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                                    @click="toggleSheetFavorite(pane.pin)"
+                                >
+                                    <v-icon size="20">{{ pane.pin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="mobile-listing-sheet__iconbtn"
+                                    aria-label="Close listing details"
+                                    @click="closeSheet()"
+                                >
+                                    <v-icon size="21">mdi-close</v-icon>
+                                </button>
+                            </div>
+                            <div class="mobile-listing-sheet__body">
+                                <div class="mobile-listing-sheet__top">
+                                    <div class="mobile-listing-sheet__header">
+                                        <div class="mobile-listing-sheet__price">
+                                            {{ formatPrice(pane.pin.currentPrice) }}
+                                        </div>
+                                        <div class="mobile-listing-sheet__street">
+                                            {{ pinAddress(pane.pin).street }}
+                                        </div>
+                                        <div v-if="pinAddress(pane.pin).locality" class="mobile-listing-sheet__locality">
+                                            {{ pinAddress(pane.pin).locality }}
+                                        </div>
+                                        <div v-if="!pane.pin.isAvailable" class="mobile-listing-sheet__expired">
+                                            Expired listing
+                                        </div>
+                                    </div>
+                                </div>
 
-                <div class="mobile-listing-sheet__actions">
-                    <a
-                        :href="selectedPin.slug"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--primary"
-                    >
-                        View listing
-                    </a>
-                    <a
-                        v-if="selectedDirectionsUrl"
-                        :href="selectedDirectionsUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mobile-listing-sheet__btn mobile-listing-sheet__btn--ghost"
-                        aria-label="Directions"
-                    >
-                        <v-icon size="20">mdi-navigation-variant-outline</v-icon>
-                    </a>
+                                <div class="mobile-listing-sheet__stats">
+                                    <div class="mobile-listing-sheet__stat">
+                                        <v-icon size="18">mdi-home-outline</v-icon>
+                                        <span class="mobile-listing-sheet__stat-key">{{ pinPropertyType(pane.pin) }}</span>
+                                    </div>
+                                    <div class="mobile-listing-sheet__stat">
+                                        <v-icon size="18">mdi-bed-outline</v-icon>
+                                        <span class="mobile-listing-sheet__stat-value">
+                                            {{ pane.pin.bedroomCount > 0 ? pane.pin.bedroomCount : "—" }}<small>bd</small>
+                                        </span>
+                                    </div>
+                                    <div class="mobile-listing-sheet__stat">
+                                        <v-icon size="18">mdi-bathtub-outline</v-icon>
+                                        <span class="mobile-listing-sheet__stat-value">
+                                            {{ selectedBathLabel(pane.pin) }}<small>ba</small>
+                                        </span>
+                                    </div>
+                                    <div class="mobile-listing-sheet__stat">
+                                        <v-icon size="18">mdi-ruler-square</v-icon>
+                                        <span class="mobile-listing-sheet__stat-value">
+                                            {{ selectedAreaLabel(pane.pin) }}<small>ft²</small>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mobile-listing-sheet__commute-row">
+                                    <span class="mobile-listing-sheet__commute-label">Commute</span>
+                                    <span
+                                        class="mobile-listing-sheet__commute"
+                                        :class="`mobile-listing-sheet__commute--${pinCommuteTier(pane.pin)}`"
+                                    >
+                                        <span class="mobile-listing-sheet__commute-dot" />
+                                        <span class="mobile-listing-sheet__commute-text">
+                                            <b>{{ pinCommuteLabel(pane.pin) }}</b> to McGill
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mobile-listing-sheet__actions">
+                                <a
+                                    :href="pane.pin.slug"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="mobile-listing-sheet__btn mobile-listing-sheet__btn--primary"
+                                >
+                                    View listing
+                                </a>
+                                <a
+                                    v-if="pinDirectionsUrl(pane.pin)"
+                                    :href="pinDirectionsUrl(pane.pin) ?? undefined"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="mobile-listing-sheet__btn mobile-listing-sheet__btn--ghost"
+                                    aria-label="Directions"
+                                >
+                                    <v-icon size="20">mdi-navigation-variant-outline</v-icon>
+                                </a>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </div>
         </Transition>
@@ -972,6 +1228,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: min(640px, calc(100dvh - 72px));
     max-width: calc(100vw - 22px);
     max-height: calc(100dvh - 72px);
     --mobile-listing-sheet-bg: 38, 41, 37;
@@ -985,12 +1242,52 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
         inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.04);
 }
 
+.mobile-listing-sheet__swipe-viewport {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+.mobile-listing-sheet__swipe-track {
+    height: 100%;
+    display: flex;
+    min-height: 0;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+}
+
+.mobile-listing-sheet__swipe-track--dragging {
+    transition: none;
+}
+
+.mobile-listing-sheet__swipe-track--settling {
+    transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mobile-listing-sheet__swipe-pane {
+    position: relative;
+    flex: 0 0 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    touch-action: pan-y;
+}
+
 .mobile-listing-sheet__photo {
     width: 100%;
     height: clamp(172px, 34dvh, 230px);
     flex: 0 0 auto;
     overflow: hidden;
     background: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+.mobile-listing-sheet__photo--placeholder {
+    background:
+        color-mix(in srgb, rgb(var(--mobile-listing-sheet-bg)) 88%, rgb(var(--v-theme-primary)) 12%);
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
 .mobile-listing-sheet__photo img {
@@ -1000,15 +1297,31 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
     object-fit: cover;
 }
 
+.mobile-listing-sheet__placeholder {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: rgba(var(--v-theme-on-surface), 0.46);
+}
+
+.mobile-listing-sheet__placeholder span {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
 .mobile-listing-sheet__body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     padding: 22px 22px 6px;
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__body {
-    padding-top: 24px;
+    touch-action: pan-y;
 }
 
 .mobile-listing-sheet__top {
@@ -1020,10 +1333,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
 .mobile-listing-sheet__header {
     flex: 1 1 auto;
     min-width: 0;
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__header {
-    padding-right: 110px;
 }
 
 .mobile-listing-sheet__price {
@@ -1111,35 +1420,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
 
 .mobile-listing-sheet__iconbtn:active {
     transform: translateY(1px);
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__top-actions {
-    top: 14px;
-    right: 14px;
-    gap: 6px;
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn {
-    border: 0;
-    background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.56);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.86);
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn--active {
-    color: rgb(var(--v-theme-error));
-}
-
-.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn--active:hover {
-    background-color: rgba(var(--v-theme-error), 0.08);
-    color: rgb(var(--v-theme-error));
 }
 
 .mobile-listing-sheet__stats {
