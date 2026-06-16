@@ -38,6 +38,7 @@ type Row struct {
 	Longitude              float64   `gorm:"column:longitude"`
 	Address                string    `gorm:"column:address"`
 	Slug                   string    `gorm:"column:slug"`
+	PhotoURL               *string   `gorm:"column:photo_url"`
 	BuildingType           int       `gorm:"column:building_type"`
 	BedroomCount           int       `gorm:"column:bedroom_count"`
 	BathroomCount          int       `gorm:"column:bathroom_count"`

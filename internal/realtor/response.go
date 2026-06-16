@@ -34,6 +34,13 @@ type listingResult struct {
 type property struct {
 	PriceUnformattedValue string  `json:"PriceUnformattedValue"`
 	Address               address `json:"Address"`
+	Photo                 []photo `json:"Photo"`
+}
+
+type photo struct {
+	HighResPath string `json:"HighResPath"`
+	MedResPath  string `json:"MedResPath"`
+	LowResPath  string `json:"LowResPath"`
 }
 
 type building struct {

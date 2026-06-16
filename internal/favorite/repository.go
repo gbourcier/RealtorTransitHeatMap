@@ -69,7 +69,7 @@ func (r *Repository) List(ctx context.Context, userID uuid.UUID, page Page, sort
 
 	q := r.db.WithContext(ctx).
 		Table("favorites AS f").
-		Select("l.board, l.mls, l.latitude, l.longitude, l.address, l.slug, l.building_type, l.bedroom_count, l.bathroom_count, l.interior_area_sqft, l.commute_seconds_downtown, l.is_available, l.first_seen_at, f.created_at AS favorited_at, lp.price AS current_price").
+		Select("l.board, l.mls, l.latitude, l.longitude, l.address, l.slug, l.photo_url, l.building_type, l.bedroom_count, l.bathroom_count, l.interior_area_sqft, l.commute_seconds_downtown, l.is_available, l.first_seen_at, f.created_at AS favorited_at, lp.price AS current_price").
 		Joins("JOIN listings l ON l.board = f.board AND l.mls = f.mls").
 		Joins("LEFT JOIN (?) AS lp ON lp.board = l.board AND lp.mls = l.mls", latestPrice).
 		Where("f.user_id = ?", userID)

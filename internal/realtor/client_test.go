@@ -63,6 +63,9 @@ func TestDecodeObservations(t *testing.T) {
 						Latitude:    "45.5",
 						Longitude:   "-73.5",
 					},
+					Photo: []photo{
+						{HighResPath: "https://cdn.realtor.ca/listings/highres/42_1.jpg"},
+					},
 				},
 				Building: building{
 					BathroomTotal: "2",
@@ -109,6 +112,78 @@ func TestParseSqft(t *testing.T) {
 		if got != want {
 			t.Errorf("parseSqft(%q) = %v, want %v", in, got, want)
 		}
+	}
+}
+
+func TestDecodeObservationsPhotoURL(t *testing.T) {
+	results := []listingResult{{
+		MlsNumber:  1,
+		Individual: []individual{{Organization: organization{OrganizationId: 1}}},
+		Property: property{
+			Photo: []photo{
+				{HighResPath: "", MedResPath: " https://cdn.realtor.ca/listings/medres/1_1.jpg "},
+				{HighResPath: " https://cdn.realtor.ca/listings/highres/1_1.jpg "},
+			},
+		},
+	}}
+	got := decodeObservations(results)
+	if len(got) != 1 {
+		t.Fatalf("len = %d, want 1", len(got))
+	}
+	if got[0].Listing.PhotoURL == nil || *got[0].Listing.PhotoURL != "https://cdn.realtor.ca/listings/medres/1_1.jpg" {
+		t.Fatalf("PhotoURL = %v", got[0].Listing.PhotoURL)
+	}
+}
+
+func TestFirstPhotoURLPreference(t *testing.T) {
+	tests := []struct {
+		name   string
+		photos []photo
+		want   string
+	}{
+		{
+			name: "prefers high resolution",
+			photos: []photo{{
+				HighResPath: " https://cdn.realtor.ca/listings/highres/1.jpg ",
+				MedResPath:  "https://cdn.realtor.ca/listings/medres/1.jpg",
+				LowResPath:  "https://cdn.realtor.ca/listings/lowres/1.jpg",
+			}},
+			want: "https://cdn.realtor.ca/listings/highres/1.jpg",
+		},
+		{
+			name: "falls back to medium resolution",
+			photos: []photo{{
+				MedResPath: "https://cdn.realtor.ca/listings/medres/1.jpg",
+				LowResPath: "https://cdn.realtor.ca/listings/lowres/1.jpg",
+			}},
+			want: "https://cdn.realtor.ca/listings/medres/1.jpg",
+		},
+		{
+			name: "falls back to low resolution",
+			photos: []photo{{
+				LowResPath: "https://cdn.realtor.ca/listings/lowres/1.jpg",
+			}},
+			want: "https://cdn.realtor.ca/listings/lowres/1.jpg",
+		},
+		{
+			name:   "returns nil when no photo paths are available",
+			photos: []photo{{}},
+			want:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := firstPhotoURL(tt.photos)
+			if tt.want == "" {
+				if got != nil {
+					t.Fatalf("firstPhotoURL() = %q, want nil", *got)
+				}
+				return
+			}
+			if got == nil || *got != tt.want {
+				t.Fatalf("firstPhotoURL() = %v, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
