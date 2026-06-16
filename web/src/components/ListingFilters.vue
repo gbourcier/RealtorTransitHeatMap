@@ -690,7 +690,6 @@ async function onUpdate(): Promise<void> {
         width: auto;
         max-height: 88dvh;
         border-radius: 22px 22px 0 0;
-        animation: filter-sheet-up 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
     }
 
     .fp__applied {
@@ -728,9 +727,4 @@ async function onUpdate(): Promise<void> {
     }
 }
 
-@keyframes filter-sheet-up {
-    from {
-        transform: translateY(100%);
-    }
-}
 </style>

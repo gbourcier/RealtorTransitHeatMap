@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -44,6 +44,7 @@ const HEX_RESOLUTION = 8;
 const loading = ref(false);
 const selectedPin = ref<ListingMapPin | null>(null);
 const selectedPhotoFailed = ref(false);
+const animateMobileSheet = ref(true);
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
@@ -235,16 +236,29 @@ function selectedAreaLabel(pin: ListingMapPin): string {
     return formatArea(pin.interiorAreaSqft);
 }
 
+type CloseSheetOptions = {
+    immediate?: boolean;
+};
+
 function openSheet(pin: ListingMapPin): void {
+    animateMobileSheet.value = true;
     selectedPhotoFailed.value = false;
     selectedPin.value = pin;
     markSelectedPin(pin.board, pin.mls);
 }
 
-function closeSheet(): void {
+function closeSheet(options: CloseSheetOptions = {}): void {
+    if (options.immediate) {
+        animateMobileSheet.value = false;
+    }
     selectedPhotoFailed.value = false;
     selectedPin.value = null;
     clearSelectedPin();
+    if (options.immediate) {
+        void nextTick(() => {
+            animateMobileSheet.value = true;
+        });
+    }
 }
 
 function onSelectedPhotoError(): void {
@@ -702,7 +716,7 @@ function clearHighlight(): void {
     }
 }
 
-defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
+defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, closeSheet });
 </script>
 
 <template>
@@ -724,7 +738,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
             </div>
         </div>
 
-        <Transition v-if="props.mobileSheet" name="mobile-sheet-transition">
+        <Transition v-if="props.mobileSheet" name="mobile-sheet-transition" :css="animateMobileSheet">
             <div
                 v-if="selectedPin"
                 class="mobile-listing-sheet"
@@ -760,7 +774,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
                         type="button"
                         class="mobile-listing-sheet__iconbtn"
                         aria-label="Close listing details"
-                        @click="closeSheet"
+                        @click="closeSheet()"
                     >
                         <v-icon size="21">mdi-close</v-icon>
                     </button>
