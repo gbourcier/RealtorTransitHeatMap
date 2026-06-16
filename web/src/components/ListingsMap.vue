@@ -9,6 +9,8 @@ import { latLngToCell, cellToBoundary } from "h3-js";
 import { useDisplay } from "vuetify";
 import { listListingsForMap, type ListingMapPin } from "../api/listings";
 import { listTransitStops } from "../api/transit";
+import { useBottomSheetDrag } from "../composables/useBottomSheetDrag";
+import { useMobileBottomSheetCoordinator } from "../composables/useMobileBottomSheetCoordinator";
 import { debounce } from "../utils/debounce";
 
 const props = defineProps<{
@@ -45,6 +47,20 @@ const loading = ref(false);
 const selectedPin = ref<ListingMapPin | null>(null);
 const selectedPhotoFailed = ref(false);
 const animateMobileSheet = ref(true);
+const {
+    dragClasses: sheetDragClasses,
+    dragStyle: sheetDragStyle,
+    resetDrag: resetSheetDrag,
+    onDragPointerDown,
+    onDragPointerMove,
+    onDragPointerUp,
+    onDragPointerCancel,
+} = useBottomSheetDrag(() => closeSheet({ immediate: true }));
+useMobileBottomSheetCoordinator({
+    open: () => selectedPin.value != null,
+    close: () => closeSheet({ immediate: true }),
+    enabled: () => props.mobileSheet,
+});
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
@@ -241,6 +257,7 @@ type CloseSheetOptions = {
 };
 
 function openSheet(pin: ListingMapPin): void {
+    resetSheetDrag();
     animateMobileSheet.value = true;
     selectedPhotoFailed.value = false;
     selectedPin.value = pin;
@@ -742,13 +759,26 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
             <div
                 v-if="selectedPin"
                 class="mobile-listing-sheet"
-                :class="{
-                    'mobile-listing-sheet--with-photo': showSelectedPhoto,
-                    'mobile-listing-sheet--no-photo': !showSelectedPhoto,
-                }"
+                :class="[
+                    sheetDragClasses,
+                    {
+                        'mobile-listing-sheet--with-photo': showSelectedPhoto,
+                        'mobile-listing-sheet--no-photo': !showSelectedPhoto,
+                    },
+                ]"
+                :style="sheetDragStyle"
                 role="dialog"
                 aria-label="Listing details"
             >
+                <button
+                    type="button"
+                    class="mobile-sheet-grip"
+                    aria-label="Drag down to close listing details"
+                    @pointerdown="onDragPointerDown"
+                    @pointermove="onDragPointerMove"
+                    @pointerup="onDragPointerUp"
+                    @pointercancel="onDragPointerCancel"
+                />
                 <div v-if="showSelectedPhoto" class="mobile-listing-sheet__photo">
                     <img
                         :src="selectedPhotoUrl"
@@ -944,8 +974,9 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
     width: 100%;
     max-width: calc(100vw - 22px);
     max-height: calc(100dvh - 72px);
+    --mobile-listing-sheet-bg: 38, 41, 37;
     color: rgb(var(--v-theme-on-surface));
-    background: rgb(var(--v-theme-popup-overlay));
+    background: rgb(var(--mobile-listing-sheet-bg));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 22px 22px 0 0;
     overflow: hidden;
@@ -1051,7 +1082,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
     height: 44px;
     border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 999px;
-    background: rgba(var(--v-theme-popup-overlay), 0.72);
+    background: rgba(var(--mobile-listing-sheet-bg), 0.72);
     color: rgba(var(--v-theme-on-surface), 0.68);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -1062,7 +1093,7 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
 
 .mobile-listing-sheet__iconbtn:hover {
     border-color: rgba(var(--v-theme-on-surface), 0.2);
-    background-color: rgba(var(--v-theme-popup-overlay), 0.9);
+    background-color: rgba(var(--mobile-listing-sheet-bg), 0.9);
     color: rgba(var(--v-theme-on-surface), 0.9);
 }
 

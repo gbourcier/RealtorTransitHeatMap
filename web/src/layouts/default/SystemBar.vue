@@ -49,7 +49,24 @@
         </button>
       </template>
 
-      <div v-if="mobile && menuView === 'settings'" class="user-menu" role="menu" aria-label="Settings">
+      <div
+        v-if="mobile && menuView === 'settings'"
+        class="user-menu"
+        :class="mobile ? menuDragClasses : undefined"
+        :style="mobile ? menuDragStyle : undefined"
+        role="menu"
+        aria-label="Settings"
+      >
+        <button
+          v-if="mobile"
+          type="button"
+          class="mobile-sheet-grip"
+          aria-label="Drag down to close settings"
+          @pointerdown="onMenuDragPointerDown"
+          @pointermove="onMenuDragPointerMove"
+          @pointerup="onMenuDragPointerUp"
+          @pointercancel="onMenuDragPointerCancel"
+        />
         <header class="user-menu__header">
           <button
             type="button"
@@ -86,7 +103,24 @@
         </div>
       </div>
 
-      <div v-else class="user-menu" role="menu" aria-label="User menu">
+      <div
+        v-else
+        class="user-menu"
+        :class="mobile ? menuDragClasses : undefined"
+        :style="mobile ? menuDragStyle : undefined"
+        role="menu"
+        aria-label="User menu"
+      >
+        <button
+          v-if="mobile"
+          type="button"
+          class="mobile-sheet-grip"
+          aria-label="Drag down to close user menu"
+          @pointerdown="onMenuDragPointerDown"
+          @pointermove="onMenuDragPointerMove"
+          @pointerup="onMenuDragPointerUp"
+          @pointercancel="onMenuDragPointerCancel"
+        />
         <header class="user-menu__header">
           <span class="user-menu__avatar">
             <v-icon size="22">mdi-account-outline</v-icon>
@@ -157,6 +191,8 @@
 import { computed, ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBottomSheetDrag } from '../../composables/useBottomSheetDrag'
+import { useMobileBottomSheetCoordinator } from '../../composables/useMobileBottomSheetCoordinator'
 import { useAuthStore } from '../../stores/auth'
 import { useSavedFiltersStore } from '../../stores/savedFilters'
 
@@ -174,6 +210,24 @@ const route = useRoute()
 const { mobile } = useDisplay()
 const menuOpen = ref(false)
 const menuView = ref<'user' | 'settings'>('user')
+const {
+  dragClasses: menuDragClasses,
+  dragStyle: menuDragStyle,
+  resetDrag: resetMenuDrag,
+  onDragPointerDown: onMenuDragPointerDown,
+  onDragPointerMove: onMenuDragPointerMove,
+  onDragPointerUp: onMenuDragPointerUp,
+  onDragPointerCancel: onMenuDragPointerCancel,
+} = useBottomSheetDrag(() => {
+  menuOpen.value = false
+})
+useMobileBottomSheetCoordinator({
+  open: menuOpen,
+  close: () => {
+    menuOpen.value = false
+  },
+  enabled: () => mobile.value,
+})
 
 const settingsItems = [
   {
@@ -199,7 +253,10 @@ const settingsItems = [
 const favoritesActive = computed(() => route.name === 'favorites')
 
 watch(menuOpen, (open) => {
-  if (!open) menuView.value = 'user'
+  if (open) resetMenuDrag()
+  if (!open) {
+    menuView.value = 'user'
+  }
 })
 
 function onFavorites() {
@@ -387,6 +444,7 @@ async function onLogout() {
 }
 
 .user-menu {
+  position: relative;
   width: 260px;
   padding: 8px;
   border-radius: 16px;

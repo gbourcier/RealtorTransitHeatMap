@@ -19,6 +19,7 @@ import { useSavedViews } from "../composables/useSavedViews";
 import { useListings } from "../composables/useListings";
 import { useFavorites, favoritesKey } from "../composables/useFavorites";
 import { useBodyScrollLock } from "../composables/useBodyScrollLock";
+import { useMobileBottomSheetCoordinator } from "../composables/useMobileBottomSheetCoordinator";
 import { useSavedFiltersStore } from "../stores/savedFilters";
 import { debounce } from "../utils/debounce";
 
@@ -217,6 +218,14 @@ function updatePanelWidth(width: number): void {
 
 watch(drawerOpen, (open) => {
     window.localStorage.setItem(PANEL_OPEN_STORAGE_KEY, String(open));
+});
+
+useMobileBottomSheetCoordinator({
+    open: filtersOpen,
+    close: () => {
+        filtersOpen.value = false;
+    },
+    enabled: () => !mdAndUp.value,
 });
 
 onMounted(() => {

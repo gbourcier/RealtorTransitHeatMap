@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
+import { useBottomSheetDrag } from "../composables/useBottomSheetDrag";
 import { LISTING_FILTER_BUILDING_TYPES } from "../constants/realtor";
 import { formatCompactPrice } from "../utils/listingFormat";
 import HeatSlider from "./HeatSlider.vue";
@@ -20,6 +21,14 @@ const emit = defineEmits<{
 }>();
 const rootEl = ref<HTMLElement | null>(null);
 defineExpose({ rootEl });
+const {
+    dragClasses,
+    dragStyle,
+    onDragPointerDown,
+    onDragPointerMove,
+    onDragPointerUp,
+    onDragPointerCancel,
+} = useBottomSheetDrag(() => emit("close"));
 
 const PRICE_MIN = 300_000;
 const PRICE_MAX = 1_000_000;
@@ -123,7 +132,23 @@ async function onUpdate(): Promise<void> {
 </script>
 
 <template>
-    <div ref="rootEl" class="filter-drawer" role="dialog" aria-label="Filters">
+    <div
+        ref="rootEl"
+        class="filter-drawer"
+        :class="dragClasses"
+        :style="dragStyle"
+        role="dialog"
+        aria-label="Filters"
+    >
+        <button
+            type="button"
+            class="mobile-sheet-grip"
+            aria-label="Drag down to close filters"
+            @pointerdown="onDragPointerDown"
+            @pointermove="onDragPointerMove"
+            @pointerup="onDragPointerUp"
+            @pointercancel="onDragPointerCancel"
+        />
         <header class="fp__head">
             <span class="fp__title">Filters</span>
             <span v-if="state.activeFilterCount.value > 0" class="fp__badge">
