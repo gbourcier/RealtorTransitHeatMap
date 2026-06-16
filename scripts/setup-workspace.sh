@@ -3,10 +3,11 @@
 #   1. activate tracked git hooks
 #   2. install required Go tooling (golang-migrate)
 #   3. download Go module dependencies
-#   4. set up the database (drop + create + migrate + seed)
-#   5. build all Go packages
-#   6. precompute transit stops from GTFS feeds
-#   7. install frontend npm dependencies
+#   4. install frontend npm dependencies
+#   5. build frontend assets for go:embed
+#   6. set up the database (drop + create + migrate + seed)
+#   7. build all Go packages
+#   8. precompute transit stops from GTFS feeds
 #
 # Idempotent: safe to re-run.
 
@@ -15,7 +16,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if ! command -v go >/dev/null 2>&1; then
-    echo "error: go is not installed. Install Go (>= 1.24) and re-run." >&2
+    echo "error: go is not installed. Install Go (>= 1.25) and re-run." >&2
     exit 1
 fi
 
@@ -34,6 +35,16 @@ fi
 echo "==> go mod download..."
 go mod download
 
+echo "==> installing frontend dependencies..."
+if ! command -v npm >/dev/null 2>&1; then
+    echo "error: npm is not installed. Install Node.js (>= 20) and re-run." >&2
+    exit 1
+fi
+npm --prefix web install
+
+echo "==> building frontend assets..."
+npm --prefix web run build
+
 echo "==> setting up database..."
 ./scripts/setup-db.sh
 
@@ -46,12 +57,5 @@ if [[ -d data/gtfs ]] && compgen -G "data/gtfs/*.zip" > /dev/null; then
     PRECOMPUTE_FLAGS="-skip-download"
 fi
 go run ./cmd/gtfs-precompute $PRECOMPUTE_FLAGS
-
-echo "==> installing frontend dependencies..."
-if ! command -v npm >/dev/null 2>&1; then
-    echo "error: npm is not installed. Install Node.js (>= 20) and re-run." >&2
-    exit 1
-fi
-npm --prefix web install
 
 echo "==> workspace ready."
