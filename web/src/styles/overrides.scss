@@ -1,0 +1,67 @@
+.mobile-sheet-grip {
+    display: none;
+}
+
+@media (max-width: 899px) {
+    .mobile-sheet-grip {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        z-index: 5;
+        display: grid;
+        place-items: start center;
+        width: 120px;
+        height: 34px;
+        padding: 10px 0 0;
+        border: 0;
+        background: transparent;
+        color: transparent;
+        cursor: grab;
+        touch-action: none;
+        transform: translateX(-50%);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-sheet-grip::before {
+        content: "";
+        display: block;
+        width: 72px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(var(--v-theme-on-surface), 0.32);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 1px 2px rgba(var(--v-theme-shadow), 0.28);
+        transition: background-color 140ms ease, transform 140ms ease;
+    }
+
+    .mobile-sheet-grip:active {
+        cursor: grabbing;
+    }
+
+    .mobile-sheet-grip:active::before {
+        background: rgba(var(--v-theme-on-surface), 0.48);
+        transform: scaleX(1.08);
+    }
+
+    .mobile-sheet-grip:focus-visible {
+        outline: none;
+    }
+
+    .mobile-sheet-grip:focus-visible::before {
+        outline: 2px solid rgb(var(--v-theme-primary));
+        outline-offset: 4px;
+    }
+
+    .mobile-bottom-sheet--dragging {
+        transition: none !important;
+        will-change: height, transform;
+    }
+
+    .mobile-bottom-sheet--settling {
+        transition:
+            height 210ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            transform 210ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+        will-change: height, transform;
+    }
+}

@@ -19,6 +19,7 @@ import { useSavedViews } from "../composables/useSavedViews";
 import { useListings } from "../composables/useListings";
 import { useFavorites, favoritesKey } from "../composables/useFavorites";
 import { useBodyScrollLock } from "../composables/useBodyScrollLock";
+import { useMobileBottomSheetCoordinator } from "../composables/useMobileBottomSheetCoordinator";
 import { useSavedFiltersStore } from "../stores/savedFilters";
 import { debounce } from "../utils/debounce";
 
@@ -117,6 +118,14 @@ function onDocumentPointerDown(event: PointerEvent): void {
     filtersOpen.value = false;
 }
 
+function onToggleFilters(): void {
+    const opening = !filtersOpen.value;
+    if (opening) {
+        mapRef.value?.closeSheet({ immediate: true });
+    }
+    filtersOpen.value = opening;
+}
+
 function toggleResultsPanel(): void {
     drawerOpen.value = !drawerOpen.value;
 }
@@ -211,6 +220,14 @@ watch(drawerOpen, (open) => {
     window.localStorage.setItem(PANEL_OPEN_STORAGE_KEY, String(open));
 });
 
+useMobileBottomSheetCoordinator({
+    open: filtersOpen,
+    close: () => {
+        filtersOpen.value = false;
+    },
+    enabled: () => !mdAndUp.value,
+});
+
 onMounted(() => {
     void refreshHeaderTeleportTargets();
     listings.loadInitial();
@@ -239,7 +256,7 @@ onBeforeUnmount(() => {
             <FiltersButton
                 :open="filtersOpen"
                 :count="filters.activeFilterCount.value"
-                @toggle="filtersOpen = !filtersOpen"
+                @toggle="onToggleFilters"
             />
         </template>
     </Teleport>
@@ -498,6 +515,17 @@ onBeforeUnmount(() => {
 @media (max-width: 899px) {
     .map-fullbleed {
         height: calc(100dvh - 58px);
+    }
+
+    .filter-drawer-enter-active,
+    .filter-drawer-leave-active {
+        transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 0.7, 0.3, 1);
+    }
+
+    .filter-drawer-enter-from,
+    .filter-drawer-leave-to {
+        opacity: 0;
+        transform: translateY(100%);
     }
 }
 </style>

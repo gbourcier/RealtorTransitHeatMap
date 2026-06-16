@@ -3,6 +3,8 @@ import { ref, computed } from "vue";
 import { useDisplay } from "vuetify";
 import type { ListingFiltersState } from "../composables/useListingFilters";
 import type { SavedViewsState } from "../composables/useSavedViews";
+import { useBottomSheetDrag } from "../composables/useBottomSheetDrag";
+import { useMobileBottomSheetCoordinator } from "../composables/useMobileBottomSheetCoordinator";
 import type { SavedFilter } from "../api/savedFilters";
 
 interface Props {
@@ -15,6 +17,24 @@ const emit = defineEmits<{ save: [] }>();
 
 const { mobile } = useDisplay();
 const menuOpen = ref(false);
+const {
+    dragClasses,
+    dragStyle,
+    resetDrag,
+    onDragPointerDown,
+    onDragPointerMove,
+    onDragPointerUp,
+    onDragPointerCancel,
+} = useBottomSheetDrag(() => {
+    menuOpen.value = false;
+});
+useMobileBottomSheetCoordinator({
+    open: menuOpen,
+    close: () => {
+        menuOpen.value = false;
+    },
+    enabled: () => mobile.value,
+});
 
 const favActive = computed(() => props.filters.favoritesOnly.value);
 const activeView = computed(() => props.views.active.value);
@@ -59,6 +79,10 @@ function onSave(): void {
     emit("save");
 }
 
+function onActivatorClick(): void {
+    if (!menuOpen.value) resetDrag();
+}
+
 async function onStar(id: string): Promise<void> {
     try {
         await props.views.toggleDefault(id);
@@ -94,6 +118,7 @@ async function onDelete(id: string): Promise<void> {
                 aria-haspopup="listbox"
                 :aria-expanded="menuOpen"
                 aria-label="Select view"
+                @click="onActivatorClick"
             >
                 <span class="viewsel__content">
                     <v-icon :icon="triggerIcon" size="16" class="viewsel__ic" />
@@ -103,7 +128,23 @@ async function onDelete(id: string): Promise<void> {
             </button>
         </template>
 
-        <div class="view-menu" role="listbox" aria-label="Views">
+        <div
+            class="view-menu"
+            :class="mobile ? dragClasses : undefined"
+            :style="mobile ? dragStyle : undefined"
+            role="listbox"
+            aria-label="Views"
+        >
+            <button
+                v-if="mobile"
+                type="button"
+                class="mobile-sheet-grip"
+                aria-label="Drag down to close saved filters"
+                @pointerdown="onDragPointerDown"
+                @pointermove="onDragPointerMove"
+                @pointerup="onDragPointerUp"
+                @pointercancel="onDragPointerCancel"
+            />
             <div class="view-menu__label">Show</div>
 
             <button
@@ -299,6 +340,7 @@ async function onDelete(id: string): Promise<void> {
 }
 
 .view-menu {
+    position: relative;
     width: 300px;
     padding: 8px;
     border-radius: 16px;
