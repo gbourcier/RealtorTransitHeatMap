@@ -808,7 +808,7 @@ components:
 
     Listing:
       type: object
-      required: [board, mls, address, firstSeenAt, slug, buildingType]
+      required: [board, mls, address, firstSeenAt, slug, photoUrl, buildingType]
       properties:
         board:
           type: integer
@@ -831,6 +831,10 @@ components:
         slug:
           type: string
           description: Full realtor.ca URL for the listing.
+        photoUrl:
+          type: string
+          nullable: true
+          description: Main listing image URL from realtor.ca.
         buildingType:
           type: integer
           enum: [0, 1, 2, 3]
@@ -896,7 +900,7 @@ components:
 
     Favorite:
       type: object
-      required: [board, mls, address, latitude, longitude, firstSeenAt, favoritedAt, slug, buildingType, isAvailable]
+      required: [board, mls, address, latitude, longitude, firstSeenAt, favoritedAt, slug, photoUrl, buildingType, isAvailable]
       properties:
         board:
           type: integer
@@ -929,6 +933,10 @@ components:
         slug:
           type: string
           description: Full realtor.ca URL for the listing.
+        photoUrl:
+          type: string
+          nullable: true
+          description: Main listing image URL from realtor.ca.
         buildingType:
           type: integer
           enum: [0, 1, 2, 3]

@@ -8,12 +8,17 @@ defineProps<{ variant: "panel" | "mobile" }>();
         :class="{ 'listing-card-skeleton--mobile': variant === 'mobile' }"
         aria-hidden="true"
     >
-        <div class="listing-card-skeleton__bar listing-card-skeleton__bar--price" />
-        <div class="listing-card-skeleton__bar listing-card-skeleton__bar--street" />
-        <div class="listing-card-skeleton__bar listing-card-skeleton__bar--locality" />
-        <div class="listing-card-skeleton__meta">
-            <div class="listing-card-skeleton__pill" />
-            <div class="listing-card-skeleton__bar listing-card-skeleton__bar--seen" />
+        <div class="listing-card-skeleton__content">
+            <div class="listing-card-skeleton__thumb" />
+            <div class="listing-card-skeleton__details">
+                <div class="listing-card-skeleton__bar listing-card-skeleton__bar--price" />
+                <div class="listing-card-skeleton__bar listing-card-skeleton__bar--street" />
+                <div class="listing-card-skeleton__bar listing-card-skeleton__bar--locality" />
+                <div class="listing-card-skeleton__meta">
+                    <div class="listing-card-skeleton__pill" />
+                    <div class="listing-card-skeleton__bar listing-card-skeleton__bar--seen" />
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -23,16 +28,18 @@ defineProps<{ variant: "panel" | "mobile" }>();
     position: relative;
     background-color: rgba(var(--v-theme-on-surface), 0.03);
     border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    border-radius: 14px;
-    padding: 14px 14px 12px;
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
 }
 
 .listing-card-skeleton--mobile {
-    padding: 18px 18px 16px;
+    padding: 0;
 }
 
 .listing-card-skeleton__bar,
-.listing-card-skeleton__pill {
+.listing-card-skeleton__pill,
+.listing-card-skeleton__thumb {
     background: linear-gradient(
         90deg,
         rgba(var(--v-theme-on-surface), 0.04) 0%,
@@ -44,9 +51,33 @@ defineProps<{ variant: "panel" | "mobile" }>();
     border-radius: 6px;
 }
 
+.listing-card-skeleton__content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.listing-card-skeleton__thumb {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 136px;
+    border-radius: 0;
+}
+
+.listing-card-skeleton--mobile .listing-card-skeleton__thumb {
+    height: 168px;
+}
+
+.listing-card-skeleton__details {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 14px;
+}
+
 .listing-card-skeleton__bar--price {
-    height: 22px;
-    width: 42%;
+    height: 25px;
+    width: 48%;
     margin-bottom: 10px;
 }
 
@@ -56,8 +87,8 @@ defineProps<{ variant: "panel" | "mobile" }>();
 }
 
 .listing-card-skeleton__bar--street {
-    height: 16px;
-    width: 75%;
+    height: 17px;
+    width: 82%;
     margin-bottom: 6px;
 }
 
@@ -66,8 +97,8 @@ defineProps<{ variant: "panel" | "mobile" }>();
 }
 
 .listing-card-skeleton__bar--locality {
-    height: 12px;
-    width: 50%;
+    height: 14px;
+    width: 58%;
 }
 
 .listing-card-skeleton__meta {
@@ -75,15 +106,11 @@ defineProps<{ variant: "panel" | "mobile" }>();
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    margin-top: 16px;
 }
 
 .listing-card-skeleton--mobile .listing-card-skeleton__meta {
-    border-top: 0;
-    padding-top: 14px;
-    margin-top: 10px;
+    margin-top: 16px;
 }
 
 .listing-card-skeleton__pill {

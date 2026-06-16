@@ -24,6 +24,7 @@ type Listing struct {
 	Address                string
 	IsAvailable            bool           `gorm:"column:is_available"`
 	Slug                   string         `gorm:"column:slug"`
+	PhotoURL               *string        `gorm:"column:photo_url"`
 	BuildingType           BuildingType   `gorm:"column:building_type"`
 	BedroomCount           int            `gorm:"column:bedroom_count"`
 	BathroomCount          int            `gorm:"column:bathroom_count"`
@@ -86,6 +87,7 @@ type MapPinRow struct {
 	Longitude              float64      `gorm:"column:longitude"`
 	Address                string       `gorm:"column:address"`
 	Slug                   string       `gorm:"column:slug"`
+	PhotoURL               *string      `gorm:"column:photo_url"`
 	BuildingType           BuildingType `gorm:"column:building_type"`
 	BedroomCount           int          `gorm:"column:bedroom_count"`
 	BathroomCount          int          `gorm:"column:bathroom_count"`

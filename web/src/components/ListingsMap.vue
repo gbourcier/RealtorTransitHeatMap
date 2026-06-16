@@ -43,6 +43,7 @@ const hexLayer = shallowRef<L.LayerGroup | null>(null);
 const HEX_RESOLUTION = 8;
 const loading = ref(false);
 const selectedPin = ref<ListingMapPin | null>(null);
+const selectedPhotoFailed = ref(false);
 let hasFitBounds = false;
 let resizeObserver: ResizeObserver | null = null;
 const markersByKey = new Map<string, L.Marker>();
@@ -206,6 +207,11 @@ function formatBuildingType(buildingType: number): string {
 }
 
 const selectedAddress = computed(() => parseAddress(selectedPin.value?.address));
+const selectedPhotoUrl = computed(() => selectedPin.value?.photoUrl ?? "");
+const showSelectedPhoto = computed(() =>
+    selectedPhotoUrl.value !== "" && !selectedPhotoFailed.value,
+);
+const selectedPhotoAlt = computed(() => `Listing photo for ${selectedAddress.value.street}`);
 const selectedPropertyType = computed(() =>
     selectedPin.value ? formatBuildingType(selectedPin.value.buildingType) : "",
 );
@@ -230,13 +236,19 @@ function selectedAreaLabel(pin: ListingMapPin): string {
 }
 
 function openSheet(pin: ListingMapPin): void {
+    selectedPhotoFailed.value = false;
     selectedPin.value = pin;
     markSelectedPin(pin.board, pin.mls);
 }
 
 function closeSheet(): void {
+    selectedPhotoFailed.value = false;
     selectedPin.value = null;
     clearSelectedPin();
+}
+
+function onSelectedPhotoError(): void {
+    selectedPhotoFailed.value = true;
 }
 
 function toggleSheetFavorite(pin: ListingMapPin): void {
@@ -281,8 +293,21 @@ function popupHtml(pin: ListingMapPin): string {
     const ba = formatBath(pin.bathroomCount);
     const area = formatArea(pin.interiorAreaSqft);
     const buildingType = escapeHtml(formatBuildingType(pin.buildingType));
+    const photoUrl = pin.photoUrl ? escapeHtml(pin.photoUrl) : "";
+    const photo = photoUrl
+        ? `<div class="map-popup__photo"><img src="${photoUrl}" alt="Listing photo" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>`
+        : "";
+    const photoClass = photoUrl ? "" : " map-popup--no-photo";
+    const actionsClass = photoUrl
+        ? "map-popup__top-actions"
+        : "map-popup__top-actions map-popup__top-actions--plain";
     return `
-        <div class="map-popup">
+        <div class="map-popup${photoClass}">
+            ${photo}
+            <div class="${actionsClass}">
+                ${favButtonHtml(pin.isFavorite)}
+                <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+            </div>
             <div class="map-popup__body">
                 <div class="map-popup__top">
                     <div class="map-popup__header">
@@ -290,10 +315,6 @@ function popupHtml(pin: ListingMapPin): string {
                         <div class="map-popup__street">${streetEsc}</div>
                         ${localityLine}
                         ${expiredBadge}
-                    </div>
-                    <div class="map-popup__top-actions">
-                        ${favButtonHtml(pin.isFavorite)}
-                        <button type="button" class="map-popup__close" aria-label="Close"><i class="mdi mdi-close" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div class="map-popup__stats">
@@ -707,9 +728,43 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
             <div
                 v-if="selectedPin"
                 class="mobile-listing-sheet"
+                :class="{
+                    'mobile-listing-sheet--with-photo': showSelectedPhoto,
+                    'mobile-listing-sheet--no-photo': !showSelectedPhoto,
+                }"
                 role="dialog"
                 aria-label="Listing details"
             >
+                <div v-if="showSelectedPhoto" class="mobile-listing-sheet__photo">
+                    <img
+                        :src="selectedPhotoUrl"
+                        :alt="selectedPhotoAlt"
+                        loading="lazy"
+                        decoding="async"
+                        referrerpolicy="no-referrer"
+                        @error="onSelectedPhotoError"
+                    >
+                </div>
+                <div class="mobile-listing-sheet__top-actions">
+                    <button
+                        type="button"
+                        class="mobile-listing-sheet__iconbtn"
+                        :class="{ 'mobile-listing-sheet__iconbtn--active': selectedPin.isFavorite }"
+                        :aria-pressed="selectedPin.isFavorite"
+                        :aria-label="selectedPin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                        @click="toggleSheetFavorite(selectedPin)"
+                    >
+                        <v-icon size="20">{{ selectedPin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
+                    </button>
+                    <button
+                        type="button"
+                        class="mobile-listing-sheet__iconbtn"
+                        aria-label="Close listing details"
+                        @click="closeSheet"
+                    >
+                        <v-icon size="21">mdi-close</v-icon>
+                    </button>
+                </div>
                 <div class="mobile-listing-sheet__body">
                     <div class="mobile-listing-sheet__top">
                         <div class="mobile-listing-sheet__header">
@@ -725,26 +780,6 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
                             <div v-if="!selectedPin.isAvailable" class="mobile-listing-sheet__expired">
                                 Expired listing
                             </div>
-                        </div>
-                        <div class="mobile-listing-sheet__top-actions">
-                            <button
-                                type="button"
-                                class="mobile-listing-sheet__iconbtn"
-                                :class="{ 'mobile-listing-sheet__iconbtn--active': selectedPin.isFavorite }"
-                                :aria-pressed="selectedPin.isFavorite"
-                                :aria-label="selectedPin.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-                                @click="toggleSheetFavorite(selectedPin)"
-                            >
-                                <v-icon size="20">{{ selectedPin.isFavorite ? "mdi-heart" : "mdi-heart-outline" }}</v-icon>
-                            </button>
-                            <button
-                                type="button"
-                                class="mobile-listing-sheet__iconbtn"
-                                aria-label="Close listing details"
-                                @click="closeSheet"
-                            >
-                                <v-icon size="21">mdi-close</v-icon>
-                            </button>
                         </div>
                     </div>
 
@@ -890,19 +925,45 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     bottom: 0;
     left: 11px;
     z-index: 2000;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: calc(100vw - 22px);
+    max-height: calc(100dvh - 72px);
     color: rgb(var(--v-theme-on-surface));
     background: rgb(var(--v-theme-popup-overlay));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 22px 22px 0 0;
+    overflow: hidden;
     box-shadow:
         0 -22px 70px -28px rgba(var(--v-theme-shadow), 0.95),
         inset 0 1px 0 rgba(var(--v-theme-on-surface), 0.04);
 }
 
+.mobile-listing-sheet__photo {
+    width: 100%;
+    height: clamp(172px, 34dvh, 230px);
+    flex: 0 0 auto;
+    overflow: hidden;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+.mobile-listing-sheet__photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .mobile-listing-sheet__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     padding: 22px 22px 6px;
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__body {
+    padding-top: 24px;
 }
 
 .mobile-listing-sheet__top {
@@ -914,6 +975,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 .mobile-listing-sheet__header {
     flex: 1 1 auto;
     min-width: 0;
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__header {
+    padding-right: 110px;
 }
 
 .mobile-listing-sheet__price {
@@ -930,7 +995,8 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1.14;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .mobile-listing-sheet__locality {
@@ -955,10 +1021,13 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
 }
 
 .mobile-listing-sheet__top-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 8px;
-    flex: 0 0 auto;
 }
 
 .mobile-listing-sheet__iconbtn {
@@ -966,20 +1035,66 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     place-items: center;
     width: 44px;
     height: 44px;
-    border: 0;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 999px;
-    background: rgba(var(--v-theme-on-surface), 0.06);
-    color: rgba(var(--v-theme-on-surface), 0.52);
+    background: rgba(var(--v-theme-popup-overlay), 0.72);
+    color: rgba(var(--v-theme-on-surface), 0.68);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(var(--v-theme-shadow), 0.28);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease, transform 60ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 60ms ease;
+}
+
+.mobile-listing-sheet__iconbtn:hover {
+    border-color: rgba(var(--v-theme-on-surface), 0.2);
+    background-color: rgba(var(--v-theme-popup-overlay), 0.9);
+    color: rgba(var(--v-theme-on-surface), 0.9);
 }
 
 .mobile-listing-sheet__iconbtn--active {
     color: rgb(var(--v-theme-error));
+    border-color: rgba(var(--v-theme-error), 0.28);
+    background-color: rgba(var(--v-theme-error), 0.14);
+}
+
+.mobile-listing-sheet__iconbtn--active:hover {
+    color: rgb(var(--v-theme-error));
+    border-color: rgba(var(--v-theme-error), 0.38);
+    background-color: rgba(var(--v-theme-error), 0.18);
 }
 
 .mobile-listing-sheet__iconbtn:active {
     transform: translateY(1px);
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__top-actions {
+    top: 14px;
+    right: 14px;
+    gap: 6px;
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn {
+    border: 0;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.56);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.86);
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn--active {
+    color: rgb(var(--v-theme-error));
+}
+
+.mobile-listing-sheet--no-photo .mobile-listing-sheet__iconbtn--active:hover {
+    background-color: rgba(var(--v-theme-error), 0.08);
+    color: rgb(var(--v-theme-error));
 }
 
 .mobile-listing-sheet__stats {
@@ -1520,6 +1635,20 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     font-size: 14px;
 }
 
+.map-popup__photo {
+    width: 100%;
+    height: 154px;
+    overflow: hidden;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+.map-popup__photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .map-popup__body {
     padding: 18px 18px 6px;
 }
@@ -1535,65 +1664,115 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
     min-width: 0;
 }
 
+.map-popup--no-photo .map-popup__header {
+    padding-right: 84px;
+}
+
 .map-popup__top-actions {
-    flex: 0 0 auto;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    margin-top: -4px;
+    gap: 8px;
 }
 
 .map-popup__fav {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border: 0;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 999px;
-    background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.34);
+    background: rgba(var(--v-theme-popup-overlay), 0.72);
+    color: rgba(var(--v-theme-on-surface), 0.68);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(var(--v-theme-shadow), 0.28);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 60ms ease;
 }
 
 .map-popup__fav .mdi {
     font-size: 19px;
+    transform: translateY(1px);
 }
 
 .map-popup__close {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border: 0;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     border-radius: 999px;
-    background: transparent;
-    color: rgba(var(--v-theme-on-surface), 0.34);
+    background: rgba(var(--v-theme-popup-overlay), 0.72);
+    color: rgba(var(--v-theme-on-surface), 0.68);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(var(--v-theme-shadow), 0.28);
     cursor: pointer;
-    transition: background-color 120ms ease, color 120ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 60ms ease;
 }
 
 .map-popup__close .mdi {
     font-size: 20px;
+    transform: translateY(0.5px);
 }
 
 .map-popup__close:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.52);
+    border-color: rgba(var(--v-theme-on-surface), 0.2);
+    background-color: rgba(var(--v-theme-popup-overlay), 0.9);
+    color: rgba(var(--v-theme-on-surface), 0.9);
 }
 
 .map-popup__fav:hover {
-    background-color: rgba(var(--v-theme-on-surface), 0.08);
-    color: rgba(var(--v-theme-on-surface), 0.52);
+    border-color: rgba(var(--v-theme-on-surface), 0.2);
+    background-color: rgba(var(--v-theme-popup-overlay), 0.9);
+    color: rgba(var(--v-theme-on-surface), 0.9);
 }
 
 .map-popup__fav--active {
     color: rgb(var(--v-theme-error));
+    border-color: rgba(var(--v-theme-error), 0.28);
+    background-color: rgba(var(--v-theme-error), 0.14);
 }
 
 .map-popup__fav--active:hover {
     color: rgb(var(--v-theme-error));
+    border-color: rgba(var(--v-theme-error), 0.38);
+    background-color: rgba(var(--v-theme-error), 0.18);
+}
+
+.map-popup__fav:active,
+.map-popup__close:active {
+    transform: translateY(1px);
+}
+
+.map-popup__top-actions--plain .map-popup__fav,
+.map-popup__top-actions--plain .map-popup__close {
+    border: 0;
+    background: transparent;
+    color: rgba(var(--v-theme-on-surface), 0.56);
+    box-shadow: none;
+    text-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.map-popup__top-actions--plain .map-popup__fav:hover,
+.map-popup__top-actions--plain .map-popup__close:hover {
+    background-color: rgba(var(--v-theme-on-surface), 0.08);
+    color: rgba(var(--v-theme-on-surface), 0.86);
+}
+
+.map-popup__top-actions--plain .map-popup__fav--active {
+    color: rgb(var(--v-theme-error));
+}
+
+.map-popup__top-actions--plain .map-popup__fav--active:hover {
     background-color: rgba(var(--v-theme-error), 0.08);
+    color: rgb(var(--v-theme-error));
 }
 
 .map-popup__price {
@@ -1836,12 +2015,22 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite });
         padding: 16px 14px 5px;
     }
 
+    .map-popup__photo {
+        height: 126px;
+    }
+
     .map-popup__top {
         gap: 8px;
     }
 
     .map-popup__top-actions {
-        gap: 0;
+        top: 10px;
+        right: 10px;
+        gap: 6px;
+    }
+
+    .map-popup--no-photo .map-popup__header {
+        padding-right: 72px;
     }
 
     .map-popup__fav,

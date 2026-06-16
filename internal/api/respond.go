@@ -210,6 +210,7 @@ type ListingResponse struct {
 	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
 	FirstSeenAt            int64    `json:"firstSeenAt"`
 	Slug                   string   `json:"slug"`
+	PhotoURL               *string  `json:"photoUrl"`
 	BuildingType           int      `json:"buildingType"`
 	BedroomCount           int      `json:"bedroomCount"`
 	BathroomCount          int      `json:"bathroomCount"`
@@ -228,6 +229,7 @@ type ListingMapPinResponse struct {
 	CommuteSecondsDowntown *int     `json:"commuteSecondsDowntown,omitempty"`
 	FirstSeenAt            int64    `json:"firstSeenAt"`
 	Slug                   string   `json:"slug"`
+	PhotoURL               *string  `json:"photoUrl"`
 	BuildingType           int      `json:"buildingType"`
 	BedroomCount           int      `json:"bedroomCount"`
 	BathroomCount          int      `json:"bathroomCount"`
@@ -247,6 +249,7 @@ func mapPinFromRow(row *listing.MapPinRow) ListingMapPinResponse {
 		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
 		FirstSeenAt:            row.FirstSeenAt.Unix(),
 		Slug:                   "https://www.realtor.ca" + row.Slug,
+		PhotoURL:               row.PhotoURL,
 		BuildingType:           int(row.BuildingType),
 		BedroomCount:           row.BedroomCount,
 		BathroomCount:          row.BathroomCount,
@@ -267,6 +270,7 @@ type FavoriteResponse struct {
 	FirstSeenAt            int64    `json:"firstSeenAt"`
 	FavoritedAt            int64    `json:"favoritedAt"`
 	Slug                   string   `json:"slug"`
+	PhotoURL               *string  `json:"photoUrl"`
 	BuildingType           int      `json:"buildingType"`
 	BedroomCount           int      `json:"bedroomCount"`
 	BathroomCount          int      `json:"bathroomCount"`
@@ -286,6 +290,7 @@ func favoriteFromRow(row *favorite.Row) FavoriteResponse {
 		FirstSeenAt:            row.FirstSeenAt.Unix(),
 		FavoritedAt:            row.FavoritedAt.Unix(),
 		Slug:                   "https://www.realtor.ca" + row.Slug,
+		PhotoURL:               row.PhotoURL,
 		BuildingType:           int(row.BuildingType),
 		BedroomCount:           row.BedroomCount,
 		BathroomCount:          row.BathroomCount,
@@ -321,6 +326,7 @@ func listingFromRow(row *listing.ListingRow) ListingResponse {
 		CommuteSecondsDowntown: row.CommuteSecondsDowntown,
 		FirstSeenAt:            row.FirstSeenAt.Unix(),
 		Slug:                   "https://www.realtor.ca" + row.Slug,
+		PhotoURL:               row.PhotoURL,
 		BuildingType:           int(row.BuildingType),
 		BedroomCount:           row.BedroomCount,
 		BathroomCount:          row.BathroomCount,
@@ -353,6 +359,7 @@ func listingDetailFromModel(l *listing.Listing) ListingDetailResponse {
 			CommuteSecondsDowntown: l.CommuteSecondsDowntown,
 			FirstSeenAt:            l.FirstSeenAt.Unix(),
 			Slug:                   "https://www.realtor.ca" + l.Slug,
+			PhotoURL:               l.PhotoURL,
 			BuildingType:           int(l.BuildingType),
 			BedroomCount:           l.BedroomCount,
 			BathroomCount:          l.BathroomCount,

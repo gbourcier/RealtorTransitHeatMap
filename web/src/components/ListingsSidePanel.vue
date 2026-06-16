@@ -244,12 +244,12 @@ function onResizeKeydown(event: KeyboardEvent): void {
 .listing-cards {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 10px;
+    gap: 8px;
+    padding: 10px 12px;
 }
 
 .listing-cards--panel {
-    padding: 10px;
+    padding: 10px 12px;
 }
 </style>
 

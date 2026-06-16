@@ -89,12 +89,12 @@ useInfiniteScroll(sentinelEl, null, () => emit("loadMore"));
 .listing-cards {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     padding: 10px;
 }
 
 .listing-cards--mobile {
-    gap: 14px;
+    gap: 10px;
     padding: 10px 12px 12px;
 }
 

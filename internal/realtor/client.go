@@ -215,6 +215,7 @@ func decodeObservations(results []listingResult) []listing.Observation {
 				Address:          r.Property.Address.AddressText,
 				IsAvailable:      r.StatusId == "1",
 				Slug:             r.RelativeDetailsURL,
+				PhotoURL:         firstPhotoURL(r.Property.Photo),
 				BuildingType:     parseBuildingType(r.Building.Type),
 				BedroomCount:     bedrooms,
 				BathroomCount:    bathrooms,
@@ -224,6 +225,17 @@ func decodeObservations(results []listingResult) []listing.Observation {
 		})
 	}
 	return out
+}
+
+func firstPhotoURL(photos []photo) *string {
+	for _, p := range photos {
+		for _, raw := range []string{p.HighResPath, p.MedResPath, p.LowResPath} {
+			if s := strings.TrimSpace(raw); s != "" {
+				return &s
+			}
+		}
+	}
+	return nil
 }
 
 func parseBuildingType(raw string) listing.BuildingType {

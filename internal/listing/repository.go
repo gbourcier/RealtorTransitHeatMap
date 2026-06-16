@@ -54,7 +54,7 @@ func (r *Repository) UpsertListings(ctx context.Context, obs []Observation) (ins
 			Omit(clause.Associations, "FirstSeenAt").
 			Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "board"}, {Name: "mls"}},
-				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "is_available", "slug", "building_type", "bedroom_count", "bathroom_count", "interior_area_sqft"}),
+				DoUpdates: clause.AssignmentColumns([]string{"latitude", "longitude", "address", "is_available", "slug", "photo_url", "building_type", "bedroom_count", "bathroom_count", "interior_area_sqft"}),
 			}).
 			CreateInBatches(listings, 200).Error; err != nil {
 			return err
@@ -134,7 +134,7 @@ func (r *Repository) ListListingsForMap(ctx context.Context, where Where) ([]Map
 		Order("board, mls, observed_at DESC")
 
 	q := r.db.WithContext(ctx).Model(&Listing{}).
-		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.building_type, listings.bedroom_count, listings.bathroom_count, listings.interior_area_sqft, listings.commute_seconds_downtown, listings.first_seen_at, listings.is_available, lp.price AS current_price, (fav.user_id IS NOT NULL) AS is_favorite").
+		Select("listings.board, listings.mls, listings.latitude, listings.longitude, listings.address, listings.slug, listings.photo_url, listings.building_type, listings.bedroom_count, listings.bathroom_count, listings.interior_area_sqft, listings.commute_seconds_downtown, listings.first_seen_at, listings.is_available, lp.price AS current_price, (fav.user_id IS NOT NULL) AS is_favorite").
 		Joins("LEFT JOIN (?) AS lp ON lp.board = listings.board AND lp.mls = listings.mls", latestPrice).
 		Joins("LEFT JOIN favorites fav ON fav.board = listings.board AND fav.mls = listings.mls AND fav.user_id = ?", where.UserID).
 		Where("listings.latitude <> 0 AND listings.longitude <> 0")
