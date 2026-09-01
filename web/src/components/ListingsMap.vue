@@ -751,7 +751,7 @@ onMounted(() => {
     L.control
         .attribution({ prefix: false, position: "bottomleft" })
         .addAttribution(
-            '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+            '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
         )
         .addTo(map.value);
     map.value.createPane("hexPane");
@@ -761,10 +761,10 @@ onMounted(() => {
         hexPane.style.pointerEvents = "none";
     }
     L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-            subdomains: "abcd",
             maxZoom: 19,
+            className: "osm-basemap-tile",
             updateWhenZooming: false,
             updateWhenIdle: false,
             keepBuffer: 4,
@@ -1602,6 +1602,10 @@ defineExpose({ focusListing, highlightListing, clearHighlight, setFavorite, clos
 <style>
 .leaflet-container {
     background: rgb(var(--v-theme-map-bg));
+}
+
+.osm-basemap-tile {
+    filter: invert(1) hue-rotate(180deg) saturate(0.35) brightness(0.65) contrast(1.1);
 }
 
 .price-pin {
